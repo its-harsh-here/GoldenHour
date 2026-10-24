@@ -231,7 +231,7 @@
     $('#inbox-lede').innerHTML = `${S.cases.length} cashless requests · <b>${need}</b> need a human now · ${decided} decided · IRDAI window ${S.meta.sla_minutes} min`;
     const filters = [['ALL', 'plain', 'All', S.cases.length],
       ...['NEW', 'AWAITING_APPROVAL', 'ESCALATED', 'QUERY_RAISED', 'APPROVED', 'PARTIALLY_APPROVED', 'DENIED'].map((s) => [s, STATUS[s][0], STATUS[s][1], count(s)]),
-      ['FEED', 'sky', 'Live and replayed', S.cases.filter(generated).length]];
+      ['FEED', 'sky', 'Feed and replay', S.cases.filter(generated).length]];
     $('#filters').innerHTML = filters.map(([key, cls, label, n]) => `<button class="chip ${cls} filter" data-filter="${key}" aria-pressed="${S.filter === key}">${label} <b class="num">${n}</b></button>`).join('');
     const list = $('#case-list');
     if (shown.length) patchRows(list, shown, flash && !firstPaint);
@@ -273,8 +273,8 @@
     const f = (S.meta && S.meta.feed) || {};
     const day = f.day && f.day.active ? f.day : null;
     const on = !!f.enabled;
-    const pill = day ? '<span class="live-pill on"><i></i>Day replay</span>'
-      : `<span class="live-pill ${on ? 'on' : 'off'}"><i></i>${on ? 'Live feed' : 'Feed paused'}</span>`;
+    const pill = day ? '<span class="lp-title replay">Day replay</span>'
+      : `<span class="lp-title">${on ? 'Incoming requests' : 'Feed paused'}</span>`;
     const text = day
       ? `Replaying the last 24 hours on a simulated clock: <b class="mono">${clockMin(day.sim_now)}</b> · ${day.arrivals_done} of ${day.arrivals_total} requests${day.mode === 'paced' ? ` · about ${day.minutes} min end to end` : ' · catching up as fast as the server allows'}`
       : on ? `New hospital requests arrive at random, about one every ${Math.round(f.interval_s || 40)} s. Each lands as New and the agents pick it up within seconds${f.live_per_hour ? `; up to ${f.live_per_hour} an hour run on the live model` : ''}${f.simulate_desk ? '. A simulated desk signs generated cases off within minutes' : ''}. <span class="mono" id="feed-next"></span>`
@@ -936,7 +936,7 @@
         <div class="card-body"><div id="day-progress-slot"></div><div class="chart-box day"><canvas id="day-chart" aria-label="Requests by hour of the day"></canvas></div>
           <div class="legend row" id="day-legend"></div></div></div>
       <div class="dash-grid">
-        <div class="card"><div class="card-head"><h2>Turnaround per decided case</h2><div class="right"><span class="chip plain">last 30 decisions · blue = live or replayed</span><span class="chip gold">— 60-minute line</span></div></div>
+        <div class="card"><div class="card-head"><h2>Turnaround per decided case</h2><div class="right"><span class="chip plain">last 30 decisions · blue = feed or day replay</span><span class="chip gold">— 60-minute line</span></div></div>
           <div class="card-body"><div class="chart-box"><canvas id="tat-chart" aria-label="Turnaround chart"></canvas></div></div></div>
         <div class="card"><div class="card-head"><h2>Decision split</h2></div><div class="card-body"><div class="chart-box donut"><canvas id="split-chart" aria-label="Decision split"></canvas></div><div class="legend" id="split-legend"></div></div></div>
       </div>
@@ -945,9 +945,7 @@
   }
   function paintDashboard(d, animate) {
     const k = d.kpis;
-    const fed = S.meta.feed || {};
-    const replaying = fed.day && fed.day.active;
-    $('#dash-actions').innerHTML = `<span class="live-pill ${replaying || fed.enabled ? 'on' : 'off'}"><i></i>${replaying ? 'Day replay' : fed.enabled ? 'Feed on' : 'Feed paused'}</span><span class="chip plain">IRDAI cashless window ${d.sla_minutes} min</span><span class="chip ${d.kill_switch ? 'coral' : 'gold'}">Autonomy level ${d.autonomy_level}${d.kill_switch ? ' · kill switch' : ''}</span>`;
+    $('#dash-actions').innerHTML = `<span class="chip plain">IRDAI cashless window ${d.sla_minutes} min</span><span class="chip ${d.kill_switch ? 'coral' : 'gold'}">Autonomy level ${d.autonomy_level}${d.kill_switch ? ' · kill switch' : ''}</span>`;
     $('#dash-kpis').innerHTML = `${kpi('Median turnaround', 'k-tat', 'min', `decision time vs the ${d.sla_minutes}-minute rule`, 'accent', 'i-clock')}
       ${kpi('Within 60-minute SLA', 'k-sla', '%', `${k.decided} decided cases`, '', 'i-check')}
       ${kpi('Cases processed', 'k-proc', '', 'by the agent pipeline', '', 'i-flow')}
@@ -980,14 +978,8 @@
     if (!head) return;
     const day = S.meta.feed && S.meta.feed.day;
     const today = (S.dash && S.dash.today) || { arrivals: 0 };
-    const pill = $('#dash-actions .live-pill');
-    if (pill) {
-      const fed = S.meta.feed || {};
-      pill.className = `live-pill ${(day && day.active) || fed.enabled ? 'on' : 'off'}`;
-      pill.innerHTML = `<i></i>${day && day.active ? 'Day replay' : fed.enabled ? 'Feed on' : 'Feed paused'}`;
-    }
     if (day && day.active) {
-      head.innerHTML = `<span class="live-pill on"><i></i>Replaying · <span class="mono">${clockMin(day.sim_now)}</span></span><span class="chip plain">${day.arrivals_done} of ${day.arrivals_total} requests</span>`;
+      head.innerHTML = `<span class="chip gold">Replaying · <span class="mono">${clockMin(day.sim_now)}</span></span><span class="chip plain">${day.arrivals_done} of ${day.arrivals_total} requests</span>`;
       $('#day-progress-slot').innerHTML = `<div class="day-progress"><i style="width:${(day.progress * 100).toFixed(1)}%"></i></div>`;
     } else {
       head.innerHTML = `<span class="chip plain">${today.arrivals} requests in 24 h</span><button class="btn sm" id="dash-replay">${icon('i-play', 'sm')}Replay the day in ${S.meta.day_minutes || 3} min</button>`;

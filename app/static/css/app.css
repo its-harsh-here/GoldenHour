@@ -105,9 +105,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .segmented button[aria-pressed="true"] { background: var(--gold-bg); color: var(--accent-text); box-shadow: inset 0 0 0 1px rgba(245, 185, 66, .35); }
 .segmented button:disabled { cursor: not-allowed; opacity: .55; }
 .mode-badge { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; padding: 4px 10px; border-radius: var(--pill); border: 1px solid var(--line); color: var(--muted); }
-.mode-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: .45; }
-.mode-badge.connected::before { opacity: 1; animation: badge-beacon 1.8s ease-out infinite; }
-@keyframes badge-beacon { 0% { box-shadow: 0 0 0 0 currentColor; } 80%, 100% { box-shadow: 0 0 0 6px transparent; } }
+.mode-badge:not(.connected) { opacity: .6; }  /* live updates reconnecting */
 .mode-badge.live { color: var(--teal); border-color: rgba(45, 212, 191, .35); }
 .mode-badge.replay { color: var(--sky); border-color: rgba(96, 165, 250, .35); }
 .mode-badge.mock { color: var(--violet); border-color: rgba(167, 139, 250, .35); }
@@ -512,12 +510,8 @@ html.presentation .wf-bar.total { background: #CDBFAE; }
 .run-mini:hover, .run-mini:focus-visible { opacity: 1; border-color: rgba(245, 185, 66, .6); }
 .run-mini .icon { width: 8px; height: 8px; margin-left: 1px; }
 .run-mini:disabled { opacity: .3; cursor: progress; }
-.live-pill { display: inline-flex; align-items: center; gap: 6px; font-size: .7rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
-.live-pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: none; }
-.live-pill.on { color: var(--teal); }
-.live-pill.on i { background: var(--teal); animation: beacon 1.8s ease-out infinite; }
-.live-pill.off i { background: var(--faint); }
-@keyframes beacon { 0% { box-shadow: 0 0 0 0 rgba(45, 212, 191, .55); } 80%, 100% { box-shadow: 0 0 0 7px rgba(45, 212, 191, 0); } }
+.lp-title { font-size: .7rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.lp-title.replay { color: var(--accent-text); }
 .live-panel { margin-bottom: var(--s2); padding: 12px var(--s3) 12px; }
 .lp-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .lp-meta { color: var(--muted); font-size: .84rem; flex: 1 1 420px; min-width: 0; line-height: 1.45; }
