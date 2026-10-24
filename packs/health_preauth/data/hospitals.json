@@ -1,0 +1,47 @@
+{
+  "_note": "Invented hospitals for synthetic data.",
+  "hospitals": [
+    {
+      "name": "Kaveri City Hospital",
+      "city": "Bengaluru",
+      "hospital_code": "HSP-KCH-0192",
+      "tpa_email": "tpa.desk@kavericity.example",
+      "phone": "+91 80 4110 2290"
+    },
+    {
+      "name": "Nandi Valley Medical Centre",
+      "city": "Bengaluru",
+      "hospital_code": "HSP-NVM-0417",
+      "tpa_email": "preauth@nandivalley.example",
+      "phone": "+91 80 4725 3381"
+    },
+    {
+      "name": "Malnad Ridge Hospital",
+      "city": "Shivamogga",
+      "hospital_code": "HSP-MRH-0733",
+      "tpa_email": "cashless@malnadridge.example",
+      "phone": "+91 8182 40 6612"
+    },
+    {
+      "name": "Deccan Lotus Hospital",
+      "city": "Hubballi",
+      "hospital_code": "HSP-DLH-0851",
+      "tpa_email": "tpa@deccanlotus.example",
+      "phone": "+91 836 41 7720"
+    },
+    {
+      "name": "Coastal Pearl Hospital",
+      "city": "Mangaluru",
+      "hospital_code": "HSP-CPH-0968",
+      "tpa_email": "insurance@coastalpearl.example",
+      "phone": "+91 824 42 1185"
+    },
+    {
+      "name": "Kabini Grove Hospital",
+      "city": "Mysuru",
+      "hospital_code": "HSP-KGH-1024",
+      "tpa_email": "preauth@kabinigrove.example",
+      "phone": "+91 821 43 9904"
+    }
+  ]
+}

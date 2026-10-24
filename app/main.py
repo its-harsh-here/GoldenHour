@@ -5,7 +5,7 @@ hooks (seed, decide, case views, dashboard). The demo role switcher sends the ro
 """
 from __future__ import annotations
 
-import asyncio
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -44,6 +44,10 @@ class TamperBody(BaseModel):
     block_id: int | None = None
 
 
+class FeedBody(BaseModel):
+    enabled: bool = True
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -54,7 +58,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not rt.cases.list():
             print(f"ERROR: pack '{rt.pack.name}' loaded zero cases; its data directory is missing from this build.", flush=True)
         app.state.rt = rt
+        if s.live_feed:
+            rt.feed.start()
         yield
+        rt.feed.stop()
 
     app = FastAPI(title="GoldenHour", version="0.1.0", lifespan=lifespan)
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
@@ -101,8 +108,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/health")
     def health(request: Request) -> dict:
         rt = rt_of(request)
-        cases = len(rt.cases.list())
-        return {"ok": cases > 0, "llm_mode": rt.llm.mode, "cases": cases, "replay_entries": len(rt.llm.replay)}
+        cases = rt.store.one("SELECT COUNT(*) AS n FROM cases")["n"]
+        return {"ok": cases > 0, "llm_mode": rt.llm.mode, "cases": cases, "replay_entries": len(rt.llm.replay),
+                "feed": {"enabled": rt.feed.enabled, "running": rt.feed.running}}
 
     @app.get("/api/meta")
     def meta(request: Request) -> dict:
@@ -118,6 +126,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "pack": {"name": rt.pack.name, "title": cfg["title"], "domain": cfg["domain"], "version": cfg["version"]},
             "sla_minutes": rt.sla_minutes, "threshold_inr": cfg["decision_policy"]["auto_threshold_inr"],
             "hero_cases": [c["case_id"] for c in sorted(rt.cases.list(), key=lambda c: c["hero"] or "Z") if c["hero"]],
+            "feed": rt.feed.status(),
         }
 
     # ---------------- cases ----------------
@@ -227,14 +236,39 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return rt.gateway.execute("kill_switch", case_id=None, role=role, actor=actor_of(role, x_actor), params={"engaged": body.engaged})
 
     @app.post("/api/demo/reset")
-    async def reset(request: Request, body: ResetBody | None = None, x_role: str | None = Header(None)) -> dict:
+    def reset(request: Request, body: ResetBody | None = None, x_role: str | None = Header(None)) -> dict:
         rt = rt_of(request)
         rt.rbac.require(role_of(x_role), "reset_demo")
-        for _ in range(50):  # let any in-flight case finish before wiping state
-            if not any(rt.orchestrator.is_running(c["case_id"]) for c in rt.cases.list()):
-                break
-            await asyncio.sleep(0.2)
-        return rt.pack.seed(rt, history=body.history if body else True)
+        with rt.feed.busy:  # no live-feed tick runs while the desk is wiped
+            for _ in range(50):  # let any in-flight case finish before wiping state
+                if not any(rt.orchestrator.is_running(c["case_id"]) for c in rt.cases.list()):
+                    break
+                time.sleep(0.2)
+            return rt.pack.seed(rt, history=body.history if body else True)
+
+    # ---------------- live feed ----------------
+    @app.get("/api/feed")
+    def feed_status(request: Request) -> dict:
+        return rt_of(request).feed.status()
+
+    @app.post("/api/feed")
+    def feed_toggle(body: FeedBody, request: Request, x_role: str | None = Header(None), x_actor: str | None = Header(None)) -> dict:
+        rt, role = rt_of(request), role_of(x_role)
+        return rt.gateway.execute("set_feed", case_id=None, role=role, actor=actor_of(role, x_actor), params={"enabled": body.enabled})
+
+    @app.get("/api/notifications")
+    def notifications(request: Request, after: int = 0, limit: int = 50) -> list[dict]:
+        rt = rt_of(request)
+        if after <= 0:
+            return rt.events.notifications(max(0, rt.events.last_notification_id() - limit), limit)
+        return rt.events.notifications(after, limit)
+
+    @app.get("/api/stream")
+    async def desk_stream(request: Request, after: int | None = None, last_event_id: str | None = Header(None)) -> StreamingResponse:
+        rt = rt_of(request)
+        start = after if after is not None else (int(last_event_id) if last_event_id and last_event_id.isdigit() else None)
+        return StreamingResponse(rt.events.desk_stream(start), media_type="text/event-stream",
+                                 headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
     return app
 

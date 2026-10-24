@@ -1,0 +1,55 @@
+{
+  "case_id": "PA-1022",
+  "hero": null,
+  "title": "Haemorrhoidectomy",
+  "source": "history",
+  "received_offset_min": 527,
+  "hospital": {
+    "name": "Deccan Lotus Hospital",
+    "city": "Hubballi",
+    "hospital_code": "HSP-DLH-0851",
+    "tpa_email": "tpa@deccanlotus.example",
+    "phone": "+91 836 41 7720"
+  },
+  "form": {
+    "patient_name": "Harpreet Singh",
+    "age": 55,
+    "gender": "M",
+    "patient_phone": "+91 95457 31241",
+    "patient_email": "harpreet.singh@example.com",
+    "aadhaar": "2743 6847 6049",
+    "policy_number": "GH-POL-103093",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-24",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Ritu Bhandari",
+    "provisional_diagnosis": "Grade III haemorrhoids",
+    "icd10": "K64.2",
+    "proposed_procedure": "Haemorrhoidectomy (stapled)",
+    "room_category": "Deluxe room",
+    "room_rent_per_day": 5000,
+    "expected_los_days": 2,
+    "is_accident": false,
+    "estimate": {
+      "room": 10000,
+      "ot": 10000,
+      "surgeon": 17000,
+      "consumables": 12500,
+      "medicines": 5000,
+      "investigations": 6000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "id_proof"
+  ],
+  "admission_note": "DECCAN LOTUS HOSPITAL - Department of General Surgery\nCashless pre-authorization request: planned admission\n\nPatient: Harpreet Singh, 55 years, male. Contact +91 95457 31241, harpreet.singh@example.com. Aadhaar 2743 6847 6049.\nPolicy no. GH-POL-103093 (self).\n\nHistory: painless bleeding per rectum with prolapse for 5 months.\nFindings: proctoscopy shows grade III internal haemorrhoids.\nProvisional diagnosis: grade III haemorrhoids (ICD-10 K64.2).\n\nProposed treatment: haemorrhoidectomy (stapled) on 24-Oct-2026. Expected stay 2 days in a deluxe room at Rs 5,000 per day.\nCost estimate: room Rs 10,000; OT Rs 10,000; surgeon and anaesthetist Rs 17,000; consumables Rs 12,500; medicines Rs 5,000; investigations Rs 6,000. Total Rs 60,500.\nDocuments attached: Admission note, Itemised cost estimate, Patient ID proof.\n\nTreating doctor: Dr. Ritu Bhandari.",
+  "upload_on_query": [
+    "proctoscopy_report"
+  ],
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 19.8
+  }
+}

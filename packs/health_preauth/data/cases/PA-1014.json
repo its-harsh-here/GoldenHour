@@ -1,0 +1,54 @@
+{
+  "case_id": "PA-1014",
+  "hero": null,
+  "title": "Laparoscopic cholecystectomy",
+  "source": "history",
+  "received_offset_min": 674,
+  "hospital": {
+    "name": "Kabini Grove Hospital",
+    "city": "Mysuru",
+    "hospital_code": "HSP-KGH-1024",
+    "tpa_email": "preauth@kabinigrove.example",
+    "phone": "+91 821 43 9904"
+  },
+  "form": {
+    "patient_name": "Zara Sheikh",
+    "age": 11,
+    "gender": "F",
+    "patient_phone": "+91 98996 60403",
+    "patient_email": "",
+    "aadhaar": "9409 0468 9358",
+    "policy_number": "GH-POL-100874",
+    "relationship_to_holder": "daughter",
+    "admission_date": "2026-10-23",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Nandini Kamath",
+    "provisional_diagnosis": "Symptomatic cholelithiasis",
+    "icd10": "K80.10",
+    "proposed_procedure": "Laparoscopic cholecystectomy",
+    "room_category": "Single private AC",
+    "room_rent_per_day": 8500,
+    "expected_los_days": 3,
+    "is_accident": false,
+    "estimate": {
+      "room": 25500,
+      "ot": 15500,
+      "surgeon": 26000,
+      "consumables": 19500,
+      "medicines": 8000,
+      "investigations": 9500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "ultrasound_abdomen",
+    "lft_report",
+    "id_proof"
+  ],
+  "admission_note": "KABINI GROVE HOSPITAL - Department of General and Laparoscopic Surgery\nCashless pre-authorization request: planned admission\n\nPatient: Zara Sheikh, 11 years, female. Contact +91 98996 60403. Aadhaar 9409 0468 9358.\nPolicy no. GH-POL-100874 (daughter of holder).\n\nHistory: recurrent right upper quadrant pain after fatty meals for 6 months.\nFindings: ultrasound shows multiple gallstones with a normal common bile duct; LFT within normal limits.\nProvisional diagnosis: symptomatic cholelithiasis (ICD-10 K80.10).\n\nProposed treatment: laparoscopic cholecystectomy on 23-Oct-2026. Expected stay 3 days in a single private ac at Rs 8,500 per day.\nCost estimate: room Rs 25,500; OT Rs 15,500; surgeon and anaesthetist Rs 26,000; consumables Rs 19,500; medicines Rs 8,000; investigations Rs 9,500. Total Rs 1,04,000.\nDocuments attached: Admission note, Itemised cost estimate, Ultrasound abdomen report, Liver function test report, Patient ID proof.\n\nTreating doctor: Dr. Nandini Kamath.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 8.9
+  }
+}

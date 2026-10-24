@@ -1,0 +1,54 @@
+{
+  "case_id": "PA-1036",
+  "hero": null,
+  "title": "Transurethral resection of prostate",
+  "source": "history",
+  "received_offset_min": 92,
+  "hospital": {
+    "name": "Deccan Lotus Hospital",
+    "city": "Hubballi",
+    "hospital_code": "HSP-DLH-0851",
+    "tpa_email": "tpa@deccanlotus.example",
+    "phone": "+91 836 41 7720"
+  },
+  "form": {
+    "patient_name": "Aditya Narayan",
+    "age": 17,
+    "gender": "M",
+    "patient_phone": "+91 97379 04893",
+    "patient_email": "",
+    "aadhaar": "6054 7623 2816",
+    "policy_number": "GH-POL-103106",
+    "relationship_to_holder": "son",
+    "admission_date": "2026-10-24",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Ritu Bhandari",
+    "provisional_diagnosis": "Benign prostatic hyperplasia with outflow obstruction",
+    "icd10": "N40.0",
+    "proposed_procedure": "Transurethral resection of prostate (TURP)",
+    "room_category": "Twin sharing",
+    "room_rent_per_day": 24000,
+    "expected_los_days": 3,
+    "is_accident": false,
+    "estimate": {
+      "room": 72000,
+      "ot": 6500,
+      "surgeon": 11000,
+      "consumables": 8500,
+      "medicines": 3500,
+      "investigations": 4000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "psa_report",
+    "usg_pelvis",
+    "id_proof"
+  ],
+  "admission_note": "DECCAN LOTUS HOSPITAL - Department of Urology\nCashless pre-authorization request: planned admission\n\nPatient: Aditya Narayan, 17 years, male. Contact +91 97379 04893. Aadhaar 6054 7623 2816.\nPolicy no. GH-POL-103106 (son of holder).\n\nHistory: poor urinary stream, frequency and nocturia for 17 months.\nFindings: enlarged prostate on examination; ultrasound shows a post-void residual of 180 mL.\nProvisional diagnosis: benign prostatic hyperplasia with outflow obstruction (ICD-10 N40.0).\n\nProposed treatment: transurethral resection of prostate (TURP) on 24-Oct-2026. Expected stay 3 days in a twin sharing at Rs 24,000 per day.\nCost estimate: room Rs 72,000; OT Rs 6,500; surgeon and anaesthetist Rs 11,000; consumables Rs 8,500; medicines Rs 3,500; investigations Rs 4,000. Total Rs 1,05,500.\nDocuments attached: Admission note, Itemised cost estimate, PSA report, Ultrasound pelvis report, Patient ID proof.\n\nTreating doctor: Dr. Ritu Bhandari.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 9.4
+  }
+}

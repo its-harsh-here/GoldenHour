@@ -24,24 +24,620 @@
     "ent_consult": "ENT consultation note",
     "bmi_assessment": "BMI and comorbidity assessment",
     "psa_report": "PSA report",
-    "obstetric_usg": "Obstetric ultrasound report"
+    "obstetric_usg": "Obstetric ultrasound report",
+    "hip_xray": "Hip X-ray report",
+    "echo_report": "Echocardiography report",
+    "proctoscopy_report": "Proctoscopy report",
+    "stool_report": "Stool examination report",
+    "electrolytes_report": "Serum electrolytes report",
+    "widal_or_culture_report": "Blood culture / Widal report",
+    "urine_culture": "Urine culture report",
+    "mri_spine_report": "MRI spine report",
+    "neurosurgery_consult": "Neurosurgery consultation note"
   },
   "procedures": [
-    {"key": "lap_appendectomy", "name": "Laparoscopic appendectomy", "icd10": ["K35.80", "K35.89", "K35.2", "K35.3", "K37"], "category": "surgical", "benchmark_rate_inr": 105000, "typical_los_days": 3, "specific_disease": null, "sub_limit_key": null, "required_docs": ["admission_note", "cost_estimate", "ultrasound_abdomen", "cbc_report", "id_proof"], "keywords": ["appendectomy", "appendicectomy", "appendicitis"]},
-    {"key": "cataract_phaco", "name": "Cataract surgery (phacoemulsification with IOL)", "icd10": ["H25.1", "H25.9", "H25.0", "H26.9"], "category": "surgical", "benchmark_rate_inr": 45000, "typical_los_days": 1, "specific_disease": "cataract", "sub_limit_key": "cataract", "required_docs": ["admission_note", "cost_estimate", "ophthalmologist_consult", "biometry_ascan_report", "id_proof"], "keywords": ["cataract", "phaco", "phacoemulsification", "iol"]},
-    {"key": "tkr", "name": "Total knee replacement (unilateral)", "icd10": ["M17.11", "M17.12", "M17.0", "M17.9"], "category": "surgical", "benchmark_rate_inr": 250000, "typical_los_days": 5, "specific_disease": "joint_replacement", "sub_limit_key": "joint_replacement", "required_docs": ["admission_note", "cost_estimate", "knee_xray", "orthopaedic_consult", "id_proof"], "keywords": ["knee replacement", "tkr", "arthroplasty"]},
-    {"key": "lap_cholecystectomy", "name": "Laparoscopic cholecystectomy", "icd10": ["K80.20", "K80.10", "K81.0"], "category": "surgical", "benchmark_rate_inr": 120000, "typical_los_days": 3, "specific_disease": "gall_bladder", "sub_limit_key": null, "required_docs": ["admission_note", "cost_estimate", "ultrasound_abdomen", "lft_report", "id_proof"], "keywords": ["cholecystectomy", "gallstone", "cholelithiasis", "gall bladder"]},
-    {"key": "ptca_single", "name": "Coronary angioplasty (PTCA, single stent)", "icd10": ["I21.4", "I25.10", "I20.0"], "category": "surgical", "benchmark_rate_inr": 220000, "typical_los_days": 3, "specific_disease": null, "sub_limit_key": null, "required_docs": ["admission_note", "cost_estimate", "ecg", "troponin_report", "angiography_report", "id_proof"], "keywords": ["angioplasty", "ptca", "stent", "nstemi"]},
-    {"key": "lscs", "name": "Caesarean delivery (LSCS)", "icd10": ["O82", "O82.0"], "category": "maternity", "benchmark_rate_inr": 70000, "typical_los_days": 4, "specific_disease": null, "sub_limit_key": "maternity", "required_docs": ["admission_note", "cost_estimate", "obstetric_usg", "id_proof"], "keywords": ["caesarean", "lscs", "c-section"]},
-    {"key": "hernia_mesh", "name": "Inguinal hernia repair with mesh", "icd10": ["K40.90", "K40.20"], "category": "surgical", "benchmark_rate_inr": 75000, "typical_los_days": 2, "specific_disease": "hernia", "sub_limit_key": null, "required_docs": ["admission_note", "cost_estimate", "ultrasound_abdomen", "id_proof"], "keywords": ["hernia", "hernioplasty", "mesh repair"]},
-    {"key": "turp", "name": "Transurethral resection of prostate (TURP)", "icd10": ["N40.1", "N40.0"], "category": "surgical", "benchmark_rate_inr": 95000, "typical_los_days": 3, "specific_disease": "prostate", "sub_limit_key": null, "required_docs": ["admission_note", "cost_estimate", "psa_report", "usg_pelvis", "id_proof"], "keywords": ["turp", "prostate", "bph"]},
-    {"key": "dengue_medical", "name": "Dengue fever (medical management)", "icd10": ["A90", "A91"], "category": "medical", "benchmark_rate_inr": 45000, "typical_los_days": 4, "specific_disease": null, "sub_limit_key": null, "required_docs": ["admission_note", "cost_estimate", "ns1_antigen_report", "platelet_count", "id_proof"], "keywords": ["dengue", "ns1", "thrombocytopenia"]},
-    {"key": "pneumonia_medical", "name": "Community-acquired pneumonia (medical management)", "icd10": ["J18.9", "J18.1", "J15.9"], "category": "medical", "benchmark_rate_inr": 60000, "typical_los_days": 5, "specific_disease": null, "sub_limit_key": null, "required_docs": ["admission_note", "cost_estimate", "chest_xray", "cbc_report", "id_proof"], "keywords": ["pneumonia", "lower respiratory", "consolidation"]},
-    {"key": "lap_hysterectomy", "name": "Laparoscopic hysterectomy", "icd10": ["D25.9", "N85.2", "N92.0"], "category": "surgical", "benchmark_rate_inr": 130000, "typical_los_days": 3, "specific_disease": "hysterectomy", "sub_limit_key": null, "required_docs": ["admission_note", "cost_estimate", "usg_pelvis", "id_proof"], "keywords": ["hysterectomy", "fibroid", "tlh"]},
-    {"key": "urs_stone", "name": "Ureteroscopic lithotripsy (URS)", "icd10": ["N20.0", "N20.1", "N20.2"], "category": "surgical", "benchmark_rate_inr": 85000, "typical_los_days": 2, "specific_disease": "kidney_stone", "sub_limit_key": null, "required_docs": ["admission_note", "cost_estimate", "ct_kub", "id_proof"], "keywords": ["ureteroscopy", "urs", "lithotripsy", "renal calculus", "kidney stone"]},
-    {"key": "tonsillectomy", "name": "Tonsillectomy", "icd10": ["J35.01", "J35.1", "J35.03"], "category": "surgical", "benchmark_rate_inr": 55000, "typical_los_days": 2, "specific_disease": "tonsils", "sub_limit_key": null, "required_docs": ["admission_note", "cost_estimate", "ent_consult", "id_proof"], "keywords": ["tonsillectomy", "tonsillitis", "adenotonsillectomy"]},
-    {"key": "orif_tibia", "name": "Open reduction and internal fixation (ORIF), tibia", "icd10": ["S82.201A", "S82.101A", "S82.209A"], "category": "surgical", "benchmark_rate_inr": 140000, "typical_los_days": 4, "specific_disease": null, "sub_limit_key": null, "required_docs": ["admission_note", "cost_estimate", "xray_report", "mlc_or_accident_report", "id_proof"], "keywords": ["orif", "tibia", "fracture", "internal fixation"]},
-    {"key": "septoplasty", "name": "Septoplasty", "icd10": ["J34.2"], "category": "surgical", "benchmark_rate_inr": 50000, "typical_los_days": 2, "specific_disease": "sinus_septum", "sub_limit_key": null, "required_docs": ["admission_note", "cost_estimate", "ent_consult", "id_proof"], "keywords": ["septoplasty", "deviated septum", "dns"]},
-    {"key": "sleeve_gastrectomy", "name": "Laparoscopic sleeve gastrectomy (bariatric)", "icd10": ["E66.01", "E66.9"], "category": "obesity_surgery", "benchmark_rate_inr": 280000, "typical_los_days": 3, "specific_disease": null, "sub_limit_key": null, "required_docs": ["admission_note", "cost_estimate", "bmi_assessment", "id_proof"], "keywords": ["sleeve gastrectomy", "bariatric", "morbid obesity"]}
+    {
+      "key": "lap_appendectomy",
+      "name": "Laparoscopic appendectomy",
+      "icd10": [
+        "K35.80",
+        "K35.89",
+        "K35.2",
+        "K35.3",
+        "K37"
+      ],
+      "category": "surgical",
+      "benchmark_rate_inr": 105000,
+      "typical_los_days": 3,
+      "specific_disease": null,
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "ultrasound_abdomen",
+        "cbc_report",
+        "id_proof"
+      ],
+      "keywords": [
+        "appendectomy",
+        "appendicectomy",
+        "appendicitis"
+      ]
+    },
+    {
+      "key": "cataract_phaco",
+      "name": "Cataract surgery (phacoemulsification with IOL)",
+      "icd10": [
+        "H25.1",
+        "H25.9",
+        "H25.0",
+        "H26.9"
+      ],
+      "category": "surgical",
+      "benchmark_rate_inr": 45000,
+      "typical_los_days": 1,
+      "specific_disease": "cataract",
+      "sub_limit_key": "cataract",
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "ophthalmologist_consult",
+        "biometry_ascan_report",
+        "id_proof"
+      ],
+      "keywords": [
+        "cataract",
+        "phaco",
+        "phacoemulsification",
+        "iol"
+      ]
+    },
+    {
+      "key": "tkr",
+      "name": "Total knee replacement (unilateral)",
+      "icd10": [
+        "M17.11",
+        "M17.12",
+        "M17.0",
+        "M17.9"
+      ],
+      "category": "surgical",
+      "benchmark_rate_inr": 250000,
+      "typical_los_days": 5,
+      "specific_disease": "joint_replacement",
+      "sub_limit_key": "joint_replacement",
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "knee_xray",
+        "orthopaedic_consult",
+        "id_proof"
+      ],
+      "keywords": [
+        "knee replacement",
+        "tkr",
+        "arthroplasty"
+      ]
+    },
+    {
+      "key": "lap_cholecystectomy",
+      "name": "Laparoscopic cholecystectomy",
+      "icd10": [
+        "K80.20",
+        "K80.10",
+        "K81.0"
+      ],
+      "category": "surgical",
+      "benchmark_rate_inr": 120000,
+      "typical_los_days": 3,
+      "specific_disease": "gall_bladder",
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "ultrasound_abdomen",
+        "lft_report",
+        "id_proof"
+      ],
+      "keywords": [
+        "cholecystectomy",
+        "gallstone",
+        "cholelithiasis",
+        "gall bladder"
+      ]
+    },
+    {
+      "key": "ptca_single",
+      "name": "Coronary angioplasty (PTCA, single stent)",
+      "icd10": [
+        "I21.4",
+        "I25.10",
+        "I20.0"
+      ],
+      "category": "surgical",
+      "benchmark_rate_inr": 220000,
+      "typical_los_days": 3,
+      "specific_disease": null,
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "ecg",
+        "troponin_report",
+        "angiography_report",
+        "id_proof"
+      ],
+      "keywords": [
+        "angioplasty",
+        "ptca",
+        "stent",
+        "nstemi"
+      ]
+    },
+    {
+      "key": "lscs",
+      "name": "Caesarean delivery (LSCS)",
+      "icd10": [
+        "O82",
+        "O82.0"
+      ],
+      "category": "maternity",
+      "benchmark_rate_inr": 70000,
+      "typical_los_days": 4,
+      "specific_disease": null,
+      "sub_limit_key": "maternity",
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "obstetric_usg",
+        "id_proof"
+      ],
+      "keywords": [
+        "caesarean",
+        "lscs",
+        "c-section"
+      ]
+    },
+    {
+      "key": "hernia_mesh",
+      "name": "Inguinal hernia repair with mesh",
+      "icd10": [
+        "K40.90",
+        "K40.20"
+      ],
+      "category": "surgical",
+      "benchmark_rate_inr": 75000,
+      "typical_los_days": 2,
+      "specific_disease": "hernia",
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "ultrasound_abdomen",
+        "id_proof"
+      ],
+      "keywords": [
+        "hernia",
+        "hernioplasty",
+        "mesh repair"
+      ]
+    },
+    {
+      "key": "turp",
+      "name": "Transurethral resection of prostate (TURP)",
+      "icd10": [
+        "N40.1",
+        "N40.0"
+      ],
+      "category": "surgical",
+      "benchmark_rate_inr": 95000,
+      "typical_los_days": 3,
+      "specific_disease": "prostate",
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "psa_report",
+        "usg_pelvis",
+        "id_proof"
+      ],
+      "keywords": [
+        "turp",
+        "prostate",
+        "bph"
+      ]
+    },
+    {
+      "key": "dengue_medical",
+      "name": "Dengue fever (medical management)",
+      "icd10": [
+        "A90",
+        "A91"
+      ],
+      "category": "medical",
+      "benchmark_rate_inr": 45000,
+      "typical_los_days": 4,
+      "specific_disease": null,
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "ns1_antigen_report",
+        "platelet_count",
+        "id_proof"
+      ],
+      "keywords": [
+        "dengue",
+        "ns1",
+        "thrombocytopenia"
+      ]
+    },
+    {
+      "key": "pneumonia_medical",
+      "name": "Community-acquired pneumonia (medical management)",
+      "icd10": [
+        "J18.9",
+        "J18.1",
+        "J15.9"
+      ],
+      "category": "medical",
+      "benchmark_rate_inr": 60000,
+      "typical_los_days": 5,
+      "specific_disease": null,
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "chest_xray",
+        "cbc_report",
+        "id_proof"
+      ],
+      "keywords": [
+        "pneumonia",
+        "lower respiratory",
+        "consolidation"
+      ]
+    },
+    {
+      "key": "lap_hysterectomy",
+      "name": "Laparoscopic hysterectomy",
+      "icd10": [
+        "D25.9",
+        "N85.2",
+        "N92.0"
+      ],
+      "category": "surgical",
+      "benchmark_rate_inr": 130000,
+      "typical_los_days": 3,
+      "specific_disease": "hysterectomy",
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "usg_pelvis",
+        "id_proof"
+      ],
+      "keywords": [
+        "hysterectomy",
+        "fibroid",
+        "tlh"
+      ]
+    },
+    {
+      "key": "urs_stone",
+      "name": "Ureteroscopic lithotripsy (URS)",
+      "icd10": [
+        "N20.0",
+        "N20.1",
+        "N20.2"
+      ],
+      "category": "surgical",
+      "benchmark_rate_inr": 85000,
+      "typical_los_days": 2,
+      "specific_disease": "kidney_stone",
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "ct_kub",
+        "id_proof"
+      ],
+      "keywords": [
+        "ureteroscopy",
+        "urs",
+        "lithotripsy",
+        "renal calculus",
+        "kidney stone"
+      ]
+    },
+    {
+      "key": "tonsillectomy",
+      "name": "Tonsillectomy",
+      "icd10": [
+        "J35.01",
+        "J35.1",
+        "J35.03"
+      ],
+      "category": "surgical",
+      "benchmark_rate_inr": 55000,
+      "typical_los_days": 2,
+      "specific_disease": "tonsils",
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "ent_consult",
+        "id_proof"
+      ],
+      "keywords": [
+        "tonsillectomy",
+        "tonsillitis",
+        "adenotonsillectomy"
+      ]
+    },
+    {
+      "key": "orif_tibia",
+      "name": "Open reduction and internal fixation (ORIF), tibia",
+      "icd10": [
+        "S82.201A",
+        "S82.101A",
+        "S82.209A"
+      ],
+      "category": "surgical",
+      "benchmark_rate_inr": 140000,
+      "typical_los_days": 4,
+      "specific_disease": null,
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "xray_report",
+        "mlc_or_accident_report",
+        "id_proof"
+      ],
+      "keywords": [
+        "orif",
+        "tibia",
+        "fracture",
+        "internal fixation"
+      ]
+    },
+    {
+      "key": "septoplasty",
+      "name": "Septoplasty",
+      "icd10": [
+        "J34.2"
+      ],
+      "category": "surgical",
+      "benchmark_rate_inr": 50000,
+      "typical_los_days": 2,
+      "specific_disease": "sinus_septum",
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "ent_consult",
+        "id_proof"
+      ],
+      "keywords": [
+        "septoplasty",
+        "deviated septum",
+        "dns"
+      ]
+    },
+    {
+      "key": "sleeve_gastrectomy",
+      "name": "Laparoscopic sleeve gastrectomy (bariatric)",
+      "icd10": [
+        "E66.01",
+        "E66.9"
+      ],
+      "category": "obesity_surgery",
+      "benchmark_rate_inr": 280000,
+      "typical_los_days": 3,
+      "specific_disease": null,
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "bmi_assessment",
+        "id_proof"
+      ],
+      "keywords": [
+        "sleeve gastrectomy",
+        "bariatric",
+        "morbid obesity"
+      ]
+    },
+    {
+      "key": "thr",
+      "name": "Total hip replacement (unilateral)",
+      "icd10": [
+        "M16.11",
+        "M16.12",
+        "M16.9"
+      ],
+      "category": "surgical",
+      "benchmark_rate_inr": 280000,
+      "typical_los_days": 5,
+      "specific_disease": "joint_replacement",
+      "sub_limit_key": "joint_replacement",
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "hip_xray",
+        "orthopaedic_consult",
+        "id_proof"
+      ],
+      "keywords": [
+        "hip replacement",
+        "thr"
+      ]
+    },
+    {
+      "key": "cabg",
+      "name": "Coronary artery bypass grafting (CABG)",
+      "icd10": [
+        "I25.110",
+        "I25.119"
+      ],
+      "category": "surgical",
+      "benchmark_rate_inr": 350000,
+      "typical_los_days": 7,
+      "specific_disease": null,
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "ecg",
+        "angiography_report",
+        "echo_report",
+        "id_proof"
+      ],
+      "keywords": [
+        "cabg",
+        "bypass grafting"
+      ]
+    },
+    {
+      "key": "hemorrhoidectomy",
+      "name": "Haemorrhoidectomy (stapled)",
+      "icd10": [
+        "K64.2",
+        "K64.3"
+      ],
+      "category": "surgical",
+      "benchmark_rate_inr": 60000,
+      "typical_los_days": 2,
+      "specific_disease": "piles",
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "proctoscopy_report",
+        "id_proof"
+      ],
+      "keywords": [
+        "haemorrhoid",
+        "hemorrhoid",
+        "piles"
+      ]
+    },
+    {
+      "key": "gastroenteritis_medical",
+      "name": "Acute gastroenteritis with dehydration (medical)",
+      "icd10": [
+        "A09",
+        "K52.9"
+      ],
+      "category": "medical",
+      "benchmark_rate_inr": 35000,
+      "typical_los_days": 3,
+      "specific_disease": null,
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "stool_report",
+        "electrolytes_report",
+        "id_proof"
+      ],
+      "keywords": [
+        "gastroenteritis",
+        "dehydration"
+      ]
+    },
+    {
+      "key": "typhoid_medical",
+      "name": "Enteric (typhoid) fever (medical)",
+      "icd10": [
+        "A01.0",
+        "A01.00"
+      ],
+      "category": "medical",
+      "benchmark_rate_inr": 40000,
+      "typical_los_days": 5,
+      "specific_disease": null,
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "widal_or_culture_report",
+        "cbc_report",
+        "id_proof"
+      ],
+      "keywords": [
+        "typhoid",
+        "enteric fever"
+      ]
+    },
+    {
+      "key": "pyelonephritis_medical",
+      "name": "Acute pyelonephritis (medical)",
+      "icd10": [
+        "N10"
+      ],
+      "category": "medical",
+      "benchmark_rate_inr": 45000,
+      "typical_los_days": 4,
+      "specific_disease": null,
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "urine_culture",
+        "ultrasound_abdomen",
+        "id_proof"
+      ],
+      "keywords": [
+        "pyelonephritis"
+      ]
+    },
+    {
+      "key": "lumbar_discectomy",
+      "name": "Lumbar microdiscectomy",
+      "icd10": [
+        "M51.16",
+        "M51.26"
+      ],
+      "category": "surgical",
+      "benchmark_rate_inr": 160000,
+      "typical_los_days": 3,
+      "specific_disease": "spine",
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "mri_spine_report",
+        "neurosurgery_consult",
+        "id_proof"
+      ],
+      "keywords": [
+        "discectomy",
+        "disc prolapse"
+      ]
+    },
+    {
+      "key": "normal_delivery",
+      "name": "Normal vaginal delivery",
+      "icd10": [
+        "O80"
+      ],
+      "category": "maternity",
+      "benchmark_rate_inr": 40000,
+      "typical_los_days": 2,
+      "specific_disease": null,
+      "sub_limit_key": null,
+      "required_docs": [
+        "admission_note",
+        "cost_estimate",
+        "obstetric_usg",
+        "id_proof"
+      ],
+      "keywords": [
+        "normal delivery",
+        "vaginal delivery"
+      ]
+    }
   ]
 }

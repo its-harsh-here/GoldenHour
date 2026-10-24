@@ -1,0 +1,54 @@
+{
+  "case_id": "PA-1012",
+  "hero": null,
+  "title": "Cataract surgery",
+  "source": "history",
+  "received_offset_min": 701,
+  "hospital": {
+    "name": "Deccan Lotus Hospital",
+    "city": "Hubballi",
+    "hospital_code": "HSP-DLH-0851",
+    "tpa_email": "tpa@deccanlotus.example",
+    "phone": "+91 836 41 7720"
+  },
+  "form": {
+    "patient_name": "Meera Iyer",
+    "age": 58,
+    "gender": "F",
+    "patient_phone": "+91 96385 93232",
+    "patient_email": "",
+    "aadhaar": "2136 5637 0982",
+    "policy_number": "GH-POL-100455",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-23",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Suresh Nayak",
+    "provisional_diagnosis": "Age-related cataract, right eye",
+    "icd10": "H26.9",
+    "proposed_procedure": "Cataract surgery (phacoemulsification with IOL)",
+    "room_category": "Day-care ward",
+    "room_rent_per_day": 2500,
+    "expected_los_days": 1,
+    "is_accident": false,
+    "estimate": {
+      "room": 2500,
+      "ot": 9000,
+      "surgeon": 14500,
+      "consumables": 11000,
+      "medicines": 4500,
+      "investigations": 5500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "ophthalmologist_consult",
+    "biometry_ascan_report",
+    "id_proof"
+  ],
+  "admission_note": "DECCAN LOTUS HOSPITAL - Department of Ophthalmology\nCashless pre-authorization request: planned admission\n\nPatient: Meera Iyer, 58 years, female. Contact +91 96385 93232. Aadhaar 2136 5637 0982.\nPolicy no. GH-POL-100455 (self).\n\nHistory: progressive painless blurring of vision in the right eye over 14 months.\nFindings: visual acuity 6/36 in the right eye; slit lamp shows grade III nuclear sclerosis.\nProvisional diagnosis: age-related cataract, right eye (ICD-10 H26.9).\n\nProposed treatment: cataract surgery (phacoemulsification with IOL) on 23-Oct-2026. Expected stay 1 day in a day-care ward at Rs 2,500 per day.\nCost estimate: room Rs 2,500; OT Rs 9,000; surgeon and anaesthetist Rs 14,500; consumables Rs 11,000; medicines Rs 4,500; investigations Rs 5,500. Total Rs 47,000.\nDocuments attached: Admission note, Itemised cost estimate, Ophthalmologist consultation note, Biometry / A-scan report (IOL power calculation), Patient ID proof.\n\nTreating doctor: Dr. Suresh Nayak.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 11.3
+  }
+}

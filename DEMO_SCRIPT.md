@@ -11,8 +11,10 @@ five judging criteria (Reusability, Responsible AI & Governance, AI-to-ROI, MVP 
 2. Open `http://127.0.0.1:8000/console`, click **Reset demo**, role **Processor**, autonomy **L2**.
    Header badge should read `REPLAY` (or `GROQ` / `MOCK`).
 3. Browser at 1440 px or wider; zoom 100%. For a projector, toggle **Presentation mode** (monitor icon).
-4. Fallback: if anything stalls, the **Run guided demo** button replays the whole path A → B → C by itself,
-   with captions.
+4. Fallback: if anything stalls, the tiny **▶** button at the right end of the console header replays the whole path
+   A → B → C by itself, with captions.
+5. The live feed keeps adding requests (about one every 40 s) and its ticker sits at the top of the inbox. Pause it from
+   the inbox if you want a still screen while you talk.
 
 ## Part 1 — click path (5:00)
 
@@ -20,7 +22,7 @@ five judging criteria (Reusability, Responsible AI & Governance, AI-to-ROI, MVP 
 |---|---|---|---|
 | 0:00 | Landing `/` | Scroll hero → problem strip | "IRDAI says one hour for a cashless decision. Six in ten patients wait six to forty-eight. GoldenHour is a governed agent desk built to hit the hour, with a human in charge of every denial." |
 | 0:25 | Landing | Point at the pipeline and guardrails grid | "Six agents, one fixed decision policy, eight controls you will see working." Click **Open the console**. |
-| 0:40 | Inbox | Point at the sun-dials, the 3 hero cases, seeded history | "Every request has a 60-minute clock that fills gold, then turns coral if breached." |
+| 0:40 | Inbox | Point at the sun-dials, the live-feed ticker, the 3 hero cases | "Every request has a 60-minute clock that fills gold, then turns coral if breached. New requests keep arriving live; the agents process each one on arrival." |
 | 0:50 | Case A `PA-1001` | Click **Process** | Trace streams in: "Intake redacts patient data before any model sees it, screens for injection, extracts the case. Policy calls tools for the policy and claim history. Then the rule engine, not the model, does the money." |
 | 1:20 | Case A decision card | Point at waterfall + ledger | "Room rent is ₹8,000 against a ₹5,000 cap: ₹9,000 deducted, cited to Sec 4.2. The summary is from the model, and it is checked: any rupee figure not in the rule results is rejected." |
 | 1:35 | Case A document | Toggle **What the model saw** | "Black bars for a human, tokens for the model. Names, phone, Aadhaar, policy number never leave the building." |
@@ -63,7 +65,7 @@ five judging criteria (Reusability, Responsible AI & Governance, AI-to-ROI, MVP 
 
 ### 4. MVP readiness (1:00)
 * Runs with one command (`python run.py`), no Node, no CDN; fonts and charts vendored for offline demos.
-* 61 automated tests run offline (`LLM_MODE=mock pytest -q`), including HTTP end-to-end tests for all three hero
+* 71 automated tests run offline (`LLM_MODE=mock pytest -q`), including HTTP end-to-end tests for all three hero
   cases, plus `scripts/smoke_http.py` against a live server.
 * Verified on real Groq models (gpt-oss-20b, gpt-oss-120b, Prompt Guard 2); live testing surfaced a gpt-oss
   tool-call quirk that is now handled. A recorded replay makes the demo deterministic.

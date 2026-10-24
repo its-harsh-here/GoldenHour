@@ -74,6 +74,27 @@ class HealthPreauthPack:
             out.append(actions._mask(row, case["state"].get("intake", {}).get("phi_map", {})) if case else row)
         return out
 
+    # ---- live feed hooks used by core/feed.py ----
+    def feed_arrival(self, rt, force_mock: bool = True) -> str:
+        from packs.health_preauth import actions
+
+        return actions.feed_arrival(rt, force_mock)
+
+    def feed_desk(self, rt, force_mock: bool = True, force: bool = False) -> list:
+        from packs.health_preauth import actions
+
+        return actions.feed_desk(rt, force_mock, force)
+
+    def feed_prune(self, rt, keep: int) -> int:
+        from packs.health_preauth import actions
+
+        return actions.feed_prune(rt, keep)
+
+    def brief(self, case: dict | None) -> dict:
+        from packs.health_preauth import actions
+
+        return actions.brief(case)
+
     def audit_summary(self, step: str, out: dict) -> dict:
         """A few fields per step for the audit chain (full output stays in the case state)."""
         if step == "intake":

@@ -3,7 +3,8 @@
 (() => {
   const { api, inr, esc, icon, dial, toast, caption, countUp, sleep } = GH;
   const $ = (sel, root = document) => root.querySelector(sel);
-  const S = { meta: null, cases: [], tab: 'inbox', caseId: null, view: null, events: [], es: null, docMode: 'original', charts: {}, draft: {}, demo: false };
+  const S = { meta: null, cases: [], tab: 'inbox', caseId: null, view: null, events: [], es: null, docMode: 'original', charts: {}, draft: {}, demo: false,
+    filter: 'ALL', known: new Set(), fresh: new Set(), ticker: [], desk: null, feedOffset: 0, auditNew: 0, timers: {} };
 
   const AGENTS = [
     { id: 'intake', name: 'Intake Agent', role: 'Redact PHI · screen injection · extract', icon: 'i-scan' },
@@ -49,19 +50,23 @@
       sel.innerHTML = S.meta.roles.map((r) => `<option value="${r.id}">${esc(r.label)}${r.phi_access ? '' : ' (no PHI)'}</option>`).join('');
     }
     sel.value = GH.state.role;
+    if (S.meta.feed) S.feedOffset = S.meta.feed.now * 1000 - Date.now();
     paintAutonomy();
   }
   function paintAutonomy() {
-    const admin = GH.state.role === 'ADMIN';
     document.querySelectorAll('#autonomy button').forEach((b) => {
       b.setAttribute('aria-pressed', String(Number(b.dataset.level) === S.meta.autonomy_level));
-      b.disabled = !admin;
-      b.title = (admin ? '' : 'Admin only. ') + b.title.replace('Admin only. ', '');
     });
-    $('#kill').disabled = !admin;
     $('#kill').setAttribute('aria-pressed', String(S.meta.kill_switch));
+    $('#kill').title = S.meta.kill_switch ? 'Release the kill switch (Admin control)' : 'Kill switch: force autonomy level 1 (Admin control)';
     $('#kill-banner').hidden = !S.meta.kill_switch;
-    $('#kill-release').hidden = !admin;
+  }
+  // Autonomy and the kill switch are Admin controls: clicking one switches the demo role to Admin.
+  // The server still enforces the permission (pack.yaml), so the action is audited as demo.admin.
+  function ensureAdmin() {
+    if (GH.state.role === 'ADMIN') return;
+    setRole('ADMIN');
+    toast('Autonomy and the kill switch are Admin controls, so the demo role is now <b>Admin</b>.');
   }
   function setRole(role) {
     GH.state.role = role;
@@ -77,6 +82,7 @@
     }));
     $('#role').addEventListener('change', (e) => setRole(e.target.value));
     document.querySelectorAll('#autonomy button').forEach((b) => b.addEventListener('click', async () => {
+      ensureAdmin();
       try {
         await api('POST', '/api/admin/autonomy', { level: Number(b.dataset.level) });
         await loadMeta();
@@ -85,6 +91,7 @@
       } catch (e) { toast(esc(e.message), 'err'); }
     }));
     const kill = async (engaged) => {
+      ensureAdmin();
       try {
         await api('POST', '/api/admin/kill-switch', { engaged });
         await loadMeta();
@@ -141,7 +148,15 @@
     const need = count('AWAITING_APPROVAL') + count('ESCALATED');
     const decided = S.cases.filter((c) => c.decided_at);
     const order = { NEW: 0, PROCESSING: 1, ESCALATED: 2, AWAITING_APPROVAL: 3, QUERY_RAISED: 4 };
-    const rows = [...S.cases].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9) || (a.hero || 'Z').localeCompare(b.hero || 'Z') || b.received_at - a.received_at);
+    const firstPaint = !S.known.size;
+    S.fresh = new Set(firstPaint ? [] : S.cases.filter((c) => !S.known.has(c.case_id)).map((c) => c.case_id));
+    S.cases.forEach((c) => S.known.add(c.case_id));
+    const match = (c) => S.filter === 'ALL' || (S.filter === 'FEED' ? c.source === 'feed' : c.status === S.filter);
+    const rows = S.cases.filter(match).sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9) || (a.hero || 'Z').localeCompare(b.hero || 'Z') || b.received_at - a.received_at);
+    const filters = [['ALL', 'plain', 'All', S.cases.length],
+      ...['NEW', 'AWAITING_APPROVAL', 'ESCALATED', 'QUERY_RAISED', 'APPROVED', 'PARTIALLY_APPROVED', 'DENIED'].map((s) => [s, STATUS[s][0], STATUS[s][1], count(s)]),
+      ['FEED', 'sky', 'Live feed', S.cases.filter((c) => c.source === 'feed').length]];
+    const y = window.scrollY;
     root.innerHTML = `
       <div class="view-head">
         <div><h1>Inbox</h1><p class="lede">${S.cases.length} cashless requests · <b>${need}</b> need a human now · ${decided.length} decided today · IRDAI window ${S.meta.sla_minutes} min</p></div>
@@ -150,11 +165,14 @@
           <button class="btn ghost" id="reset">${icon('i-refresh', 'sm')}Reset demo</button>
         </div>
       </div>
-      <div class="queue-strip">
-        ${['NEW', 'AWAITING_APPROVAL', 'ESCALATED', 'QUERY_RAISED', 'APPROVED', 'PARTIALLY_APPROVED', 'DENIED'].map((s) => `<span class="chip ${STATUS[s][0]}">${STATUS[s][1]} <b class="num">${count(s)}</b></span>`).join('')}
+      ${livePanel()}
+      <div class="queue-strip" role="group" aria-label="Filter the inbox">
+        ${filters.map(([key, cls, label, n]) => `<button class="chip ${cls} filter" data-filter="${key}" aria-pressed="${S.filter === key}">${label} <b class="num">${n}</b></button>`).join('')}
       </div>
       ${rows.length ? `<div class="list-head"><span>SLA</span><span>Request</span><span>Patient</span><span class="r">Amount</span><span>Status</span><span>Risk</span><span></span></div>
-      <div class="case-list">${rows.map(caseRow).join('')}</div>` : `<div class="card">${empty('i-inbox', 'No requests in the queue', 'New hospital requests will appear here as they arrive.')}</div>`}`;
+      <div class="case-list">${rows.map(caseRow).join('')}</div>`
+        : `<div class="card">${empty('i-inbox', S.filter === 'ALL' ? 'No requests in the queue' : 'Nothing matches this filter', S.filter === 'ALL' ? 'New hospital requests will appear here as they arrive.' : 'Choose another filter, or All.')}</div>`}`;
+    window.scrollTo({ top: y });  // live refreshes must not move the page
     root.querySelectorAll('.case-row').forEach((row) => row.addEventListener('click', (e) => {
       if (e.target.closest('[data-process]')) return;
       location.hash = `#/case/${row.dataset.id}`;
@@ -164,6 +182,7 @@
       await processCase(b.dataset.process);
       location.hash = `#/case/${b.dataset.process}`;
     }));
+    root.querySelectorAll('.filter').forEach((b) => b.addEventListener('click', () => { S.filter = b.dataset.filter; renderInbox(); }));
     $('#process-all').addEventListener('click', async () => {
       const fresh = S.cases.filter((c) => c.status === 'NEW');
       for (const c of fresh) await processCase(c.case_id, true);
@@ -171,7 +190,121 @@
       setTimeout(renderInbox, 600);
     });
     $('#reset').addEventListener('click', resetDemo);
+    $('#feed-toggle').addEventListener('click', toggleFeed);
+    paintFeedNext();
   }
+
+  // ------------------------------------------------------------------ live desk feed
+  function livePanel() {
+    const f = (S.meta && S.meta.feed) || {};
+    const on = !!f.enabled;
+    return `<div class="card live-panel" aria-live="polite"><div class="lp-head">
+      <span class="live-pill ${on ? 'on' : 'off'}"><i></i>${on ? 'Live feed' : 'Feed paused'}</span>
+      <span class="lp-meta">${on ? `New hospital requests arrive about every ${Math.round(f.interval_s || 40)} s and the agents process each one on arrival${f.simulate_desk ? '; a simulated desk signs off live-feed cases within minutes' : ''}.` : 'No new requests are arriving.'}
+        <span class="mono" id="feed-next"></span></span>
+      <button class="btn sm ghost" id="feed-toggle">${icon(on ? 'i-pause' : 'i-play', 'sm')}${on ? 'Pause feed' : 'Resume feed'}</button></div>
+      <ul class="ticker" id="ticker">${tickerItems(5)}</ul></div>`;
+  }
+  const clockSec = (ts) => new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  function tickerItems(n) {
+    if (!S.ticker.length) return '<li class="t-line"><i class="t-dot"></i><span class="t-text muted">Waiting for the next hospital request…</span></li>';
+    return S.ticker.slice(0, n).map((t) => `<li class="t-line ${t.cls}"><span class="t-time mono">${clockSec(t.ts)}</span><i class="t-dot"></i><span class="t-text">${t.text}</span></li>`).join('');
+  }
+  function paintTicker() { const el = $('#ticker'); if (el) el.innerHTML = tickerItems(5); }
+  function paintFeedNext() {
+    const el = $('#feed-next');
+    const f = S.meta && S.meta.feed;
+    if (!el) return;
+    if (!f || !f.enabled || !f.next_at) { el.textContent = ''; return; }
+    const left = Math.round(f.next_at - (Date.now() + S.feedOffset) / 1000);
+    el.textContent = left > 0 ? `· next request in ${left}s` : '· next request arriving…';
+  }
+  async function refreshFeedStatus() {
+    try {
+      const f = await api('GET', '/api/feed');
+      S.meta.feed = f;
+      S.feedOffset = f.now * 1000 - Date.now();
+    } catch (e) { /* the stream will retry */ }
+  }
+  async function toggleFeed() {
+    const on = !(S.meta.feed && S.meta.feed.enabled);
+    try {
+      await api('POST', '/api/feed', { enabled: on });
+      await refreshFeedStatus();
+      toast(on ? 'Live feed resumed: new requests will keep arriving.' : 'Live feed paused.');
+      if (S.tab === 'inbox') renderInbox();
+    } catch (e) { toast(`${e.status || ''} ${esc(e.message)}`, 'err'); }
+  }
+  function outcomeText(s) {
+    return ({
+      AWAITING_APPROVAL: [`agents recommend approving ${inr(s.recommended_amount)}`, 'gold'],
+      ESCALATED: [`escalated to the Medical Officer${s.injection ? ' · injection quarantined' : ''}`, 'coral'],
+      QUERY_RAISED: ['documents missing · the agent queried the hospital', 'violet'],
+      APPROVED: [`approved ${inr(s.final_amount)}`, 'teal'],
+      PARTIALLY_APPROVED: [`partially approved ${inr(s.final_amount)}`, 'sky'],
+      DENIED: ['not approved', 'coral'],
+    })[s.status] || [String(s.status || '').toLowerCase().replace(/_/g, ' '), 'plain'];
+  }
+  function feedLine(n) {
+    const s = n.summary || {};
+    const id = n.case_id ? `<span class="mono">${esc(n.case_id)}</span> ` : '';
+    const who = s.actor ? ` · <span class="muted">${esc(s.actor)}</span>` : '';
+    switch (n.kind) {
+      case 'arrived': return { cls: 'sky', text: `${id}arrived from ${esc(s.hospital)} · ${esc(s.title)} · ${inr(s.requested)}` };
+      case 'settled': { const [t, cls] = outcomeText(s); return { cls, text: `${id}${esc(s.title || '')} → ${t}` }; }
+      case 'approve': return { cls: 'teal', text: `${id}approved ${inr(s.amount)}${who}` };
+      case 'auto_approve': return { cls: 'teal', text: `${id}auto-approved ${inr(s.amount)} at autonomy level 3` };
+      case 'partial_approve': return { cls: 'sky', text: `${id}partially approved ${inr(s.amount)}${who}` };
+      case 'deny': return { cls: 'coral', text: `${id}not approved, with a written reason${who}` };
+      case 'simulate_upload': return { cls: 'violet', text: `${id}hospital uploaded the queried document; case resumed` };
+      case 'blocked': return { cls: 'coral', text: `403 · ${esc(s.role)} tried to ${esc(String(s.action || '').replace(/_/g, ' '))} ${id}— blocked and audited` };
+      case 'set_autonomy': return { cls: 'gold', text: `Autonomy set to level ${esc(s.autonomy_level)}${who}` };
+      case 'kill_switch': return { cls: s.kill_switch ? 'coral' : 'teal', text: `${s.kill_switch ? 'Kill switch engaged' : 'Kill switch released'}${who}` };
+      case 'set_feed': return { cls: s.enabled ? 'teal' : 'plain', text: `Live feed ${s.enabled ? 'resumed' : 'paused'}${who}` };
+      case 'reset': return { cls: 'plain', text: 'Desk reset: synthetic requests reloaded' };
+      default: return null;
+    }
+  }
+  function addTicker(n) {
+    const line = feedLine(n);
+    if (!line) return;
+    S.ticker.unshift({ ...line, ts: n.ts, id: n.id });
+    S.ticker.length = Math.min(S.ticker.length, 40);
+  }
+  function later(key, ms, fn) { clearTimeout(S.timers[key]); S.timers[key] = setTimeout(fn, ms); }
+  function setLive(on) { const p = $('#live-pill'); if (p) { p.classList.toggle('on', on && !!(S.meta && S.meta.feed && S.meta.feed.enabled)); p.classList.toggle('off', !on); } }
+  function onDeskEvent(n) {
+    if (n.kind === 'reset') { S.ticker = []; S.known = new Set(); }
+    addTicker(n);
+    paintTicker();
+    if (['set_autonomy', 'kill_switch', 'set_feed', 'reset'].includes(n.kind)) later('meta', 300, async () => { await loadMeta(); setLive(!!S.desk); refresh(); });
+    if (n.kind === 'arrived') refreshFeedStatus().then(paintFeedNext);
+    if (S.tab === 'inbox') later('inbox', 400, renderInbox);
+    else later('badge', 1500, loadCases);
+    if (S.tab === 'dashboard') later('dash', 1500, () => renderDashboard(true));
+    if (S.tab === 'audit') { S.auditNew += 1; paintAuditNew(); }
+    if (S.tab === 'case' && n.case_id === S.caseId && !S.es) later('case', 400, () => { reloadCase(); stream(); });
+  }
+  async function connectDesk() {
+    try {
+      const recent = await api('GET', '/api/notifications?limit=40');
+      recent.forEach(addTicker);
+      paintTicker();
+    } catch (e) { /* first load without history is fine */ }
+    const es = new EventSource('/api/stream');
+    S.desk = es;
+    es.onopen = () => setLive(true);
+    es.addEventListener('feed', (m) => onDeskEvent(JSON.parse(m.data)));
+    es.onerror = () => setLive(false);  // EventSource reconnects on its own with Last-Event-ID
+  }
+  function paintAuditNew() {
+    const el = $('#audit-new');
+    if (!el) return;
+    el.innerHTML = S.auditNew ? `<button class="chip gold filter" id="audit-refresh">${S.auditNew} new event${S.auditNew > 1 ? 's' : ''} · refresh</button>` : '';
+    const b = $('#audit-refresh');
+    if (b) b.addEventListener('click', () => renderAudit());
+  }
+
   function caseRow(c) {
     const amount = c.status === 'DENIED' ? `${inr(c.requested_amount)}<small>requested · not approved</small>`
       : c.final_amount != null ? `${inr(c.final_amount)}<small>authorized of ${inr(c.requested_amount)}</small>`
@@ -179,13 +312,13 @@
       : `${inr(c.requested_amount)}<small>requested</small>`;
     const action = c.status === 'NEW' ? `<button class="btn sm primary" data-process="${c.case_id}">${icon('i-play', 'sm')}Process</button>`
       : `<button class="btn sm ghost">Open ${icon('i-arrow', 'sm')}</button>`;
-    return `<div class="case-row ${c.hero ? 'hero' : ''}" data-id="${c.case_id}" tabindex="0" role="link" aria-label="Open ${c.case_id}">
+    return `<div class="case-row ${c.hero ? 'hero' : ''} ${S.fresh.has(c.case_id) ? 'fresh' : ''}" data-id="${c.case_id}" tabindex="0" role="link" aria-label="Open ${c.case_id}">
       ${GH.dial(c.sla, 'sm')}
       <div><div class="title">${c.hero ? `<span class="hero-tag">${c.hero}</span>` : ''}<span class="mono muted">${c.case_id}</span> · ${esc(c.title)}</div>
         <div class="sub">${esc(c.hospital)}, ${esc(c.city)}</div></div>
       <div><div>${esc(c.patient)}</div><div class="sub">${c.age} ${c.gender} · received ${GH.ago(c.received_at)}</div></div>
       <div class="amt">${amount}</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${chip(c.running ? 'PROCESSING' : c.status)}${c.injection ? `<span class="chip coral" title="Prompt injection quarantined">${icon('i-alert', 'sm')}Injection</span>` : ''}${c.override ? '<span class="chip plain">Override</span>' : ''}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${chip(c.running ? 'PROCESSING' : c.status)}${c.injection ? `<span class="chip coral" title="Prompt injection quarantined">${icon('i-alert', 'sm')}Injection</span>` : ''}${c.override ? '<span class="chip plain">Override</span>' : ''}${c.source === 'feed' ? '<span class="chip sky" title="Arrived through the live feed">Live</span>' : ''}</div>
       <div><span class="risk-pill ${riskClass(c.risk_score)}">${c.risk_score ?? '—'}</span></div>
       <div class="open">${action}</div></div>`;
   }
@@ -196,7 +329,7 @@
   async function resetDemo() {
     try {
       await api('POST', '/api/demo/reset', { history: true });
-      S.cases = []; S.view = null; S.events = [];
+      S.cases = []; S.view = null; S.events = []; S.known = new Set();
       await loadMeta();
       toast('Demo reset: 10 synthetic requests in the inbox.');
       refresh();
@@ -270,7 +403,7 @@
       : v.sla.paused ? 'SLA clock paused while the hospital uploads documents' : `of the ${S.meta.sla_minutes}-minute IRDAI cashless window`;
     $('#c-head').innerHTML = `<div class="case-head">
       <div class="ids"><div class="crumb"><a href="#/inbox">${icon('i-inbox', 'sm')} Inbox</a><span>/</span><span class="mono">${v.case_id}</span>
-        ${v.hero ? `<span class="hero-tag">Case ${v.hero}</span>` : ''}${v.seeded ? '<span class="chip plain">seeded history</span>' : ''}</div>
+        ${v.hero ? `<span class="hero-tag">Case ${v.hero}</span>` : ''}${v.seeded ? '<span class="chip plain">seeded history</span>' : ''}${v.source === 'feed' ? '<span class="chip sky">live feed</span>' : ''}</div>
         <h1>${esc(v.title)}</h1>
         <div class="meta"><span>${icon('i-human', 'sm')} ${esc(v.patient)}, ${v.age} ${v.gender}</span><span>${esc(v.hospital)}, ${esc(v.city)}</span>
           <span class="mono">${esc(v.form.policy_number)}</span>${v.policy ? `<span>${esc(v.policy.product)}</span>` : ''}
@@ -619,14 +752,14 @@
   }
 
   // ------------------------------------------------------------------ dashboard
-  async function renderDashboard() {
+  async function renderDashboard(live = false) {
     const root = $('#view-dashboard');
     if (!root.innerHTML) root.innerHTML = `<div class="kpis">${[1, 2, 3, 4, 5].map(() => '<div class="skeleton" style="height:150px"></div>').join('')}</div><div class="skeleton" style="height:360px"></div>`;
     let d;
     try { d = await api('GET', '/api/dashboard'); } catch (e) { root.innerHTML = errorCard(e, null); return; }
     const k = d.kpis;
     root.innerHTML = `<div class="view-head"><div><h1>Dashboard</h1><p class="lede">Turnaround, decisions and value, computed live from the case store. Synthetic data.</p></div>
-      <div class="actions"><span class="chip plain">IRDAI cashless window ${d.sla_minutes} min</span><span class="chip ${d.kill_switch ? 'coral' : 'gold'}">Autonomy level ${d.autonomy_level}${d.kill_switch ? ' · kill switch' : ''}</span></div></div>
+      <div class="actions"><span class="live-pill ${S.meta.feed && S.meta.feed.enabled ? 'on' : 'off'}"><i></i>${S.meta.feed && S.meta.feed.enabled ? 'Live' : 'Feed paused'}</span><span class="chip plain">IRDAI cashless window ${d.sla_minutes} min</span><span class="chip ${d.kill_switch ? 'coral' : 'gold'}">Autonomy level ${d.autonomy_level}${d.kill_switch ? ' · kill switch' : ''}</span></div></div>
       <div class="kpis">
         ${kpi('Median turnaround', 'k-tat', 'min', `decision time vs the ${d.sla_minutes}-minute rule`, 'accent', 'i-clock')}
         ${kpi('Within 60-minute SLA', 'k-sla', '%', `${k.decided} decided cases`, '', 'i-check')}
@@ -635,7 +768,7 @@
         ${kpi('Processor hours saved', 'k-hrs', 'h', `${d.roi.saved_minutes_per_case} min saved per case`, '', 'i-sparkle')}
       </div>
       <div class="dash-grid">
-        <div class="card"><div class="card-head"><h2>Turnaround per decided case</h2><div class="right"><span class="chip gold">— 60-minute line</span></div></div><div class="card-body"><div class="chart-box"><canvas id="tat-chart" aria-label="Turnaround chart"></canvas></div></div></div>
+        <div class="card"><div class="card-head"><h2>Turnaround per decided case</h2><div class="right"><span class="chip plain">last 30 decisions · blue = live feed</span><span class="chip gold">— 60-minute line</span></div></div><div class="card-body"><div class="chart-box"><canvas id="tat-chart" aria-label="Turnaround chart"></canvas></div></div></div>
         <div class="card"><div class="card-head"><h2>Decision split</h2></div><div class="card-body"><div class="chart-box donut"><canvas id="split-chart" aria-label="Decision split"></canvas></div><div class="legend" id="split-legend"></div></div></div>
       </div>
       <div class="tiles">
@@ -653,39 +786,40 @@
           <div class="bar-row"><span>IRDAI mandate</span><div class="t"><i style="width:${(60 / (48 * 60)) * 100 * 8}%;background:var(--accent)"></i></div><span class="num">60 min</span></div>
           <div class="bar-row"><span>GoldenHour median</span><div class="t"><i style="width:${Math.max(1.5, ((k.median_tat_min || 0) / (48 * 60)) * 100 * 8)}%;background:var(--teal)"></i></div><span class="num">${k.median_tat_min ?? '—'} min</span></div>
           <div class="faint" style="font-size:.74rem">${esc(d.baseline.label)}. Bars after the first are drawn 8x for legibility.</div></div></div></div>`;
-    countUp($('#k-tat'), k.median_tat_min, { decimals: 1 });
-    countUp($('#k-sla'), k.within_sla_pct);
-    countUp($('#k-proc'), k.processed);
-    countUp($('#k-ovr'), k.override_rate_pct);
-    countUp($('#k-hrs'), k.hours_saved, { decimals: 1 });
-    countUp($('#k-annual'), d.roi.annual_hours, { format: (v) => Math.round(v).toLocaleString('en-IN') + '<small style="font-size:1.2rem;color:var(--muted)"> h</small>' });
-    drawCharts(d);
+    const cu = live ? (el, v, o = {}) => countUp(el, v, { ...o, instant: true }) : countUp;
+    cu($('#k-tat'), k.median_tat_min, { decimals: 1 });
+    cu($('#k-sla'), k.within_sla_pct);
+    cu($('#k-proc'), k.processed);
+    cu($('#k-ovr'), k.override_rate_pct);
+    cu($('#k-hrs'), k.hours_saved, { decimals: 1 });
+    cu($('#k-annual'), d.roi.annual_hours, { format: (v) => Math.round(v).toLocaleString('en-IN') + '<small style="font-size:1.2rem;color:var(--muted)"> h</small>' });
+    drawCharts(d, live);
   }
   const kpi = (label, id, unit, note, cls, ic) => `<div class="card kpi ${cls}"><div class="k-label">${icon(ic, 'sm')}${label}</div>
     <div class="k-value"><span id="${id}">0</span>${unit ? `<small>${unit}</small>` : ''}</div><div class="k-note">${note}</div></div>`;
   const tile = (value, label, ic) => `<div class="card tile"><div class="t-val">${value}</div><div class="t-label">${icon(ic, 'sm')} ${label}</div></div>`;
   function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
-  function drawCharts(d) {
+  function drawCharts(d, live = false) {
     if (!window.Chart) return;
     Object.values(S.charts).forEach((c) => c.destroy());
     const text = cssVar('--muted'), line = cssVar('--line'), teal = cssVar('--teal'), coral = cssVar('--coral'), gold = cssVar('--accent');
     Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
     Chart.defaults.color = text;
     const labels = d.tat.map((t) => t.case_id);
-    const max = Math.max(70, ...d.tat.map((t) => t.minutes + 8));
+    const max = Math.ceil(Math.max(70, ...d.tat.map((t) => t.minutes + 8)) / 10) * 10;
     S.charts.tat = new Chart($('#tat-chart'), {
       data: {
         labels,
         datasets: [
           { type: 'bar', label: 'Turnaround (min)', data: d.tat.map((t) => t.minutes), borderRadius: 6, maxBarThickness: 46, minBarLength: 5,
-            backgroundColor: d.tat.map((t) => (t.breached ? coral : teal) + (t.seeded ? '99' : '')), order: 2 },
+            backgroundColor: d.tat.map((t) => (t.breached ? coral : t.source === 'feed' ? cssVar('--sky') : teal) + (t.seeded ? '99' : '')), order: 2 },
           { type: 'line', label: 'IRDAI 60-minute limit', data: labels.map(() => d.sla_minutes), borderColor: gold, borderDash: [6, 6], borderWidth: 2, pointRadius: 0, order: 1 },
         ],
       },
       options: {
-        responsive: true, maintainAspectRatio: false, animation: { duration: GH.reduced ? 0 : 700 },
+        responsive: true, maintainAspectRatio: false, animation: { duration: GH.reduced || live ? 0 : 700 },
         plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: (c) => (c.datasetIndex === 0 ? d.tat[c.dataIndex].title + (d.tat[c.dataIndex].seeded ? ' (seeded history)' : ' (live)') : '') } } },
-        scales: { y: { beginAtZero: true, max, grid: { color: line }, title: { display: true, text: 'minutes' } }, x: { grid: { display: false }, ticks: { font: { family: 'JetBrains Mono', size: 11 } } } },
+        scales: { y: { beginAtZero: true, max, grid: { color: line }, title: { display: true, text: 'minutes' } }, x: { grid: { display: false }, ticks: { autoSkip: true, maxRotation: 0, font: { family: 'JetBrains Mono', size: 11 } } } },
       },
     });
     const colors = { Approved: teal, 'Partially approved': cssVar('--sky'), 'Denied by MO': coral, 'With Medical Officer': '#F59E9E', 'Query to hospital': cssVar('--violet'), 'Awaiting sign-off': gold };
@@ -693,7 +827,7 @@
     S.charts.split = new Chart($('#split-chart'), {
       type: 'doughnut',
       data: { labels: entries.map(([l]) => l), datasets: [{ data: entries.map(([, n]) => n), backgroundColor: entries.map(([l]) => colors[l]), borderColor: cssVar('--surface'), borderWidth: 3 }] },
-      options: { responsive: true, maintainAspectRatio: false, cutout: '68%', animation: { duration: GH.reduced ? 0 : 700 }, plugins: { legend: { display: false } } },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '68%', animation: { duration: GH.reduced || live ? 0 : 700 }, plugins: { legend: { display: false } } },
     });
     $('#split-legend').innerHTML = entries.map(([l, n]) => `<div><i style="background:${colors[l]}"></i>${l}<b>${n}</b></div>`).join('');
   }
@@ -701,6 +835,7 @@
   // ------------------------------------------------------------------ audit chain
   async function renderAudit(result = null) {
     const root = $('#view-audit');
+    S.auditNew = 0;
     let blocks;
     try { blocks = await api('GET', '/api/audit'); } catch (e) { root.innerHTML = errorCard(e, null); return; }
     const admin = GH.state.role === 'ADMIN';
@@ -709,7 +844,7 @@
       : `<div class="verify-banner bad">${icon('i-alert')}<div><b>Verification failed at block #${result.broken_at}.</b> ${esc(result.reason)}. Every block after it is unverified.</div>${admin ? `<button class="btn sm" id="restore" style="margin-left:auto">${icon('i-refresh', 'sm')}Restore</button>` : ''}</div>`)
       : `<div class="verify-banner">${icon('i-hash')}<div>${blocks.length} blocks. Each stores <span class="mono">hash = sha256(prev_hash + payload)</span>; editing any stored row breaks every link after it.</div></div>`;
     root.innerHTML = `<div class="view-head"><div><h1>Audit chain</h1><p class="lede">Every case receipt, agent step, gateway action, blocked attempt and human decision, tamper-evident.</p></div>
-      <div class="actions"><button class="btn primary" id="verify">${icon('i-shield', 'sm')}Verify chain</button>
+      <div class="actions"><span id="audit-new"></span><button class="btn primary" id="verify">${icon('i-shield', 'sm')}Verify chain</button>
         <button class="btn danger" id="tamper" ${admin ? '' : 'disabled title="Admin only"'}>${icon('i-alert', 'sm')}Tamper test${admin ? '' : ' (Admin)'}</button>
         <button class="btn ghost" id="restore2" ${admin ? '' : 'disabled title="Admin only"'}>${icon('i-refresh', 'sm')}Restore</button></div></div>
       <div id="verify-slot">${banner}</div>
@@ -856,10 +991,10 @@
       location.hash = '#/dashboard';
       await say('Turnaround against the 60-minute line, decision split and processor hours saved.', 'Dashboard', 4500);
       caption('');
-      toast('Guided demo complete: A approved, B approved after a hospital query, C decided by the Medical Officer.');
+      toast('Demo complete: A approved, B approved after a hospital query, C decided by the Medical Officer.');
     } catch (e) {
       caption('');
-      toast(`Guided demo stopped: ${esc(e.message)}`, 'err', 7000);
+      toast(`Demo stopped: ${esc(e.message)}`, 'err', 7000);
     } finally {
       S.demo = false;
       btn.disabled = false;
@@ -876,8 +1011,9 @@
       history.replaceState(null, '', '/console#/inbox');
       setTimeout(guidedDemo, 600);
     }
-    setInterval(GH.tickDials, 1000);
-    setInterval(() => { if (S.tab === 'inbox' && !document.hidden) renderInbox(); }, 5000);
+    connectDesk();
+    setInterval(() => { GH.tickDials(); paintFeedNext(); }, 1000);
+    setInterval(() => { if (S.tab === 'inbox' && !document.hidden) renderInbox(); }, 30000);  // fallback; the desk stream drives updates
     window.GoldenHour = { guidedDemo, setRole, state: S };
   }
   boot();

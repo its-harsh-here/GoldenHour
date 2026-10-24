@@ -1,0 +1,54 @@
+{
+  "case_id": "PA-1023",
+  "hero": null,
+  "title": "Enteric",
+  "source": "history",
+  "received_offset_min": 510,
+  "hospital": {
+    "name": "Coastal Pearl Hospital",
+    "city": "Mangaluru",
+    "hospital_code": "HSP-CPH-0968",
+    "tpa_email": "insurance@coastalpearl.example",
+    "phone": "+91 824 42 1185"
+  },
+  "form": {
+    "patient_name": "Ritika Joshi",
+    "age": 28,
+    "gender": "F",
+    "patient_phone": "+91 91086 08722",
+    "patient_email": "",
+    "aadhaar": "8358 6033 8065",
+    "policy_number": "GH-POL-103089",
+    "relationship_to_holder": "spouse",
+    "admission_date": "2026-10-24",
+    "admission_type": "emergency",
+    "treating_doctor": "Dr. Mahesh Shetty",
+    "provisional_diagnosis": "Enteric fever",
+    "icd10": "A01.0",
+    "proposed_procedure": "Enteric (typhoid) fever (medical)",
+    "room_category": "Deluxe room",
+    "room_rent_per_day": 3500,
+    "expected_los_days": 5,
+    "is_accident": false,
+    "estimate": {
+      "room": 17500,
+      "ot": 0,
+      "surgeon": 6500,
+      "consumables": 3000,
+      "medicines": 10000,
+      "investigations": 6500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "widal_or_culture_report",
+    "cbc_report",
+    "id_proof"
+  ],
+  "admission_note": "COASTAL PEARL HOSPITAL - Department of Internal Medicine\nCashless pre-authorization request: emergency admission\n\nPatient: Ritika Joshi, 28 years, female. Contact +91 91086 08722. Aadhaar 8358 6033 8065.\nPolicy no. GH-POL-103089 (spouse of holder).\n\nHistory: step-ladder fever for 2 days with abdominal discomfort.\nFindings: blood culture grows Salmonella Typhi; relative bradycardia.\nProvisional diagnosis: enteric fever (ICD-10 A01.0).\n\nProposed treatment: enteric (typhoid) fever (medical) on 24-Oct-2026. Expected stay 5 days in a deluxe room at Rs 3,500 per day.\nCost estimate: room Rs 17,500; OT Rs 0; surgeon and anaesthetist Rs 6,500; consumables Rs 3,000; medicines Rs 10,000; investigations Rs 6,500. Total Rs 43,500.\nDocuments attached: Admission note, Itemised cost estimate, Blood culture / Widal report, Complete blood count report, Patient ID proof.\n\nTreating doctor: Dr. Mahesh Shetty.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 43.3
+  }
+}

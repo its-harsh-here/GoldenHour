@@ -1,0 +1,54 @@
+{
+  "case_id": "PA-1037",
+  "hero": null,
+  "title": "Acute gastroenteritis with dehydration",
+  "source": "history",
+  "received_offset_min": 89,
+  "hospital": {
+    "name": "Kaveri City Hospital",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-KCH-0192",
+    "tpa_email": "tpa.desk@kavericity.example",
+    "phone": "+91 80 4110 2290"
+  },
+  "form": {
+    "patient_name": "Gopal Krishnan",
+    "age": 72,
+    "gender": "M",
+    "patient_phone": "+91 96151 85828",
+    "patient_email": "gopal.krishnan@example.com",
+    "aadhaar": "5231 8990 5652",
+    "policy_number": "GH-POL-103074",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-24",
+    "admission_type": "emergency",
+    "treating_doctor": "Dr. Farhan Qureshi",
+    "provisional_diagnosis": "Acute gastroenteritis with dehydration",
+    "icd10": "A09",
+    "proposed_procedure": "Acute gastroenteritis with dehydration (medical)",
+    "room_category": "Single room",
+    "room_rent_per_day": 2500,
+    "expected_los_days": 4,
+    "is_accident": false,
+    "estimate": {
+      "room": 10000,
+      "ot": 0,
+      "surgeon": 7000,
+      "consumables": 3500,
+      "medicines": 10500,
+      "investigations": 7000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "stool_report",
+    "electrolytes_report",
+    "id_proof"
+  ],
+  "admission_note": "KAVERI CITY HOSPITAL - Department of Internal Medicine\nCashless pre-authorization request: emergency admission\n\nPatient: Gopal Krishnan, 72 years, male. Contact +91 96151 85828, gopal.krishnan@example.com. Aadhaar 5231 8990 5652.\nPolicy no. GH-POL-103074 (self).\n\nHistory: 5 days of loose stools and vomiting with reduced urine output.\nFindings: dry mucosa, pulse 112/min; serum sodium 131 mmol/L.\nProvisional diagnosis: acute gastroenteritis with dehydration (ICD-10 A09).\n\nProposed treatment: acute gastroenteritis with dehydration (medical) on 24-Oct-2026. Expected stay 4 days in a single room at Rs 2,500 per day.\nCost estimate: room Rs 10,000; OT Rs 0; surgeon and anaesthetist Rs 7,000; consumables Rs 3,500; medicines Rs 10,500; investigations Rs 7,000. Total Rs 38,000.\nDocuments attached: Admission note, Itemised cost estimate, Stool examination report, Serum electrolytes report, Patient ID proof.\n\nTreating doctor: Dr. Farhan Qureshi.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 14.1
+  }
+}

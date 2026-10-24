@@ -1,0 +1,53 @@
+{
+  "case_id": "PA-1027",
+  "hero": null,
+  "title": "Caesarean delivery",
+  "source": "history",
+  "received_offset_min": 289,
+  "hospital": {
+    "name": "Kabini Grove Hospital",
+    "city": "Mysuru",
+    "hospital_code": "HSP-KGH-1024",
+    "tpa_email": "preauth@kabinigrove.example",
+    "phone": "+91 821 43 9904"
+  },
+  "form": {
+    "patient_name": "Sneha Kulkarni",
+    "age": 36,
+    "gender": "F",
+    "patient_phone": "+91 91628 63082",
+    "patient_email": "sneha.kulkarni@example.com",
+    "aadhaar": "5844 0521 4331",
+    "policy_number": "GH-POL-102310",
+    "relationship_to_holder": "spouse",
+    "admission_date": "2026-10-24",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Joseph Mathew",
+    "provisional_diagnosis": "Previous caesarean, planned repeat caesarean",
+    "icd10": "O82.0",
+    "proposed_procedure": "Caesarean delivery (LSCS)",
+    "room_category": "Twin sharing",
+    "room_rent_per_day": 3000,
+    "expected_los_days": 4,
+    "is_accident": false,
+    "estimate": {
+      "room": 12000,
+      "ot": 14500,
+      "surgeon": 22500,
+      "consumables": 10500,
+      "medicines": 9500,
+      "investigations": 9500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "obstetric_usg",
+    "id_proof"
+  ],
+  "admission_note": "KABINI GROVE HOSPITAL - Department of Obstetrics\nCashless pre-authorization request: planned admission\n\nPatient: Sneha Kulkarni, 36 years, female. Contact +91 91628 63082, sneha.kulkarni@example.com. Aadhaar 5844 0521 4331.\nPolicy no. GH-POL-102310 (spouse of holder).\n\nHistory: term pregnancy at 39 weeks with a previous caesarean section.\nFindings: obstetric ultrasound shows a single live foetus in cephalic presentation.\nProvisional diagnosis: previous caesarean, planned repeat caesarean (ICD-10 O82.0).\n\nProposed treatment: caesarean delivery (LSCS) on 24-Oct-2026. Expected stay 4 days in a twin sharing at Rs 3,000 per day.\nCost estimate: room Rs 12,000; OT Rs 14,500; surgeon and anaesthetist Rs 22,500; consumables Rs 10,500; medicines Rs 9,500; investigations Rs 9,500. Total Rs 78,500.\nDocuments attached: Admission note, Itemised cost estimate, Obstetric ultrasound report, Patient ID proof.\n\nTreating doctor: Dr. Joseph Mathew.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 39.6
+  }
+}

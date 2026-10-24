@@ -1,0 +1,55 @@
+{
+  "case_id": "PA-1026",
+  "hero": null,
+  "title": "Coronary angioplasty",
+  "source": "history",
+  "received_offset_min": 294,
+  "hospital": {
+    "name": "Nandi Valley Medical Centre",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-NVM-0417",
+    "tpa_email": "preauth@nandivalley.example",
+    "phone": "+91 80 4725 3381"
+  },
+  "form": {
+    "patient_name": "Nikhil Joshi",
+    "age": 29,
+    "gender": "M",
+    "patient_phone": "+91 96916 06898",
+    "patient_email": "",
+    "aadhaar": "2738 3425 5707",
+    "policy_number": "GH-POL-103089",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-24",
+    "admission_type": "emergency",
+    "treating_doctor": "Dr. Farhan Qureshi",
+    "provisional_diagnosis": "NSTEMI with single-vessel coronary disease",
+    "icd10": "I21.4",
+    "proposed_procedure": "Coronary angioplasty (PTCA, single stent)",
+    "room_category": "Deluxe room",
+    "room_rent_per_day": 6500,
+    "expected_los_days": 3,
+    "is_accident": false,
+    "estimate": {
+      "room": 19500,
+      "ot": 44500,
+      "surgeon": 73500,
+      "consumables": 55500,
+      "medicines": 22000,
+      "investigations": 26500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "ecg",
+    "troponin_report",
+    "angiography_report",
+    "id_proof"
+  ],
+  "admission_note": "NANDI VALLEY MEDICAL CENTRE - Department of Cardiology\nCashless pre-authorization request: emergency admission\n\nPatient: Nikhil Joshi, 29 years, male. Contact +91 96916 06898. Aadhaar 2738 3425 5707.\nPolicy no. GH-POL-103089 (self).\n\nHistory: retrosternal chest pain for 4 hours with sweating.\nFindings: ECG shows ST depression in the anterior leads; troponin I elevated; angiography shows a 90% single-vessel stenosis.\nProvisional diagnosis: NSTEMI with single-vessel coronary disease (ICD-10 I21.4).\n\nProposed treatment: coronary angioplasty (PTCA, single stent) on 24-Oct-2026. Expected stay 3 days in a deluxe room at Rs 6,500 per day.\nCost estimate: room Rs 19,500; OT Rs 44,500; surgeon and anaesthetist Rs 73,500; consumables Rs 55,500; medicines Rs 22,000; investigations Rs 26,500. Total Rs 2,41,500.\nDocuments attached: Admission note, Itemised cost estimate, ECG, Troponin report, Coronary angiography report, Patient ID proof.\n\nTreating doctor: Dr. Farhan Qureshi.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 25.9
+  }
+}

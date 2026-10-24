@@ -1,0 +1,56 @@
+{
+  "case_id": "PA-1038",
+  "hero": null,
+  "title": "Laparoscopic cholecystectomy",
+  "source": "history",
+  "received_offset_min": 87,
+  "hospital": {
+    "name": "Deccan Lotus Hospital",
+    "city": "Hubballi",
+    "hospital_code": "HSP-DLH-0851",
+    "tpa_email": "tpa@deccanlotus.example",
+    "phone": "+91 836 41 7720"
+  },
+  "form": {
+    "patient_name": "Vikram Rao",
+    "age": 61,
+    "gender": "M",
+    "patient_phone": "+91 98983 06205",
+    "patient_email": "vikram.rao@example.com",
+    "aadhaar": "5699 5961 5494",
+    "policy_number": "GH-POL-101942",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-24",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Prakash Hegde",
+    "provisional_diagnosis": "Symptomatic cholelithiasis",
+    "icd10": "K81.0",
+    "proposed_procedure": "Laparoscopic cholecystectomy",
+    "room_category": "Twin sharing",
+    "room_rent_per_day": 6000,
+    "expected_los_days": 3,
+    "is_accident": false,
+    "estimate": {
+      "room": 18000,
+      "ot": 22500,
+      "surgeon": 36500,
+      "consumables": 28000,
+      "medicines": 11000,
+      "investigations": 13500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "lft_report",
+    "id_proof"
+  ],
+  "admission_note": "DECCAN LOTUS HOSPITAL - Department of General and Laparoscopic Surgery\nCashless pre-authorization request: planned admission\n\nPatient: Vikram Rao, 61 years, male. Contact +91 98983 06205, vikram.rao@example.com. Aadhaar 5699 5961 5494.\nPolicy no. GH-POL-101942 (self).\n\nHistory: recurrent right upper quadrant pain after fatty meals for 13 months.\nFindings: ultrasound shows multiple gallstones with a normal common bile duct; LFT within normal limits.\nProvisional diagnosis: symptomatic cholelithiasis (ICD-10 K81.0).\n\nProposed treatment: laparoscopic cholecystectomy on 24-Oct-2026. Expected stay 3 days in a twin sharing at Rs 6,000 per day.\nCost estimate: room Rs 18,000; OT Rs 22,500; surgeon and anaesthetist Rs 36,500; consumables Rs 28,000; medicines Rs 11,000; investigations Rs 13,500. Total Rs 1,29,500.\nDocuments attached: Admission note, Itemised cost estimate, Liver function test report, Patient ID proof.\n\nTreating doctor: Dr. Prakash Hegde.",
+  "upload_on_query": [
+    "ultrasound_abdomen"
+  ],
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 18.6
+  }
+}

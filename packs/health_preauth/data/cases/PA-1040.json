@@ -1,0 +1,54 @@
+{
+  "case_id": "PA-1040",
+  "hero": null,
+  "title": "Acute pyelonephritis",
+  "source": "history",
+  "received_offset_min": 72,
+  "hospital": {
+    "name": "Malnad Ridge Hospital",
+    "city": "Shivamogga",
+    "hospital_code": "HSP-MRH-0733",
+    "tpa_email": "cashless@malnadridge.example",
+    "phone": "+91 8182 40 6612"
+  },
+  "form": {
+    "patient_name": "Omkar Patil",
+    "age": 19,
+    "gender": "M",
+    "patient_phone": "+91 91895 44867",
+    "patient_email": "omkar.patil@example.com",
+    "aadhaar": "6935 4445 8204",
+    "policy_number": "GH-POL-103052",
+    "relationship_to_holder": "son",
+    "admission_date": "2026-10-24",
+    "admission_type": "emergency",
+    "treating_doctor": "Dr. Suresh Nayak",
+    "provisional_diagnosis": "Acute pyelonephritis",
+    "icd10": "N10",
+    "proposed_procedure": "Acute pyelonephritis (medical)",
+    "room_category": "Single room",
+    "room_rent_per_day": 6500,
+    "expected_los_days": 4,
+    "is_accident": false,
+    "estimate": {
+      "room": 26000,
+      "ot": 0,
+      "surgeon": 7000,
+      "consumables": 3000,
+      "medicines": 10500,
+      "investigations": 7000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "urine_culture",
+    "ultrasound_abdomen",
+    "id_proof"
+  ],
+  "admission_note": "MALNAD RIDGE HOSPITAL - Department of Nephrology\nCashless pre-authorization request: emergency admission\n\nPatient: Omkar Patil, 19 years, male. Contact +91 91895 44867, omkar.patil@example.com. Aadhaar 6935 4445 8204.\nPolicy no. GH-POL-103052 (son of holder).\n\nHistory: fever with chills and flank pain for 4 days.\nFindings: renal angle tenderness; urine shows pyuria; ultrasound shows a bulky kidney.\nProvisional diagnosis: acute pyelonephritis (ICD-10 N10).\n\nProposed treatment: acute pyelonephritis (medical) on 24-Oct-2026. Expected stay 4 days in a single room at Rs 6,500 per day.\nCost estimate: room Rs 26,000; OT Rs 0; surgeon and anaesthetist Rs 7,000; consumables Rs 3,000; medicines Rs 10,500; investigations Rs 7,000. Total Rs 53,500.\nDocuments attached: Admission note, Itemised cost estimate, Urine culture report, Ultrasound abdomen report, Patient ID proof.\n\nTreating doctor: Dr. Suresh Nayak.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 39.5
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "case_id": "PA-1024",
+  "hero": null,
+  "title": "Caesarean delivery",
+  "source": "history",
+  "received_offset_min": 360,
+  "hospital": {
+    "name": "Kabini Grove Hospital",
+    "city": "Mysuru",
+    "hospital_code": "HSP-KGH-1024",
+    "tpa_email": "preauth@kabinigrove.example",
+    "phone": "+91 821 43 9904"
+  },
+  "form": {
+    "patient_name": "Nisha Menon",
+    "age": 41,
+    "gender": "F",
+    "patient_phone": "+91 95431 53832",
+    "patient_email": "",
+    "aadhaar": "8061 9782 1161",
+    "policy_number": "GH-POL-100231",
+    "relationship_to_holder": "spouse",
+    "admission_date": "2026-10-24",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Anil D'Souza",
+    "provisional_diagnosis": "Previous caesarean, planned repeat caesarean",
+    "icd10": "O82.0",
+    "proposed_procedure": "Caesarean delivery (LSCS)",
+    "room_category": "Single private AC",
+    "room_rent_per_day": 3500,
+    "expected_los_days": 4,
+    "is_accident": false,
+    "estimate": {
+      "room": 14000,
+      "ot": 15000,
+      "surgeon": 23000,
+      "consumables": 11000,
+      "medicines": 9500,
+      "investigations": 9500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "obstetric_usg",
+    "id_proof"
+  ],
+  "admission_note": "KABINI GROVE HOSPITAL - Department of Obstetrics\nCashless pre-authorization request: planned admission\n\nPatient: Nisha Menon, 41 years, female. Contact +91 95431 53832. Aadhaar 8061 9782 1161.\nPolicy no. GH-POL-100231 (spouse of holder).\n\nHistory: term pregnancy at 39 weeks with a previous caesarean section.\nFindings: obstetric ultrasound shows a single live foetus in cephalic presentation.\nProvisional diagnosis: previous caesarean, planned repeat caesarean (ICD-10 O82.0).\n\nProposed treatment: caesarean delivery (LSCS) on 24-Oct-2026. Expected stay 4 days in a single private ac at Rs 3,500 per day.\nCost estimate: room Rs 14,000; OT Rs 15,000; surgeon and anaesthetist Rs 23,000; consumables Rs 11,000; medicines Rs 9,500; investigations Rs 9,500. Total Rs 82,000.\nDocuments attached: Admission note, Itemised cost estimate, Obstetric ultrasound report, Patient ID proof.\n\nTreating doctor: Dr. Anil D'Souza.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 5.4
+  }
+}

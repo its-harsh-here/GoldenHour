@@ -1,0 +1,53 @@
+{
+  "case_id": "PA-1021",
+  "hero": null,
+  "title": "Septoplasty",
+  "source": "history",
+  "received_offset_min": 540,
+  "hospital": {
+    "name": "Nandi Valley Medical Centre",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-NVM-0417",
+    "tpa_email": "preauth@nandivalley.example",
+    "phone": "+91 80 4725 3381"
+  },
+  "form": {
+    "patient_name": "Fatima Sheikh",
+    "age": 45,
+    "gender": "F",
+    "patient_phone": "+91 92458 82449",
+    "patient_email": "",
+    "aadhaar": "8852 6048 6173",
+    "policy_number": "GH-POL-100874",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-24",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Suresh Nayak",
+    "provisional_diagnosis": "Deviated nasal septum",
+    "icd10": "J34.2",
+    "proposed_procedure": "Septoplasty",
+    "room_category": "Single private AC",
+    "room_rent_per_day": 6500,
+    "expected_los_days": 2,
+    "is_accident": false,
+    "estimate": {
+      "room": 13000,
+      "ot": 8500,
+      "surgeon": 14000,
+      "consumables": 11000,
+      "medicines": 4500,
+      "investigations": 5000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "ent_consult",
+    "id_proof"
+  ],
+  "admission_note": "NANDI VALLEY MEDICAL CENTRE - Department of ENT\nCashless pre-authorization request: planned admission\n\nPatient: Fatima Sheikh, 45 years, female. Contact +91 92458 82449. Aadhaar 8852 6048 6173.\nPolicy no. GH-POL-100874 (self).\n\nHistory: nasal obstruction and recurrent sinusitis for 2 years.\nFindings: deviated nasal septum on endoscopy; CT confirms the deviation.\nProvisional diagnosis: deviated nasal septum (ICD-10 J34.2).\n\nProposed treatment: septoplasty on 24-Oct-2026. Expected stay 2 days in a single private ac at Rs 6,500 per day.\nCost estimate: room Rs 13,000; OT Rs 8,500; surgeon and anaesthetist Rs 14,000; consumables Rs 11,000; medicines Rs 4,500; investigations Rs 5,000. Total Rs 56,000.\nDocuments attached: Admission note, Itemised cost estimate, ENT consultation note, Patient ID proof.\n\nTreating doctor: Dr. Suresh Nayak.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 36.0
+  }
+}

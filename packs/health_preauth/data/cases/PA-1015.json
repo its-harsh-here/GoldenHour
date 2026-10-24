@@ -1,0 +1,53 @@
+{
+  "case_id": "PA-1015",
+  "hero": null,
+  "title": "Inguinal hernia repair with mesh",
+  "source": "history",
+  "received_offset_min": 668,
+  "hospital": {
+    "name": "Nandi Valley Medical Centre",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-NVM-0417",
+    "tpa_email": "preauth@nandivalley.example",
+    "phone": "+91 80 4725 3381"
+  },
+  "form": {
+    "patient_name": "Imran Sheikh",
+    "age": 52,
+    "gender": "M",
+    "patient_phone": "+91 94939 70956",
+    "patient_email": "imran.sheikh@example.com",
+    "aadhaar": "9280 1465 0147",
+    "policy_number": "GH-POL-100874",
+    "relationship_to_holder": "spouse",
+    "admission_date": "2026-10-23",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Farhan Qureshi",
+    "provisional_diagnosis": "Inguinal hernia",
+    "icd10": "K40.90",
+    "proposed_procedure": "Inguinal hernia repair with mesh",
+    "room_category": "Deluxe room",
+    "room_rent_per_day": 12500,
+    "expected_los_days": 2,
+    "is_accident": false,
+    "estimate": {
+      "room": 25000,
+      "ot": 10000,
+      "surgeon": 16500,
+      "consumables": 12500,
+      "medicines": 5000,
+      "investigations": 6000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "ultrasound_abdomen",
+    "id_proof"
+  ],
+  "admission_note": "NANDI VALLEY MEDICAL CENTRE - Department of General Surgery\nCashless pre-authorization request: planned admission\n\nPatient: Imran Sheikh, 52 years, male. Contact +91 94939 70956, imran.sheikh@example.com. Aadhaar 9280 1465 0147.\nPolicy no. GH-POL-100874 (spouse of holder).\n\nHistory: a reducible groin swelling for 4 months, worse on straining.\nFindings: reducible inguinal hernia with a positive cough impulse; ultrasound confirms the defect.\nProvisional diagnosis: inguinal hernia (ICD-10 K40.90).\n\nProposed treatment: inguinal hernia repair with mesh on 23-Oct-2026. Expected stay 2 days in a deluxe room at Rs 12,500 per day.\nCost estimate: room Rs 25,000; OT Rs 10,000; surgeon and anaesthetist Rs 16,500; consumables Rs 12,500; medicines Rs 5,000; investigations Rs 6,000. Total Rs 75,000.\nDocuments attached: Admission note, Itemised cost estimate, Ultrasound abdomen report, Patient ID proof.\n\nTreating doctor: Dr. Farhan Qureshi.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 5.5
+  }
+}

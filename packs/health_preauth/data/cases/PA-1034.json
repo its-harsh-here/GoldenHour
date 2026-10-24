@@ -1,0 +1,53 @@
+{
+  "case_id": "PA-1034",
+  "hero": null,
+  "title": "Tonsillectomy",
+  "source": "history",
+  "received_offset_min": 115,
+  "hospital": {
+    "name": "Kabini Grove Hospital",
+    "city": "Mysuru",
+    "hospital_code": "HSP-KGH-1024",
+    "tpa_email": "preauth@kabinigrove.example",
+    "phone": "+91 821 43 9904"
+  },
+  "form": {
+    "patient_name": "Harpreet Singh",
+    "age": 55,
+    "gender": "M",
+    "patient_phone": "+91 95457 31241",
+    "patient_email": "",
+    "aadhaar": "2743 6847 6049",
+    "policy_number": "GH-POL-103093",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-24",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Anil D'Souza",
+    "provisional_diagnosis": "Chronic tonsillitis",
+    "icd10": "J35.03",
+    "proposed_procedure": "Tonsillectomy",
+    "room_category": "Single private AC",
+    "room_rent_per_day": 4500,
+    "expected_los_days": 2,
+    "is_accident": false,
+    "estimate": {
+      "room": 9000,
+      "ot": 8500,
+      "surgeon": 14000,
+      "consumables": 10500,
+      "medicines": 4500,
+      "investigations": 5000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "ent_consult",
+    "id_proof"
+  ],
+  "admission_note": "KABINI GROVE HOSPITAL - Department of ENT\nCashless pre-authorization request: planned admission\n\nPatient: Harpreet Singh, 55 years, male. Contact +91 95457 31241. Aadhaar 2743 6847 6049.\nPolicy no. GH-POL-103093 (self).\n\nHistory: recurrent sore throat with 7 documented episodes in the past year.\nFindings: grade III tonsils with no peritonsillar abscess.\nProvisional diagnosis: chronic tonsillitis (ICD-10 J35.03).\n\nProposed treatment: tonsillectomy on 24-Oct-2026. Expected stay 2 days in a single private ac at Rs 4,500 per day.\nCost estimate: room Rs 9,000; OT Rs 8,500; surgeon and anaesthetist Rs 14,000; consumables Rs 10,500; medicines Rs 4,500; investigations Rs 5,000. Total Rs 51,500.\nDocuments attached: Admission note, Itemised cost estimate, ENT consultation note, Patient ID proof.\n\nTreating doctor: Dr. Anil D'Souza.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 28.4
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "case_id": "PA-1028",
+  "hero": null,
+  "title": "Laparoscopic hysterectomy",
+  "source": "history",
+  "received_offset_min": 286,
+  "hospital": {
+    "name": "Deccan Lotus Hospital",
+    "city": "Hubballi",
+    "hospital_code": "HSP-DLH-0851",
+    "tpa_email": "tpa@deccanlotus.example",
+    "phone": "+91 836 41 7720"
+  },
+  "form": {
+    "patient_name": "Ramachandra Bhat",
+    "age": 69,
+    "gender": "M",
+    "patient_phone": "+91 94477 84797",
+    "patient_email": "ramachandra.bhat@example.com",
+    "aadhaar": "3108 8103 3631",
+    "policy_number": "GH-POL-103027",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-24",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Kavya Raman",
+    "provisional_diagnosis": "Uterine fibroids with menorrhagia",
+    "icd10": "N85.2",
+    "proposed_procedure": "Laparoscopic hysterectomy",
+    "room_category": "Single private AC",
+    "room_rent_per_day": 5500,
+    "expected_los_days": 3,
+    "is_accident": false,
+    "estimate": {
+      "room": 16500,
+      "ot": 31000,
+      "surgeon": 51500,
+      "consumables": 39000,
+      "medicines": 15500,
+      "investigations": 18500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "usg_pelvis",
+    "id_proof"
+  ],
+  "admission_note": "DECCAN LOTUS HOSPITAL - Department of Obstetrics and Gynaecology\nCashless pre-authorization request: planned admission\n\nPatient: Ramachandra Bhat, 69 years, male. Contact +91 94477 84797, ramachandra.bhat@example.com. Aadhaar 3108 8103 3631.\nPolicy no. GH-POL-103027 (self).\n\nHistory: heavy menstrual bleeding for 20 months despite medical therapy.\nFindings: ultrasound pelvis shows multiple intramural fibroids; haemoglobin 9.2 g/dL.\nProvisional diagnosis: uterine fibroids with menorrhagia (ICD-10 N85.2).\n\nProposed treatment: laparoscopic hysterectomy on 24-Oct-2026. Expected stay 3 days in a single private ac at Rs 5,500 per day.\nCost estimate: room Rs 16,500; OT Rs 31,000; surgeon and anaesthetist Rs 51,500; consumables Rs 39,000; medicines Rs 15,500; investigations Rs 18,500. Total Rs 1,72,000.\nDocuments attached: Admission note, Itemised cost estimate, Ultrasound pelvis report, Patient ID proof.\n\nTreating doctor: Dr. Kavya Raman.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 9.3
+  }
+}

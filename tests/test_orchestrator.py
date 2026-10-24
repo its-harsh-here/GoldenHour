@@ -87,6 +87,16 @@ def test_seeded_history_gives_dashboard_data(tmp_path):
     runtime = Runtime(replace(get_settings(), llm_mode="mock", db_path=tmp_path / "s.db"))
     actions.seed_demo(runtime, history=True)
     dash = actions.dashboard(runtime)
-    assert dash["kpis"]["decided"] == 6 and dash["kpis"]["overrides"] == 1
-    assert runtime.cases.get("PA-1010")["status"] == "AWAITING_APPROVAL"
+    cases = {c["case_id"]: c for c in runtime.cases.list()}
+    assert len(cases) >= 40 and dash["kpis"]["decided"] >= 30 and dash["kpis"]["overrides"] >= 1
+    # hand-written outcomes are kept; hero cases wait in the inbox; one seeded case awaits sign-off
+    assert (cases["PA-1004"]["status"], cases["PA-1006"]["status"], cases["PA-1007"]["status"]) == ("APPROVED", "DENIED", "PARTIALLY_APPROVED")
+    assert all(cases[h]["status"] == "NEW" for h in ("PA-1001", "PA-1002", "PA-1003"))
+    assert cases["PA-1010"]["status"] == "AWAITING_APPROVAL"
+    # generated history is fully decided, with reasons on every denial
+    for c in cases.values():
+        if c["request"].get("source") == "history":
+            assert c["decided_at"], c["case_id"]
+            if c["status"] == "DENIED":
+                assert c["state"]["human_decision"]["reason"]
     assert runtime.audit.verify()["valid"]

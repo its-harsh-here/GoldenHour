@@ -27,3 +27,9 @@ One line per judgement call made during the unattended build.
 - Screenshots use the preinstalled Node Playwright + Chromium (`scripts/screenshots.mjs`) instead of `pip install playwright`, as the build environment instructs not to install a second browser.
 - Alpine.js was not needed; the console is vanilla JS, so it is not vendored.
 - Deployment target chosen by the owner: Render (Docker, free plan) via `render.yaml`, running `LLM_MODE=groq` with `GROQ_API_KEY` entered in Render's dashboard (`sync: false`), never committed. The Dockerfile default stays `replay` so other hosts are safe by default.
+- Dataset growth uses a seeded generator (`packs/health_preauth/generator.py`) rather than hand-written cases, so the same sequence number always yields the same request and the committed history can be regenerated and checked by a test.
+- The live feed runs feed cases on the mock pipeline by default (`FEED_LLM=mock`): with groq mode on a public URL, a request every 40 s would exhaust the free tier within hours.
+- Live-feed cases are decided by a simulated desk whose actors are labelled `sim:*` (like the `seed:*` history); hero cases and hand-written cases are never touched, so every real demo decision stays with a person.
+- Feed cases are numbered from PA-2001 and pruned beyond the newest 40 once decided; their audit blocks are kept, because the chain is append-only.
+- L1/L2/L3 and the kill switch stay Admin permissions on the server. In the demo console, clicking them as another role switches the role to Admin (with a toast), which is the same as using the role switcher. Earlier they were disabled and looked broken.
+- The Admin tamper test now edits the most recent approval, so the broken block is visible in the latest-blocks audit view as the chain grows.

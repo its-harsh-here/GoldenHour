@@ -1,0 +1,53 @@
+{
+  "case_id": "PA-1020",
+  "hero": null,
+  "title": "Septoplasty",
+  "source": "history",
+  "received_offset_min": 627,
+  "hospital": {
+    "name": "Kabini Grove Hospital",
+    "city": "Mysuru",
+    "hospital_code": "HSP-KGH-1024",
+    "tpa_email": "preauth@kabinigrove.example",
+    "phone": "+91 821 43 9904"
+  },
+  "form": {
+    "patient_name": "Gopal Krishnan",
+    "age": 72,
+    "gender": "M",
+    "patient_phone": "+91 96151 85828",
+    "patient_email": "gopal.krishnan@example.com",
+    "aadhaar": "5231 8990 5652",
+    "policy_number": "GH-POL-103074",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-23",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Joseph Mathew",
+    "provisional_diagnosis": "Deviated nasal septum",
+    "icd10": "J34.2",
+    "proposed_procedure": "Septoplasty",
+    "room_category": "Twin sharing",
+    "room_rent_per_day": 5500,
+    "expected_los_days": 2,
+    "is_accident": false,
+    "estimate": {
+      "room": 11000,
+      "ot": 12500,
+      "surgeon": 20500,
+      "consumables": 15500,
+      "medicines": 6000,
+      "investigations": 7500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "ent_consult",
+    "id_proof"
+  ],
+  "admission_note": "KABINI GROVE HOSPITAL - Department of ENT\nCashless pre-authorization request: planned admission\n\nPatient: Gopal Krishnan, 72 years, male. Contact +91 96151 85828, gopal.krishnan@example.com. Aadhaar 5231 8990 5652.\nPolicy no. GH-POL-103074 (self).\n\nHistory: nasal obstruction and recurrent sinusitis for 4 years.\nFindings: deviated nasal septum on endoscopy; CT confirms the deviation.\nProvisional diagnosis: deviated nasal septum (ICD-10 J34.2).\n\nProposed treatment: septoplasty on 23-Oct-2026. Expected stay 2 days in a twin sharing at Rs 5,500 per day.\nCost estimate: room Rs 11,000; OT Rs 12,500; surgeon and anaesthetist Rs 20,500; consumables Rs 15,500; medicines Rs 6,000; investigations Rs 7,500. Total Rs 73,000.\nDocuments attached: Admission note, Itemised cost estimate, ENT consultation note, Patient ID proof.\n\nTreating doctor: Dr. Joseph Mathew.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 16.6
+  }
+}

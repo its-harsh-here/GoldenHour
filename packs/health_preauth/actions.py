@@ -10,6 +10,7 @@ import hashlib
 import json
 import re
 import time
+from datetime import date
 from statistics import median
 
 from pydantic import BaseModel
@@ -20,6 +21,7 @@ from core.orchestrator import sla_info
 from core.redaction import rehydrate
 from packs.health_preauth import tools
 from packs.health_preauth.agents import prompt, rupee_figures
+from packs.health_preauth.generator import generate_request
 from packs.health_preauth.rules import inr
 
 INSURER = "Kestrel Mutual Health"
@@ -370,6 +372,7 @@ def case_summary(rt, c: dict, role: str) -> dict:
         "received_at": c["received_at"], "decided_at": c["decided_at"], "sla": sla_info(c, rt.sla_minutes),
         "injection": bool(st.get("intake", {}).get("guard", {}).get("detected")), "seeded": bool(c["seeded"]),
         "running": rt.orchestrator.is_running(c["case_id"]), "override": bool(c["override"]),
+        "source": "hero" if c["hero"] else c["request"].get("source", "history"),
     }
 
 
@@ -432,7 +435,8 @@ def dashboard(rt) -> dict:
     for c in decided:
         info = sla_info(c, sla_m)
         tat.append({"case_id": c["case_id"], "title": c["title"], "minutes": round(info["elapsed_s"] / 60, 1),
-                    "status": c["status"], "breached": info["breached"], "seeded": bool(c["seeded"])})
+                    "status": c["status"], "breached": info["breached"], "seeded": bool(c["seeded"]),
+                    "source": c["request"].get("source", "hero" if c["hero"] else "history"), "decided_at": c["decided_at"]})
     minutes = [t["minutes"] for t in tat]
     statuses = [c["status"] for c in cases]
     reviewed = [c for c in cases if c.get("decided_at") or c["status"] == "ESCALATED"]
@@ -455,7 +459,7 @@ def dashboard(rt) -> dict:
             "injections_blocked": sum(1 for c in processed if c["state"].get("intake", {}).get("guard", {}).get("detected")),
             "unauthorized_blocked": blocked,
         },
-        "tat": tat,
+        "tat": sorted(tat, key=lambda t: t["decided_at"])[-30:],
         "split": {
             "Approved": statuses.count("APPROVED"), "Partially approved": statuses.count("PARTIALLY_APPROVED"),
             "Denied by MO": statuses.count("DENIED"), "With Medical Officer": statuses.count("ESCALATED"),
@@ -469,10 +473,116 @@ def dashboard(rt) -> dict:
     }
 
 
+# ---------------------------------------------------------------- simulated desk (seeded history + live feed)
+
+def _denial_reason(ev: dict) -> str:
+    by_id = {r["rule_id"]: r for r in ev.get("rules", [])}
+    parts = [f"{by_id[f]['label']} not met ({by_id[f]['clause_ref']}): {by_id[f]['explanation']}" for f in ev.get("failed_rules", []) if f in by_id]
+    return " ".join(parts) or "Automated checks could not establish eligibility; cashless authorization not approved."
+
+
+def desk_decision(rt, case_id: str, tag: str, force_mock: bool = True) -> str | None:
+    """What a reviewer on the desk would do next with a pending case. Actors are labelled `<tag>:<role>`."""
+    case = rt.cases.get(case_id)
+    if case is None:
+        return None
+    status, st = case["status"], case["state"]
+    if status == "QUERY_RAISED":
+        out = rt.gateway.execute("simulate_upload", case_id=case_id, role="PROCESSOR", actor=f"{tag}:hospital")
+        rt.orchestrator.run(case_id, from_step=out["resume_at"], force_mock=force_mock)
+        return "upload"
+    if status == "AWAITING_APPROVAL":
+        human_decision(rt, case_id, "PROCESSOR", f"{tag}:processor", "approve", force_mock=force_mock)
+        return "approve"
+    if status != "ESCALATED":
+        return None
+    ev, docs = st.get("policy", {}).get("evaluation", {}), st.get("docs", {})
+    rec = int(st.get("decision", {}).get("recommended_amount", 0))
+    mo = f"{tag}:medical_officer"
+    if ev.get("failed_rules") or rec <= 0:
+        human_decision(rt, case_id, "MEDICAL_OFFICER", mo, "deny", reason=_denial_reason(ev), force_mock=force_mock)
+        return "deny"
+    bench = int(docs.get("benchmark_rate_inr") or 0)
+    if docs.get("cost_deviation_pct", 0) > 25 and 0 < bench < rec:
+        reason = (f"Estimate {docs['cost_deviation_pct']:.0f}% above the package benchmark; authorized at the benchmark of "
+                  f"{inr(bench)}. Balance may be claimed at the final bill with invoices.")
+        human_decision(rt, case_id, "MEDICAL_OFFICER", mo, "approve", amount=bench, reason=reason, force_mock=force_mock)
+        return "partial"
+    injected = st.get("intake", {}).get("guard", {}).get("detected")
+    reason = ("Quarantined instruction text disregarded; documents and rule results verified." if injected
+              else "High-value request reviewed against package norms and the attached documents.")
+    human_decision(rt, case_id, "MEDICAL_OFFICER", mo, "approve", amount=rec, reason=reason, force_mock=force_mock)
+    return "approve"
+
+
+def brief(case: dict | None) -> dict:
+    """A one-line summary of a case for desk-wide notifications (no PHI)."""
+    if not case:
+        return {}
+    req = case["request"]
+    return {"title": case["title"], "hospital": req["hospital"]["name"], "city": req["hospital"]["city"],
+            "requested": sum(req["form"]["estimate"].values()), "status": case["status"],
+            "recommendation": case.get("recommendation"), "recommended_amount": case.get("recommended_amount"),
+            "final_amount": case.get("final_amount"), "source": "hero" if case.get("hero") else req.get("source", "history"),
+            "injection": bool(case["state"].get("intake", {}).get("guard", {}).get("detected"))}
+
+
+def feed_arrival(rt, force_mock: bool = True) -> str:
+    """A new synthetic hospital request arrives and the agents process it immediately."""
+    seq = int(rt.store.kv_get("feed_seq", 2000)) + 1
+    rt.store.kv_set("feed_seq", seq)
+    req = generate_request(seq, admission=date.today(), source="feed")
+    cid = req["case_id"]
+    rt.cases.create(cid, rt.pack.name, req, req["title"], None, time.time())
+    rt.audit.append(case_id=cid, actor=f"hospital:{req['hospital']['hospital_code']}", role="HOSPITAL", action="case_received",
+                    details={"title": req["title"], "hospital": req["hospital"]["name"], "source": "live feed"})
+    rt.events.notify(cid, "arrived", brief(rt.cases.get(cid)))
+    rt.orchestrator.run(cid, force_mock=force_mock)
+    return cid
+
+
+def _desk_delay_s(case_id: str, status: str) -> int:
+    return 60 + int(hashlib.sha256(f"{case_id}:{status}".encode()).hexdigest(), 16) % 360  # 1-7 minutes
+
+
+def feed_desk(rt, force_mock: bool = True, force: bool = False) -> list[tuple[str, str | None]]:
+    """Simulated desk staff (sim:processor, sim:medical_officer, sim:hospital) work the live-feed queue."""
+    now, acted = time.time(), []
+    pending = rt.store.query("SELECT case_id, status, updated_at FROM cases WHERE case_id LIKE 'PA-2%' "
+                             "AND status IN ('AWAITING_APPROVAL', 'ESCALATED', 'QUERY_RAISED') ORDER BY updated_at")
+    for row in pending:
+        if rt.orchestrator.is_running(row["case_id"]):
+            continue
+        if not force and now - (row["updated_at"] or now) < _desk_delay_s(row["case_id"], row["status"]):
+            continue
+        try:
+            acted.append((row["case_id"], desk_decision(rt, row["case_id"], "sim", force_mock)))
+        except Exception as err:  # one bad case must not stall the desk
+            print(f"simulated desk skipped {row['case_id']}: {type(err).__name__}: {err}", flush=True)
+    return acted
+
+
+def feed_prune(rt, keep: int) -> int:
+    """Keep the newest `keep` live-feed cases; older decided ones leave the inbox (the audit chain keeps them)."""
+    feed = rt.store.query("SELECT case_id, decided_at FROM cases WHERE case_id LIKE 'PA-2%' ORDER BY received_at")
+    excess = len(feed) - keep
+    removed = 0
+    for row in feed:
+        if removed >= excess:
+            break
+        if row["decided_at"] is None:
+            continue
+        for table in ("cases", "trace_events", "outbox"):
+            rt.store.execute(f"DELETE FROM {table} WHERE case_id=?", (row["case_id"],))
+        removed += 1
+    rt.store.execute("DELETE FROM notifications WHERE id < (SELECT MAX(id) - 2000 FROM notifications)")
+    return removed
+
+
 # ---------------------------------------------------------------- demo seed
 
 def seed_demo(rt, history: bool = True) -> dict:
-    """Reset the desk: all 10 cases in the inbox; non-hero cases pre-processed (mock) as recent history."""
+    """Reset the desk: every case in the inbox; non-hero cases pre-processed (mock) as earlier-today history."""
     rt.store.reset()
     now = time.time()
     requests = tools.load_cases()
@@ -487,12 +597,19 @@ def seed_demo(rt, history: bool = True) -> dict:
             outcome = req.get("seed_outcome")
             if not outcome:
                 continue
-            rt.orchestrator.run(req["case_id"], force_mock=True)
-            if outcome.get("action"):
+            cid = req["case_id"]
+            rt.orchestrator.run(cid, force_mock=True)
+            if outcome.get("auto"):
+                for _ in range(3):  # a queried case resumes after the upload, then gets its decision
+                    if desk_decision(rt, cid, "seed") != "upload":
+                        break
+            elif outcome.get("action"):
                 action = "deny" if outcome["action"] == "deny" else "approve"
-                human_decision(rt, req["case_id"], outcome["human"], f"seed:{outcome['human'].lower()}", action,
+                human_decision(rt, cid, outcome["human"], f"seed:{outcome['human'].lower()}", action,
                                amount=outcome.get("amount"), reason=outcome.get("reason", ""), force_mock=True)
-                c = rt.cases.get(req["case_id"])
-                rt.cases.update(req["case_id"], decided_at=c["received_at"] + outcome["tat_min"] * 60)
-            rt.cases.update(req["case_id"], seeded=1)
+            c = rt.cases.get(cid)
+            if c["decided_at"] and outcome.get("tat_min"):
+                rt.cases.update(cid, decided_at=c["received_at"] + outcome["tat_min"] * 60)
+            rt.cases.update(cid, seeded=1)
+    rt.events.notify(None, "reset", {"cases": len(requests)})
     return {"cases": len(requests), "history": history}

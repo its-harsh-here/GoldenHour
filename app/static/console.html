@@ -22,6 +22,7 @@
       <button class="tab" role="tab" data-tab="audit"><svg class="icon sm"><use href="/static/vendor/icons.svg#i-chain"/></svg>Audit</button>
     </nav>
     <div class="nav-right">
+      <span class="live-pill" id="live-pill" title="Live desk stream"><i></i>Live</span>
       <span class="mode-badge" id="mode-badge" title="LLM mode">mock</span>
       <div class="control"><label for="autonomy">Autonomy</label>
         <div class="segmented" id="autonomy" role="group" aria-label="Autonomy level">
@@ -30,10 +31,10 @@
           <button data-level="3" title="Level 3: clean low-value cases auto-execute, 10% post-audit">L3</button>
         </div>
       </div>
-      <button class="btn icon-only sm" id="kill" title="Kill switch (Admin): force autonomy level 1" aria-label="Kill switch"><svg class="icon"><use href="/static/vendor/icons.svg#i-power"/></svg></button>
+      <button class="btn icon-only sm" id="kill" title="Kill switch: force autonomy level 1 (Admin control)" aria-label="Kill switch"><svg class="icon"><use href="/static/vendor/icons.svg#i-power"/></svg></button>
       <div class="control"><label for="role">Role</label><select class="select" id="role" aria-label="Demo role"></select></div>
       <button class="btn icon-only sm" id="present" aria-pressed="false" title="Presentation mode" aria-label="Presentation mode"><svg class="icon"><use href="/static/vendor/icons.svg#i-present"/></svg></button>
-      <button class="btn primary sm" id="demo"><svg class="icon sm"><use href="/static/vendor/icons.svg#i-play"/></svg>Run guided demo</button>
+      <button class="run-mini" id="demo" title="Run" aria-label="Run the demo"><svg class="icon" aria-hidden="true"><use href="/static/vendor/icons.svg#i-play"/></svg></button>
     </div>
   </header>
   <div class="banner kill" id="kill-banner" hidden><svg class="icon"><use href="/static/vendor/icons.svg#i-power"/></svg>

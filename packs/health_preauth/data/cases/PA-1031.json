@@ -1,0 +1,54 @@
+{
+  "case_id": "PA-1031",
+  "hero": null,
+  "title": "Acute pyelonephritis",
+  "source": "history",
+  "received_offset_min": 257,
+  "hospital": {
+    "name": "Malnad Ridge Hospital",
+    "city": "Shivamogga",
+    "hospital_code": "HSP-MRH-0733",
+    "tpa_email": "cashless@malnadridge.example",
+    "phone": "+91 8182 40 6612"
+  },
+  "form": {
+    "patient_name": "Gopal Krishnan",
+    "age": 72,
+    "gender": "M",
+    "patient_phone": "+91 96151 85828",
+    "patient_email": "gopal.krishnan@example.com",
+    "aadhaar": "5231 8990 5652",
+    "policy_number": "GH-POL-103074",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-24",
+    "admission_type": "emergency",
+    "treating_doctor": "Dr. Kavya Raman",
+    "provisional_diagnosis": "Acute pyelonephritis",
+    "icd10": "N10",
+    "proposed_procedure": "Acute pyelonephritis (medical)",
+    "room_category": "Deluxe room",
+    "room_rent_per_day": 2500,
+    "expected_los_days": 4,
+    "is_accident": false,
+    "estimate": {
+      "room": 10000,
+      "ot": 0,
+      "surgeon": 9500,
+      "consumables": 4500,
+      "medicines": 14500,
+      "investigations": 9500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "urine_culture",
+    "ultrasound_abdomen",
+    "id_proof"
+  ],
+  "admission_note": "MALNAD RIDGE HOSPITAL - Department of Nephrology\nCashless pre-authorization request: emergency admission\n\nPatient: Gopal Krishnan, 72 years, male. Contact +91 96151 85828, gopal.krishnan@example.com. Aadhaar 5231 8990 5652.\nPolicy no. GH-POL-103074 (self).\n\nHistory: fever with chills and flank pain for 5 days.\nFindings: renal angle tenderness; urine shows pyuria; ultrasound shows a bulky kidney.\nProvisional diagnosis: acute pyelonephritis (ICD-10 N10).\n\nProposed treatment: acute pyelonephritis (medical) on 24-Oct-2026. Expected stay 4 days in a deluxe room at Rs 2,500 per day.\nCost estimate: room Rs 10,000; OT Rs 0; surgeon and anaesthetist Rs 9,500; consumables Rs 4,500; medicines Rs 14,500; investigations Rs 9,500. Total Rs 48,000.\nDocuments attached: Admission note, Itemised cost estimate, Urine culture report, Ultrasound abdomen report, Patient ID proof.\n\nTreating doctor: Dr. Kavya Raman.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 11.8
+  }
+}

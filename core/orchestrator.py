@@ -20,6 +20,7 @@ import yaml
 from core.action_gateway import ActionGateway
 from core.audit import AuditLog
 from core.events import EventLog
+from core.feed import Feed
 from core.llm import LLMClient
 from core.rbac import RBAC
 from core.settings import Settings
@@ -178,6 +179,8 @@ class Orchestrator:
         status = rt.cases.status(case_id)
         rt.events.emit(case_id, "orchestrator", "paused" if pause else "settled", output={"status": status},
                        status="paused" if pause else "ok")
+        case = rt.cases.get(case_id)
+        rt.events.notify(case_id, "settled", pack.brief(case) if hasattr(pack, "brief") else {"status": status})
         return {"status": status, "paused": bool(pause)}
 
     def run_in_background(self, case_id: str, from_step: str | None = None) -> bool:
@@ -214,6 +217,12 @@ class Runtime:
         self.gateway.register("kill_switch", self._kill_switch)
         self.gateway.register("tamper_test", lambda _cid, params, _role, _actor: self.audit.tamper(params.get("block_id")))
         self.gateway.register("audit_restore", lambda _cid, _params, _role, _actor: self.audit.restore())
+        self.gateway.register("set_feed", self._set_feed)
+        self.feed = Feed(self)
+
+    def _set_feed(self, _cid: str, params: dict, _role: str, _actor: str) -> dict:
+        self.feed.set_enabled(bool(params.get("enabled", True)))
+        return self.feed.status()
 
     def _set_autonomy(self, _cid: str, params: dict, _role: str, _actor: str) -> dict:
         level = int(params.get("level", 0))

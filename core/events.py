@@ -35,6 +35,39 @@ class EventLog:
                 row["output"] = None
         return rows
 
+    # ---- desk-wide notifications (arrivals, settled cases, decisions, admin changes) ----
+    def notify(self, case_id: str | None, kind: str, summary: dict | None = None) -> int:
+        return self.store.execute("INSERT INTO notifications(ts, case_id, kind, summary_json) VALUES(?,?,?,?)",
+                                  (time.time(), case_id, kind, json.dumps(summary or {}, ensure_ascii=False, default=str)))
+
+    def last_notification_id(self) -> int:
+        row = self.store.one("SELECT MAX(id) AS n FROM notifications")
+        return int(row["n"] or 0)
+
+    def notifications(self, after: int = 0, limit: int = 200) -> list[dict]:
+        rows = self.store.query("SELECT * FROM notifications WHERE id>? ORDER BY id LIMIT ?", (after, limit))
+        for row in rows:
+            row["summary"] = json.loads(row.pop("summary_json") or "{}")
+        return rows
+
+    async def desk_stream(self, after: int | None = None, max_seconds: float = 900) -> AsyncIterator[str]:
+        """Server-sent `feed` events for the whole desk; clients reconnect with Last-Event-ID."""
+        last = self.last_notification_id() if after is None else after
+        started = ping = time.monotonic()
+        yield "retry: 2000\n\n"
+        while time.monotonic() - started < max_seconds:
+            rows = self.notifications(last)
+            if not rows and last > self.last_notification_id():  # the desk was reset under us
+                last = 0
+                continue
+            for row in rows:
+                last = row["id"]
+                yield f"id: {row['id']}\nevent: feed\ndata: {json.dumps(row, ensure_ascii=False, default=str)}\n\n"
+            if time.monotonic() - ping > 15:
+                ping = time.monotonic()
+                yield ": keep-alive\n\n"
+            await asyncio.sleep(0.5)
+
     async def stream(self, case_id: str, status_of: Callable[[str], str | None], after_id: int = 0,
                      busy: tuple[str, ...] = ("PROCESSING",), max_seconds: float = 600) -> AsyncIterator[str]:
         """Server-sent events: `trace` per event, `status` on change, `done` once the case settles."""

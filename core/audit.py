@@ -64,7 +64,7 @@ class AuditLog:
             raise ValueError("audit log is empty")
         decisions = [r for r in rows if '"action": "approve"' in r["payload"] or '"action": "auto_approve"' in r["payload"]]
         target = next((r for r in rows if r["id"] == block_id), None) if block_id else None
-        target = target or (decisions[0] if decisions else rows[len(rows) // 2])
+        target = target or (decisions[-1] if decisions else rows[len(rows) // 2])
         self.store.execute("INSERT OR IGNORE INTO audit_tamper_backup(id, payload) VALUES(?, ?)", (target["id"], target["payload"]))
         data = json.loads(target["payload"])
         details = data.setdefault("details", {})

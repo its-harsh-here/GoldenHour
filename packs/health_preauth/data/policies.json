@@ -12,12 +12,27 @@
     "balance_cap": "Sec 4.8 Available Sum Insured"
   },
   "ped_icd10_prefixes": {
-    "diabetes_type2": ["E11"],
-    "hypertension": ["I10", "I11"],
-    "osteoarthritis": ["M15", "M16", "M17"],
-    "asthma": ["J45"],
-    "hypothyroidism": ["E03"],
-    "ckd": ["N18"]
+    "diabetes_type2": [
+      "E11"
+    ],
+    "hypertension": [
+      "I10",
+      "I11"
+    ],
+    "osteoarthritis": [
+      "M15",
+      "M16",
+      "M17"
+    ],
+    "asthma": [
+      "J45"
+    ],
+    "hypothyroidism": [
+      "E03"
+    ],
+    "ckd": [
+      "N18"
+    ]
   },
   "policies": [
     {
@@ -26,8 +41,18 @@
       "holder_name": "Aarav Menon",
       "phone": "+91 98450 21734",
       "members": [
-        {"name": "Aarav Menon", "relationship": "self", "age": 34},
-        {"name": "Nisha Menon", "relationship": "spouse", "age": 41}
+        {
+          "name": "Aarav Menon",
+          "relationship": "self",
+          "age": 34,
+          "gender": "M"
+        },
+        {
+          "name": "Nisha Menon",
+          "relationship": "spouse",
+          "age": 41,
+          "gender": "F"
+        }
       ],
       "status": "active",
       "sum_insured": 500000,
@@ -38,35 +63,83 @@
       "waiting_periods": {
         "initial_days": 30,
         "ped_months": 36,
-        "specific_disease": {"cataract": 24, "joint_replacement": 24, "hernia": 24, "gall_bladder": 24, "prostate": 24, "hysterectomy": 24, "kidney_stone": 24, "tonsils": 24, "sinus_septum": 24}
+        "specific_disease": {
+          "cataract": 24,
+          "joint_replacement": 24,
+          "hernia": 24,
+          "gall_bladder": 24,
+          "prostate": 24,
+          "hysterectomy": 24,
+          "kidney_stone": 24,
+          "tonsils": 24,
+          "sinus_septum": 24
+        }
       },
       "room_rent_cap_per_day": 5000,
       "copay_pct": 0,
-      "sub_limits": {"cataract": 40000},
-      "exclusions": ["cosmetic_surgery", "obesity_surgery", "infertility", "dental", "experimental"],
-      "claim_history": [{"date": "2025-02-11", "procedure": "Viral fever (medical)", "amount": 18500}]
+      "sub_limits": {
+        "cataract": 40000
+      },
+      "exclusions": [
+        "cosmetic_surgery",
+        "obesity_surgery",
+        "infertility",
+        "dental",
+        "experimental"
+      ],
+      "claim_history": [
+        {
+          "date": "2025-02-11",
+          "procedure": "Viral fever (medical)",
+          "amount": 18500
+        }
+      ]
     },
     {
       "policy_id": "GH-POL-100587",
       "product": "GoldenShield Senior",
       "holder_name": "Shanthamma Gowda",
       "phone": "+91 94481 66302",
-      "members": [{"name": "Shanthamma Gowda", "relationship": "self", "age": 67}],
+      "members": [
+        {
+          "name": "Shanthamma Gowda",
+          "relationship": "self",
+          "age": 67,
+          "gender": "F"
+        }
+      ],
       "status": "active",
       "sum_insured": 300000,
       "balance": 300000,
       "inception_date": "2024-03-01",
       "expiry_date": "2027-02-28",
-      "ped_declared": ["diabetes_type2", "hypertension"],
+      "ped_declared": [
+        "diabetes_type2",
+        "hypertension"
+      ],
       "waiting_periods": {
         "initial_days": 30,
         "ped_months": 36,
-        "specific_disease": {"cataract": 24, "joint_replacement": 24, "hernia": 24, "prostate": 24, "kidney_stone": 24}
+        "specific_disease": {
+          "cataract": 24,
+          "joint_replacement": 24,
+          "hernia": 24,
+          "prostate": 24,
+          "kidney_stone": 24
+        }
       },
       "room_rent_cap_per_day": 4000,
       "copay_pct": 10,
-      "sub_limits": {"cataract": 40000},
-      "exclusions": ["cosmetic_surgery", "obesity_surgery", "infertility", "dental", "experimental"],
+      "sub_limits": {
+        "cataract": 40000
+      },
+      "exclusions": [
+        "cosmetic_surgery",
+        "obesity_surgery",
+        "infertility",
+        "dental",
+        "experimental"
+      ],
       "claim_history": []
     },
     {
@@ -74,7 +147,14 @@
       "product": "GoldenShield Individual",
       "holder_name": "Vikram Rao",
       "phone": "+91 99001 47258",
-      "members": [{"name": "Vikram Rao", "relationship": "self", "age": 61}],
+      "members": [
+        {
+          "name": "Vikram Rao",
+          "relationship": "self",
+          "age": 61,
+          "gender": "M"
+        }
+      ],
       "status": "active",
       "sum_insured": 500000,
       "balance": 500000,
@@ -84,12 +164,28 @@
       "waiting_periods": {
         "initial_days": 30,
         "ped_months": 36,
-        "specific_disease": {"cataract": 24, "joint_replacement": 24, "hernia": 24, "gall_bladder": 24, "prostate": 24, "kidney_stone": 24}
+        "specific_disease": {
+          "cataract": 24,
+          "joint_replacement": 24,
+          "hernia": 24,
+          "gall_bladder": 24,
+          "prostate": 24,
+          "kidney_stone": 24
+        }
       },
       "room_rent_cap_per_day": 6000,
       "copay_pct": 0,
-      "sub_limits": {"cataract": 35000, "joint_replacement": 250000},
-      "exclusions": ["cosmetic_surgery", "obesity_surgery", "infertility", "dental", "experimental"],
+      "sub_limits": {
+        "cataract": 35000,
+        "joint_replacement": 250000
+      },
+      "exclusions": [
+        "cosmetic_surgery",
+        "obesity_surgery",
+        "infertility",
+        "dental",
+        "experimental"
+      ],
       "claim_history": []
     },
     {
@@ -98,28 +194,67 @@
       "holder_name": "Fatima Sheikh",
       "phone": "+91 98860 33419",
       "members": [
-        {"name": "Fatima Sheikh", "relationship": "self", "age": 45},
-        {"name": "Imran Sheikh", "relationship": "spouse", "age": 52},
-        {"name": "Zara Sheikh", "relationship": "daughter", "age": 11}
+        {
+          "name": "Fatima Sheikh",
+          "relationship": "self",
+          "age": 45,
+          "gender": "F"
+        },
+        {
+          "name": "Imran Sheikh",
+          "relationship": "spouse",
+          "age": 52,
+          "gender": "M"
+        },
+        {
+          "name": "Zara Sheikh",
+          "relationship": "daughter",
+          "age": 11,
+          "gender": "F"
+        }
       ],
       "status": "active",
       "sum_insured": 1000000,
       "balance": 1000000,
       "inception_date": "2022-06-15",
       "expiry_date": "2027-06-14",
-      "ped_declared": ["hypertension"],
+      "ped_declared": [
+        "hypertension"
+      ],
       "waiting_periods": {
         "initial_days": 30,
         "ped_months": 36,
-        "specific_disease": {"cataract": 24, "joint_replacement": 24, "hernia": 24, "gall_bladder": 24, "tonsils": 24}
+        "specific_disease": {
+          "cataract": 24,
+          "joint_replacement": 24,
+          "hernia": 24,
+          "gall_bladder": 24,
+          "tonsils": 24
+        }
       },
       "room_rent_cap_per_day": 10000,
       "copay_pct": 0,
-      "sub_limits": {"cataract": 50000},
-      "exclusions": ["cosmetic_surgery", "obesity_surgery", "infertility", "dental", "experimental"],
+      "sub_limits": {
+        "cataract": 50000
+      },
+      "exclusions": [
+        "cosmetic_surgery",
+        "obesity_surgery",
+        "infertility",
+        "dental",
+        "experimental"
+      ],
       "claim_history": [
-        {"date": "2024-08-03", "procedure": "Dengue fever (medical)", "amount": 38000},
-        {"date": "2025-11-19", "procedure": "Fracture radius ORIF", "amount": 72000}
+        {
+          "date": "2024-08-03",
+          "procedure": "Dengue fever (medical)",
+          "amount": 38000
+        },
+        {
+          "date": "2025-11-19",
+          "procedure": "Fracture radius ORIF",
+          "amount": 72000
+        }
       ]
     },
     {
@@ -128,8 +263,18 @@
       "holder_name": "Rohan Kulkarni",
       "phone": "+91 97411 58026",
       "members": [
-        {"name": "Rohan Kulkarni", "relationship": "self", "age": 39},
-        {"name": "Sneha Kulkarni", "relationship": "spouse", "age": 36}
+        {
+          "name": "Rohan Kulkarni",
+          "relationship": "self",
+          "age": 39,
+          "gender": "M"
+        },
+        {
+          "name": "Sneha Kulkarni",
+          "relationship": "spouse",
+          "age": 36,
+          "gender": "F"
+        }
       ],
       "status": "active",
       "sum_insured": 500000,
@@ -140,12 +285,25 @@
       "waiting_periods": {
         "initial_days": 30,
         "ped_months": 36,
-        "specific_disease": {"cataract": 24, "joint_replacement": 24, "hernia": 24, "gall_bladder": 24}
+        "specific_disease": {
+          "cataract": 24,
+          "joint_replacement": 24,
+          "hernia": 24,
+          "gall_bladder": 24
+        }
       },
       "room_rent_cap_per_day": 5000,
       "copay_pct": 0,
-      "sub_limits": {"cataract": 40000},
-      "exclusions": ["cosmetic_surgery", "obesity_surgery", "infertility", "dental", "experimental"],
+      "sub_limits": {
+        "cataract": 40000
+      },
+      "exclusions": [
+        "cosmetic_surgery",
+        "obesity_surgery",
+        "infertility",
+        "dental",
+        "experimental"
+      ],
       "claim_history": []
     },
     {
@@ -153,27 +311,695 @@
       "product": "GoldenShield Classic",
       "holder_name": "Meera Iyer",
       "phone": "+91 99452 70188",
-      "members": [{"name": "Meera Iyer", "relationship": "self", "age": 58}],
+      "members": [
+        {
+          "name": "Meera Iyer",
+          "relationship": "self",
+          "age": 58,
+          "gender": "F"
+        }
+      ],
       "status": "active",
       "sum_insured": 140000,
       "balance": 30000,
       "inception_date": "2021-01-05",
       "expiry_date": "2027-01-04",
-      "ped_declared": ["hypothyroidism"],
+      "ped_declared": [
+        "hypothyroidism"
+      ],
       "waiting_periods": {
         "initial_days": 30,
         "ped_months": 48,
-        "specific_disease": {"cataract": 24, "joint_replacement": 48}
+        "specific_disease": {
+          "cataract": 24,
+          "joint_replacement": 48
+        }
       },
       "room_rent_cap_per_day": 4000,
       "copay_pct": 20,
-      "sub_limits": {"cataract": 30000},
-      "exclusions": ["cosmetic_surgery", "obesity_surgery", "infertility", "dental", "experimental"],
+      "sub_limits": {
+        "cataract": 30000
+      },
+      "exclusions": [
+        "cosmetic_surgery",
+        "obesity_surgery",
+        "infertility",
+        "dental",
+        "experimental"
+      ],
       "claim_history": [
-        {"date": "2026-03-14", "procedure": "Pneumonia (medical)", "amount": 61000},
-        {"date": "2026-07-02", "procedure": "Cataract right eye", "amount": 30000},
-        {"date": "2026-09-21", "procedure": "Acute gastroenteritis (medical)", "amount": 19000}
+        {
+          "date": "2026-03-14",
+          "procedure": "Pneumonia (medical)",
+          "amount": 61000
+        },
+        {
+          "date": "2026-07-02",
+          "procedure": "Cataract right eye",
+          "amount": 30000
+        },
+        {
+          "date": "2026-09-21",
+          "procedure": "Acute gastroenteritis (medical)",
+          "amount": 19000
+        }
       ]
+    },
+    {
+      "policy_id": "GH-POL-103011",
+      "product": "GoldenShield Family Floater",
+      "holder_name": "Karthik Shenoy",
+      "phone": "",
+      "members": [
+        {
+          "name": "Karthik Shenoy",
+          "relationship": "self",
+          "age": 42,
+          "gender": "M"
+        },
+        {
+          "name": "Divya Shenoy",
+          "relationship": "spouse",
+          "age": 39,
+          "gender": "F"
+        },
+        {
+          "name": "Ananya Shenoy",
+          "relationship": "daughter",
+          "age": 12,
+          "gender": "F"
+        }
+      ],
+      "status": "active",
+      "sum_insured": 700000,
+      "balance": 700000,
+      "inception_date": "2020-04-01",
+      "expiry_date": "2027-03-31",
+      "ped_declared": [
+        "asthma"
+      ],
+      "waiting_periods": {
+        "initial_days": 30,
+        "ped_months": 36,
+        "specific_disease": {
+          "cataract": 24,
+          "joint_replacement": 24,
+          "hernia": 24,
+          "gall_bladder": 24,
+          "prostate": 24,
+          "hysterectomy": 24,
+          "kidney_stone": 24,
+          "tonsils": 24,
+          "sinus_septum": 24,
+          "piles": 24,
+          "spine": 24
+        }
+      },
+      "room_rent_cap_per_day": 7000,
+      "copay_pct": 0,
+      "sub_limits": {
+        "cataract": 45000,
+        "joint_replacement": 250000
+      },
+      "exclusions": [
+        "cosmetic_surgery",
+        "obesity_surgery",
+        "infertility",
+        "dental",
+        "experimental"
+      ],
+      "claim_history": [
+        {
+          "date": "2025-12-02",
+          "procedure": "Acute bronchitis (medical)",
+          "amount": 26000
+        }
+      ]
+    },
+    {
+      "policy_id": "GH-POL-103027",
+      "product": "GoldenShield Senior",
+      "holder_name": "Ramachandra Bhat",
+      "phone": "",
+      "members": [
+        {
+          "name": "Ramachandra Bhat",
+          "relationship": "self",
+          "age": 69,
+          "gender": "M"
+        },
+        {
+          "name": "Saraswati Bhat",
+          "relationship": "spouse",
+          "age": 64,
+          "gender": "F"
+        }
+      ],
+      "status": "active",
+      "sum_insured": 400000,
+      "balance": 355000,
+      "inception_date": "2019-08-15",
+      "expiry_date": "2027-08-14",
+      "ped_declared": [
+        "diabetes_type2",
+        "hypertension"
+      ],
+      "waiting_periods": {
+        "initial_days": 30,
+        "ped_months": 36,
+        "specific_disease": {
+          "cataract": 24,
+          "joint_replacement": 24,
+          "hernia": 24,
+          "gall_bladder": 24,
+          "prostate": 24,
+          "hysterectomy": 24,
+          "kidney_stone": 24,
+          "tonsils": 24,
+          "sinus_septum": 24,
+          "piles": 24,
+          "spine": 24
+        }
+      },
+      "room_rent_cap_per_day": 4000,
+      "copay_pct": 20,
+      "sub_limits": {
+        "cataract": 35000,
+        "joint_replacement": 200000
+      },
+      "exclusions": [
+        "cosmetic_surgery",
+        "obesity_surgery",
+        "infertility",
+        "dental",
+        "experimental",
+        "maternity"
+      ],
+      "claim_history": [
+        {
+          "date": "2026-01-20",
+          "procedure": "Cataract left eye",
+          "amount": 35000
+        },
+        {
+          "date": "2026-06-11",
+          "procedure": "Urinary tract infection (medical)",
+          "amount": 22000
+        }
+      ]
+    },
+    {
+      "policy_id": "GH-POL-103045",
+      "product": "GoldenShield Individual",
+      "holder_name": "Pooja Hegde Rao",
+      "phone": "",
+      "members": [
+        {
+          "name": "Pooja Hegde Rao",
+          "relationship": "self",
+          "age": 31,
+          "gender": "F"
+        }
+      ],
+      "status": "active",
+      "sum_insured": 300000,
+      "balance": 300000,
+      "inception_date": "2026-06-01",
+      "expiry_date": "2027-05-31",
+      "ped_declared": [],
+      "waiting_periods": {
+        "initial_days": 30,
+        "ped_months": 36,
+        "specific_disease": {
+          "cataract": 24,
+          "joint_replacement": 24,
+          "hernia": 24,
+          "gall_bladder": 24,
+          "prostate": 24,
+          "hysterectomy": 24,
+          "kidney_stone": 24,
+          "tonsils": 24,
+          "sinus_septum": 24,
+          "piles": 24,
+          "spine": 24
+        }
+      },
+      "room_rent_cap_per_day": 4500,
+      "copay_pct": 0,
+      "sub_limits": {
+        "cataract": 30000
+      },
+      "exclusions": [
+        "cosmetic_surgery",
+        "obesity_surgery",
+        "infertility",
+        "dental",
+        "experimental",
+        "maternity"
+      ],
+      "claim_history": []
+    },
+    {
+      "policy_id": "GH-POL-103052",
+      "product": "GoldenShield Family Floater Plus",
+      "holder_name": "Suresh Patil",
+      "phone": "",
+      "members": [
+        {
+          "name": "Suresh Patil",
+          "relationship": "self",
+          "age": 48,
+          "gender": "M"
+        },
+        {
+          "name": "Lata Patil",
+          "relationship": "spouse",
+          "age": 45,
+          "gender": "F"
+        },
+        {
+          "name": "Omkar Patil",
+          "relationship": "son",
+          "age": 19,
+          "gender": "M"
+        }
+      ],
+      "status": "active",
+      "sum_insured": 1000000,
+      "balance": 940000,
+      "inception_date": "2021-11-10",
+      "expiry_date": "2027-11-09",
+      "ped_declared": [
+        "hypertension"
+      ],
+      "waiting_periods": {
+        "initial_days": 30,
+        "ped_months": 36,
+        "specific_disease": {
+          "cataract": 24,
+          "joint_replacement": 24,
+          "hernia": 24,
+          "gall_bladder": 24,
+          "prostate": 24,
+          "hysterectomy": 24,
+          "kidney_stone": 24,
+          "tonsils": 24,
+          "sinus_septum": 24,
+          "piles": 24,
+          "spine": 24
+        }
+      },
+      "room_rent_cap_per_day": 10000,
+      "copay_pct": 0,
+      "sub_limits": {
+        "cataract": 60000,
+        "joint_replacement": 300000
+      },
+      "exclusions": [
+        "cosmetic_surgery",
+        "obesity_surgery",
+        "infertility",
+        "dental",
+        "experimental"
+      ],
+      "claim_history": [
+        {
+          "date": "2025-04-18",
+          "procedure": "Kidney stone URS",
+          "amount": 60000
+        }
+      ]
+    },
+    {
+      "policy_id": "GH-POL-103068",
+      "product": "GoldenShield Classic",
+      "holder_name": "Ayesha Khan",
+      "phone": "",
+      "members": [
+        {
+          "name": "Ayesha Khan",
+          "relationship": "self",
+          "age": 36,
+          "gender": "F"
+        },
+        {
+          "name": "Farhan Khan",
+          "relationship": "spouse",
+          "age": 40,
+          "gender": "M"
+        }
+      ],
+      "status": "active",
+      "sum_insured": 500000,
+      "balance": 500000,
+      "inception_date": "2026-09-05",
+      "expiry_date": "2027-09-04",
+      "ped_declared": [],
+      "waiting_periods": {
+        "initial_days": 30,
+        "ped_months": 36,
+        "specific_disease": {
+          "cataract": 24,
+          "joint_replacement": 24,
+          "hernia": 24,
+          "gall_bladder": 24,
+          "prostate": 24,
+          "hysterectomy": 24,
+          "kidney_stone": 24,
+          "tonsils": 24,
+          "sinus_septum": 24,
+          "piles": 24,
+          "spine": 24
+        }
+      },
+      "room_rent_cap_per_day": 5000,
+      "copay_pct": 10,
+      "sub_limits": {
+        "cataract": 40000
+      },
+      "exclusions": [
+        "cosmetic_surgery",
+        "obesity_surgery",
+        "infertility",
+        "dental",
+        "experimental"
+      ],
+      "claim_history": []
+    },
+    {
+      "policy_id": "GH-POL-103074",
+      "product": "GoldenShield Senior",
+      "holder_name": "Gopal Krishnan",
+      "phone": "",
+      "members": [
+        {
+          "name": "Gopal Krishnan",
+          "relationship": "self",
+          "age": 72,
+          "gender": "M"
+        }
+      ],
+      "status": "active",
+      "sum_insured": 300000,
+      "balance": 120000,
+      "inception_date": "2018-02-12",
+      "expiry_date": "2027-02-11",
+      "ped_declared": [
+        "ckd",
+        "hypertension"
+      ],
+      "waiting_periods": {
+        "initial_days": 30,
+        "ped_months": 48,
+        "specific_disease": {
+          "cataract": 24,
+          "joint_replacement": 24,
+          "hernia": 24,
+          "gall_bladder": 24,
+          "prostate": 24,
+          "hysterectomy": 24,
+          "kidney_stone": 24,
+          "tonsils": 24,
+          "sinus_septum": 24,
+          "piles": 24,
+          "spine": 24
+        }
+      },
+      "room_rent_cap_per_day": 3500,
+      "copay_pct": 20,
+      "sub_limits": {
+        "cataract": 30000,
+        "joint_replacement": 150000
+      },
+      "exclusions": [
+        "cosmetic_surgery",
+        "obesity_surgery",
+        "infertility",
+        "dental",
+        "experimental"
+      ],
+      "claim_history": [
+        {
+          "date": "2026-02-02",
+          "procedure": "Pneumonia (medical)",
+          "amount": 68000
+        },
+        {
+          "date": "2026-05-29",
+          "procedure": "Dialysis access surgery",
+          "amount": 52000
+        },
+        {
+          "date": "2026-08-14",
+          "procedure": "Cataract right eye",
+          "amount": 30000
+        }
+      ]
+    },
+    {
+      "policy_id": "GH-POL-103089",
+      "product": "GoldenShield Family Floater",
+      "holder_name": "Nikhil Joshi",
+      "phone": "",
+      "members": [
+        {
+          "name": "Nikhil Joshi",
+          "relationship": "self",
+          "age": 29,
+          "gender": "M"
+        },
+        {
+          "name": "Ritika Joshi",
+          "relationship": "spouse",
+          "age": 28,
+          "gender": "F"
+        }
+      ],
+      "status": "active",
+      "sum_insured": 500000,
+      "balance": 500000,
+      "inception_date": "2025-03-20",
+      "expiry_date": "2027-03-19",
+      "ped_declared": [],
+      "waiting_periods": {
+        "initial_days": 30,
+        "ped_months": 36,
+        "specific_disease": {
+          "cataract": 24,
+          "joint_replacement": 24,
+          "hernia": 24,
+          "gall_bladder": 24,
+          "prostate": 24,
+          "hysterectomy": 24,
+          "kidney_stone": 24,
+          "tonsils": 24,
+          "sinus_septum": 24,
+          "piles": 24,
+          "spine": 24
+        }
+      },
+      "room_rent_cap_per_day": 5000,
+      "copay_pct": 0,
+      "sub_limits": {
+        "cataract": 40000
+      },
+      "exclusions": [
+        "cosmetic_surgery",
+        "obesity_surgery",
+        "infertility",
+        "dental",
+        "experimental",
+        "maternity"
+      ],
+      "claim_history": []
+    },
+    {
+      "policy_id": "GH-POL-103093",
+      "product": "GoldenShield Individual",
+      "holder_name": "Harpreet Singh",
+      "phone": "",
+      "members": [
+        {
+          "name": "Harpreet Singh",
+          "relationship": "self",
+          "age": 55,
+          "gender": "M"
+        }
+      ],
+      "status": "active",
+      "sum_insured": 600000,
+      "balance": 600000,
+      "inception_date": "2023-01-09",
+      "expiry_date": "2027-01-08",
+      "ped_declared": [
+        "diabetes_type2"
+      ],
+      "waiting_periods": {
+        "initial_days": 30,
+        "ped_months": 36,
+        "specific_disease": {
+          "cataract": 24,
+          "joint_replacement": 24,
+          "hernia": 24,
+          "gall_bladder": 24,
+          "prostate": 24,
+          "hysterectomy": 24,
+          "kidney_stone": 24,
+          "tonsils": 24,
+          "sinus_septum": 24,
+          "piles": 24,
+          "spine": 24
+        }
+      },
+      "room_rent_cap_per_day": 6000,
+      "copay_pct": 0,
+      "sub_limits": {
+        "cataract": 45000,
+        "joint_replacement": 250000
+      },
+      "exclusions": [
+        "cosmetic_surgery",
+        "obesity_surgery",
+        "infertility",
+        "dental",
+        "experimental"
+      ],
+      "claim_history": []
+    },
+    {
+      "policy_id": "GH-POL-103106",
+      "product": "GoldenShield Family Floater Plus",
+      "holder_name": "Lakshmi Narayan",
+      "phone": "",
+      "members": [
+        {
+          "name": "Lakshmi Narayan",
+          "relationship": "self",
+          "age": 50,
+          "gender": "F"
+        },
+        {
+          "name": "Venkatesh Narayan",
+          "relationship": "spouse",
+          "age": 54,
+          "gender": "M"
+        },
+        {
+          "name": "Kavya Narayan",
+          "relationship": "daughter",
+          "age": 22,
+          "gender": "F"
+        },
+        {
+          "name": "Aditya Narayan",
+          "relationship": "son",
+          "age": 17,
+          "gender": "M"
+        }
+      ],
+      "status": "active",
+      "sum_insured": 1500000,
+      "balance": 1500000,
+      "inception_date": "2017-07-01",
+      "expiry_date": "2027-06-30",
+      "ped_declared": [
+        "hypothyroidism"
+      ],
+      "waiting_periods": {
+        "initial_days": 30,
+        "ped_months": 36,
+        "specific_disease": {
+          "cataract": 24,
+          "joint_replacement": 24,
+          "hernia": 24,
+          "gall_bladder": 24,
+          "prostate": 24,
+          "hysterectomy": 24,
+          "kidney_stone": 24,
+          "tonsils": 24,
+          "sinus_septum": 24,
+          "piles": 24,
+          "spine": 24
+        }
+      },
+      "room_rent_cap_per_day": 15000,
+      "copay_pct": 0,
+      "sub_limits": {
+        "cataract": 75000,
+        "joint_replacement": 350000
+      },
+      "exclusions": [
+        "cosmetic_surgery",
+        "obesity_surgery",
+        "infertility",
+        "dental",
+        "experimental"
+      ],
+      "claim_history": [
+        {
+          "date": "2025-09-30",
+          "procedure": "Laparoscopic cholecystectomy",
+          "amount": 118000
+        }
+      ]
+    },
+    {
+      "policy_id": "GH-POL-103112",
+      "product": "GoldenShield Classic",
+      "holder_name": "Joseph D'Costa",
+      "phone": "",
+      "members": [
+        {
+          "name": "Joseph D'Costa",
+          "relationship": "self",
+          "age": 46,
+          "gender": "M"
+        },
+        {
+          "name": "Maria D'Costa",
+          "relationship": "spouse",
+          "age": 43,
+          "gender": "F"
+        }
+      ],
+      "status": "active",
+      "sum_insured": 400000,
+      "balance": 400000,
+      "inception_date": "2026-04-15",
+      "expiry_date": "2027-04-14",
+      "ped_declared": [
+        "hypertension"
+      ],
+      "waiting_periods": {
+        "initial_days": 30,
+        "ped_months": 36,
+        "specific_disease": {
+          "cataract": 24,
+          "joint_replacement": 24,
+          "hernia": 24,
+          "gall_bladder": 24,
+          "prostate": 24,
+          "hysterectomy": 24,
+          "kidney_stone": 24,
+          "tonsils": 24,
+          "sinus_septum": 24,
+          "piles": 24,
+          "spine": 24
+        }
+      },
+      "room_rent_cap_per_day": 4000,
+      "copay_pct": 10,
+      "sub_limits": {
+        "cataract": 35000
+      },
+      "exclusions": [
+        "cosmetic_surgery",
+        "obesity_surgery",
+        "infertility",
+        "dental",
+        "experimental"
+      ],
+      "claim_history": []
     }
   ]
 }

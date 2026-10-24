@@ -34,9 +34,12 @@ CREATE TABLE IF NOT EXISTS outbox (
 );
 CREATE TABLE IF NOT EXISTS llm_cache (key TEXT PRIMARY KEY, model TEXT, response_json TEXT, created_at REAL);
 CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT);
+CREATE TABLE IF NOT EXISTS notifications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, ts REAL, case_id TEXT, kind TEXT, summary_json TEXT
+);
 """
 
-RESETTABLE = ("cases", "trace_events", "audit_log", "audit_tamper_backup", "outbox", "kv")
+RESETTABLE = ("cases", "trace_events", "audit_log", "audit_tamper_backup", "outbox", "kv", "notifications")
 
 
 class Store:
@@ -75,7 +78,7 @@ class Store:
         with self._lock:
             for table in RESETTABLE:
                 self._conn.execute(f"DELETE FROM {table}")
-            self._conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('trace_events','audit_log','outbox')")
+            self._conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('trace_events','audit_log','outbox','notifications')")
             self._conn.commit()
 
     # -- key/value settings (autonomy level, kill switch) --

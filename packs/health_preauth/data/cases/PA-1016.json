@@ -1,0 +1,54 @@
+{
+  "case_id": "PA-1016",
+  "hero": null,
+  "title": "Total hip replacement",
+  "source": "history",
+  "received_offset_min": 650,
+  "hospital": {
+    "name": "Coastal Pearl Hospital",
+    "city": "Mangaluru",
+    "hospital_code": "HSP-CPH-0968",
+    "tpa_email": "insurance@coastalpearl.example",
+    "phone": "+91 824 42 1185"
+  },
+  "form": {
+    "patient_name": "Harpreet Singh",
+    "age": 55,
+    "gender": "M",
+    "patient_phone": "+91 95457 31241",
+    "patient_email": "",
+    "aadhaar": "2743 6847 6049",
+    "policy_number": "GH-POL-103093",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-23",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Suresh Nayak",
+    "provisional_diagnosis": "Primary osteoarthritis of the hip",
+    "icd10": "M16.11",
+    "proposed_procedure": "Total hip replacement (unilateral)",
+    "room_category": "Single private AC",
+    "room_rent_per_day": 9500,
+    "expected_los_days": 5,
+    "is_accident": false,
+    "estimate": {
+      "room": 47500,
+      "ot": 41000,
+      "surgeon": 68000,
+      "consumables": 51500,
+      "medicines": 20500,
+      "investigations": 24500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "hip_xray",
+    "orthopaedic_consult",
+    "id_proof"
+  ],
+  "admission_note": "COASTAL PEARL HOSPITAL - Department of Orthopaedics\nCashless pre-authorization request: planned admission\n\nPatient: Harpreet Singh, 55 years, male. Contact +91 95457 31241. Aadhaar 2743 6847 6049.\nPolicy no. GH-POL-103093 (self).\n\nHistory: hip pain for 2 years with a limp and difficulty climbing stairs.\nFindings: restricted internal rotation; X-ray shows severe joint-space loss of the hip.\nProvisional diagnosis: primary osteoarthritis of the hip (ICD-10 M16.11).\n\nProposed treatment: total hip replacement (unilateral) on 23-Oct-2026. Expected stay 5 days in a single private ac at Rs 9,500 per day.\nCost estimate: room Rs 47,500; OT Rs 41,000; surgeon and anaesthetist Rs 68,000; consumables Rs 51,500; medicines Rs 20,500; investigations Rs 24,500. Total Rs 2,53,000.\nDocuments attached: Admission note, Itemised cost estimate, Hip X-ray report, Orthopaedic consultation note, Patient ID proof.\n\nTreating doctor: Dr. Suresh Nayak.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 72.1
+  }
+}

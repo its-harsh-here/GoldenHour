@@ -104,10 +104,10 @@ window.GH = (() => {
     slot.innerHTML = text ? `<div class="caption">${step ? `<span class="step">${esc(step)}</span>` : ''}<span>${text}</span></div>` : '';
   }
 
-  function countUp(el, to, { decimals = 0, suffix = '', format = null } = {}) {
+  function countUp(el, to, { decimals = 0, suffix = '', format = null, instant = false } = {}) {
     if (to === null || to === undefined) { el.textContent = '—'; return; }
     const render = (v) => { el.innerHTML = (format ? format(v) : v.toFixed(decimals)) + suffix; };
-    if (reduced) { render(to); return; }
+    if (reduced || instant) { render(to); return; }
     const start = performance.now(), dur = 900;
     const step = (now) => {
       const t = Math.min((now - start) / dur, 1);

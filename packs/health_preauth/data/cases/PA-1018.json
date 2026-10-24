@@ -1,0 +1,53 @@
+{
+  "case_id": "PA-1018",
+  "hero": null,
+  "title": "Normal vaginal delivery",
+  "source": "history",
+  "received_offset_min": 642,
+  "hospital": {
+    "name": "Deccan Lotus Hospital",
+    "city": "Hubballi",
+    "hospital_code": "HSP-DLH-0851",
+    "tpa_email": "tpa@deccanlotus.example",
+    "phone": "+91 836 41 7720"
+  },
+  "form": {
+    "patient_name": "Harpreet Singh",
+    "age": 55,
+    "gender": "M",
+    "patient_phone": "+91 95457 31241",
+    "patient_email": "",
+    "aadhaar": "2743 6847 6049",
+    "policy_number": "GH-POL-103093",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-23",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Joseph Mathew",
+    "provisional_diagnosis": "Term pregnancy, normal labour",
+    "icd10": "O80",
+    "proposed_procedure": "Normal vaginal delivery",
+    "room_category": "Single room",
+    "room_rent_per_day": 8500,
+    "expected_los_days": 3,
+    "is_accident": false,
+    "estimate": {
+      "room": 25500,
+      "ot": 3500,
+      "surgeon": 5500,
+      "consumables": 2500,
+      "medicines": 2500,
+      "investigations": 2500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "obstetric_usg",
+    "id_proof"
+  ],
+  "admission_note": "DECCAN LOTUS HOSPITAL - Department of Obstetrics\nCashless pre-authorization request: planned admission\n\nPatient: Harpreet Singh, 55 years, male. Contact +91 95457 31241. Aadhaar 2743 6847 6049.\nPolicy no. GH-POL-103093 (self).\n\nHistory: term pregnancy at 39 weeks in early labour.\nFindings: obstetric ultrasound shows a single live foetus in cephalic presentation.\nProvisional diagnosis: term pregnancy, normal labour (ICD-10 O80).\n\nProposed treatment: normal vaginal delivery on 23-Oct-2026. Expected stay 3 days in a single room at Rs 8,500 per day.\nCost estimate: room Rs 25,500; OT Rs 3,500; surgeon and anaesthetist Rs 5,500; consumables Rs 2,500; medicines Rs 2,500; investigations Rs 2,500. Total Rs 42,000.\nDocuments attached: Admission note, Itemised cost estimate, Obstetric ultrasound report, Patient ID proof.\n\nTreating doctor: Dr. Joseph Mathew.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 9.9
+  }
+}

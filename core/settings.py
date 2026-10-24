@@ -36,6 +36,11 @@ class Settings:
     pack: str
     replay_record: bool
     seed_history: bool
+    live_feed: bool
+    feed_interval_s: float
+    feed_max_cases: int
+    feed_llm: str
+    feed_simulate_desk: bool
 
 
 def get_settings() -> Settings:
@@ -60,4 +65,9 @@ def get_settings() -> Settings:
         pack=os.getenv("PACK", "health_preauth"),
         replay_record=_bool(os.getenv("REPLAY_RECORD"), False),
         seed_history=_bool(os.getenv("SEED_HISTORY"), True),
+        live_feed=_bool(os.getenv("LIVE_FEED"), True),
+        feed_interval_s=float(os.getenv("FEED_INTERVAL_S", "40")),
+        feed_max_cases=int(os.getenv("FEED_MAX_CASES", "40")),
+        feed_llm=os.getenv("FEED_LLM", "mock").strip().lower(),
+        feed_simulate_desk=_bool(os.getenv("FEED_SIMULATE_DESK"), True),
     )

@@ -35,12 +35,15 @@ class ActionGateway:
             if case_id:
                 self.events.emit(case_id, "action_gateway", "blocked", tool=action, status="blocked",
                                  input_summary=f"{role} attempted {action}", output={"http": 403, "reason": err.reason})
+            self.events.notify(case_id, "blocked", {"action": action, "role": role, "actor": actor, "reason": err.reason})
             raise err
         handler = self._handlers.get(action)
         if handler is None:
             raise KeyError(f"no handler registered for action '{action}'")
         result = handler(case_id or "", params or {}, role, actor)
         self.audit.append(case_id=case_id, actor=actor, role=role, action=action, details=result.get("audit", result))
+        self.events.notify(case_id, action, {"role": role, "actor": actor, "status": result.get("status"),
+                                             "amount": result.get("amount"), **({k: result[k] for k in ("autonomy_level", "kill_switch", "enabled") if k in result})})
         return result
 
     # ---- outbox: every outbound message the gateway sends ----

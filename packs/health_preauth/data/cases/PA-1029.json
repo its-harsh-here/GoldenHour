@@ -1,0 +1,56 @@
+{
+  "case_id": "PA-1029",
+  "hero": null,
+  "title": "Dengue fever",
+  "source": "history",
+  "received_offset_min": 273,
+  "hospital": {
+    "name": "Nandi Valley Medical Centre",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-NVM-0417",
+    "tpa_email": "preauth@nandivalley.example",
+    "phone": "+91 80 4725 3381"
+  },
+  "form": {
+    "patient_name": "Joseph D'Costa",
+    "age": 46,
+    "gender": "M",
+    "patient_phone": "+91 92795 89538",
+    "patient_email": "",
+    "aadhaar": "7991 3836 1225",
+    "policy_number": "GH-POL-103112",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-24",
+    "admission_type": "emergency",
+    "treating_doctor": "Dr. Meghana Rao",
+    "provisional_diagnosis": "Dengue fever with thrombocytopenia",
+    "icd10": "A91",
+    "proposed_procedure": "Dengue fever (medical management)",
+    "room_category": "Twin sharing",
+    "room_rent_per_day": 3500,
+    "expected_los_days": 4,
+    "is_accident": false,
+    "estimate": {
+      "room": 14000,
+      "ot": 0,
+      "surgeon": 12000,
+      "consumables": 5500,
+      "medicines": 18000,
+      "investigations": 12000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "platelet_count",
+    "id_proof"
+  ],
+  "admission_note": "NANDI VALLEY MEDICAL CENTRE - Department of Internal Medicine\nCashless pre-authorization request: emergency admission\n\nPatient: Joseph D'Costa, 46 years, male. Contact +91 92795 89538. Aadhaar 7991 3836 1225.\nPolicy no. GH-POL-103112 (self).\n\nHistory: fever for 4 days with myalgia and retro-orbital pain.\nFindings: NS1 antigen positive; platelets falling to 42,000/uL.\nProvisional diagnosis: dengue fever with thrombocytopenia (ICD-10 A91).\n\nProposed treatment: dengue fever (medical management) on 24-Oct-2026. Expected stay 4 days in a twin sharing at Rs 3,500 per day.\nCost estimate: room Rs 14,000; OT Rs 0; surgeon and anaesthetist Rs 12,000; consumables Rs 5,500; medicines Rs 18,000; investigations Rs 12,000. Total Rs 61,500.\nDocuments attached: Admission note, Itemised cost estimate, Platelet count trend, Patient ID proof.\n\nTreating doctor: Dr. Meghana Rao.",
+  "upload_on_query": [
+    "ns1_antigen_report"
+  ],
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 15.9
+  }
+}

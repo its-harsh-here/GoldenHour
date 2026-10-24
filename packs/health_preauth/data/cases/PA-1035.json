@@ -1,0 +1,54 @@
+{
+  "case_id": "PA-1035",
+  "hero": null,
+  "title": "Community-acquired pneumonia",
+  "source": "history",
+  "received_offset_min": 103,
+  "hospital": {
+    "name": "Kabini Grove Hospital",
+    "city": "Mysuru",
+    "hospital_code": "HSP-KGH-1024",
+    "tpa_email": "preauth@kabinigrove.example",
+    "phone": "+91 821 43 9904"
+  },
+  "form": {
+    "patient_name": "Lata Patil",
+    "age": 45,
+    "gender": "F",
+    "patient_phone": "+91 94596 33613",
+    "patient_email": "lata.patil@example.com",
+    "aadhaar": "6110 1915 0202",
+    "policy_number": "GH-POL-103052",
+    "relationship_to_holder": "spouse",
+    "admission_date": "2026-10-24",
+    "admission_type": "emergency",
+    "treating_doctor": "Dr. Anil D'Souza",
+    "provisional_diagnosis": "Community-acquired pneumonia",
+    "icd10": "J18.1",
+    "proposed_procedure": "Community-acquired pneumonia (medical management)",
+    "room_category": "Single room",
+    "room_rent_per_day": 8000,
+    "expected_los_days": 5,
+    "is_accident": false,
+    "estimate": {
+      "room": 40000,
+      "ot": 0,
+      "surgeon": 5000,
+      "consumables": 2500,
+      "medicines": 8000,
+      "investigations": 5000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "chest_xray",
+    "cbc_report",
+    "id_proof"
+  ],
+  "admission_note": "KABINI GROVE HOSPITAL - Department of Pulmonary Medicine\nCashless pre-authorization request: emergency admission\n\nPatient: Lata Patil, 45 years, female. Contact +91 94596 33613, lata.patil@example.com. Aadhaar 6110 1915 0202.\nPolicy no. GH-POL-103052 (spouse of holder).\n\nHistory: fever and productive cough for 4 days with breathlessness.\nFindings: SpO2 92% on room air; chest X-ray shows lobar consolidation.\nProvisional diagnosis: community-acquired pneumonia (ICD-10 J18.1).\n\nProposed treatment: community-acquired pneumonia (medical management) on 24-Oct-2026. Expected stay 5 days in a single room at Rs 8,000 per day.\nCost estimate: room Rs 40,000; OT Rs 0; surgeon and anaesthetist Rs 5,000; consumables Rs 2,500; medicines Rs 8,000; investigations Rs 5,000. Total Rs 60,500.\nDocuments attached: Admission note, Itemised cost estimate, Chest X-ray report, Complete blood count report, Patient ID proof.\n\nTreating doctor: Dr. Anil D'Souza.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 43.7
+  }
+}

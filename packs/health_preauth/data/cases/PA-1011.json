@@ -1,0 +1,53 @@
+{
+  "case_id": "PA-1011",
+  "hero": null,
+  "title": "Normal vaginal delivery",
+  "source": "history",
+  "received_offset_min": 705,
+  "hospital": {
+    "name": "Coastal Pearl Hospital",
+    "city": "Mangaluru",
+    "hospital_code": "HSP-CPH-0968",
+    "tpa_email": "insurance@coastalpearl.example",
+    "phone": "+91 824 42 1185"
+  },
+  "form": {
+    "patient_name": "Kavya Narayan",
+    "age": 22,
+    "gender": "F",
+    "patient_phone": "+91 91142 85602",
+    "patient_email": "kavya.narayan@example.com",
+    "aadhaar": "7446 7582 6546",
+    "policy_number": "GH-POL-103106",
+    "relationship_to_holder": "daughter",
+    "admission_date": "2026-10-23",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Prakash Hegde",
+    "provisional_diagnosis": "Term pregnancy, normal labour",
+    "icd10": "O80",
+    "proposed_procedure": "Normal vaginal delivery",
+    "room_category": "Single private AC",
+    "room_rent_per_day": 13500,
+    "expected_los_days": 2,
+    "is_accident": false,
+    "estimate": {
+      "room": 27000,
+      "ot": 3000,
+      "surgeon": 5000,
+      "consumables": 2000,
+      "medicines": 2000,
+      "investigations": 2000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "obstetric_usg",
+    "id_proof"
+  ],
+  "admission_note": "COASTAL PEARL HOSPITAL - Department of Obstetrics\nCashless pre-authorization request: planned admission\n\nPatient: Kavya Narayan, 22 years, female. Contact +91 91142 85602, kavya.narayan@example.com. Aadhaar 7446 7582 6546.\nPolicy no. GH-POL-103106 (daughter of holder).\n\nHistory: term pregnancy at 39 weeks in early labour.\nFindings: obstetric ultrasound shows a single live foetus in cephalic presentation.\nProvisional diagnosis: term pregnancy, normal labour (ICD-10 O80).\n\nProposed treatment: normal vaginal delivery on 23-Oct-2026. Expected stay 2 days in a single private ac at Rs 13,500 per day.\nCost estimate: room Rs 27,000; OT Rs 3,000; surgeon and anaesthetist Rs 5,000; consumables Rs 2,000; medicines Rs 2,000; investigations Rs 2,000. Total Rs 41,000.\nDocuments attached: Admission note, Itemised cost estimate, Obstetric ultrasound report, Patient ID proof.\n\nTreating doctor: Dr. Prakash Hegde.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 37.2
+  }
+}

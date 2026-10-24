@@ -1,0 +1,54 @@
+{
+  "case_id": "PA-1013",
+  "hero": null,
+  "title": "Lumbar microdiscectomy",
+  "source": "history",
+  "received_offset_min": 688,
+  "hospital": {
+    "name": "Kaveri City Hospital",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-KCH-0192",
+    "tpa_email": "tpa.desk@kavericity.example",
+    "phone": "+91 80 4110 2290"
+  },
+  "form": {
+    "patient_name": "Karthik Shenoy",
+    "age": 42,
+    "gender": "M",
+    "patient_phone": "+91 91094 96909",
+    "patient_email": "",
+    "aadhaar": "5827 3769 2890",
+    "policy_number": "GH-POL-103011",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-23",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Deepa Acharya",
+    "provisional_diagnosis": "Lumbar disc prolapse with radiculopathy",
+    "icd10": "M51.26",
+    "proposed_procedure": "Lumbar microdiscectomy",
+    "room_category": "Single room",
+    "room_rent_per_day": 5500,
+    "expected_los_days": 3,
+    "is_accident": false,
+    "estimate": {
+      "room": 16500,
+      "ot": 29000,
+      "surgeon": 48000,
+      "consumables": 36000,
+      "medicines": 14500,
+      "investigations": 17500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "mri_spine_report",
+    "neurosurgery_consult",
+    "id_proof"
+  ],
+  "admission_note": "KAVERI CITY HOSPITAL - Department of Neurosurgery\nCashless pre-authorization request: planned admission\n\nPatient: Karthik Shenoy, 42 years, male. Contact +91 91094 96909. Aadhaar 5827 3769 2890.\nPolicy no. GH-POL-103011 (self).\n\nHistory: low back pain radiating down the leg for 17 months, not settling with physiotherapy.\nFindings: positive straight-leg raise at 30 degrees; MRI shows an L4-L5 disc prolapse compressing the nerve root.\nProvisional diagnosis: lumbar disc prolapse with radiculopathy (ICD-10 M51.26).\n\nProposed treatment: lumbar microdiscectomy on 23-Oct-2026. Expected stay 3 days in a single room at Rs 5,500 per day.\nCost estimate: room Rs 16,500; OT Rs 29,000; surgeon and anaesthetist Rs 48,000; consumables Rs 36,000; medicines Rs 14,500; investigations Rs 17,500. Total Rs 1,61,500.\nDocuments attached: Admission note, Itemised cost estimate, MRI spine report, Neurosurgery consultation note, Patient ID proof.\n\nTreating doctor: Dr. Deepa Acharya.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 12.4
+  }
+}

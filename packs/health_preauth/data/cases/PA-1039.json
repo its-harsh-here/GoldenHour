@@ -1,0 +1,53 @@
+{
+  "case_id": "PA-1039",
+  "hero": null,
+  "title": "Normal vaginal delivery",
+  "source": "history",
+  "received_offset_min": 73,
+  "hospital": {
+    "name": "Nandi Valley Medical Centre",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-NVM-0417",
+    "tpa_email": "preauth@nandivalley.example",
+    "phone": "+91 80 4725 3381"
+  },
+  "form": {
+    "patient_name": "Saraswati Bhat",
+    "age": 64,
+    "gender": "F",
+    "patient_phone": "+91 97195 87624",
+    "patient_email": "saraswati.bhat@example.com",
+    "aadhaar": "5878 4904 0400",
+    "policy_number": "GH-POL-103027",
+    "relationship_to_holder": "spouse",
+    "admission_date": "2026-10-24",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Deepa Acharya",
+    "provisional_diagnosis": "Term pregnancy, normal labour",
+    "icd10": "O80",
+    "proposed_procedure": "Normal vaginal delivery",
+    "room_category": "Single room",
+    "room_rent_per_day": 3500,
+    "expected_los_days": 2,
+    "is_accident": false,
+    "estimate": {
+      "room": 7000,
+      "ot": 7500,
+      "surgeon": 11500,
+      "consumables": 5500,
+      "medicines": 4500,
+      "investigations": 4500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "obstetric_usg",
+    "id_proof"
+  ],
+  "admission_note": "NANDI VALLEY MEDICAL CENTRE - Department of Obstetrics\nCashless pre-authorization request: planned admission\n\nPatient: Saraswati Bhat, 64 years, female. Contact +91 97195 87624, saraswati.bhat@example.com. Aadhaar 5878 4904 0400.\nPolicy no. GH-POL-103027 (spouse of holder).\n\nHistory: term pregnancy at 39 weeks in early labour.\nFindings: obstetric ultrasound shows a single live foetus in cephalic presentation.\nProvisional diagnosis: term pregnancy, normal labour (ICD-10 O80).\n\nProposed treatment: normal vaginal delivery on 24-Oct-2026. Expected stay 2 days in a single room at Rs 3,500 per day.\nCost estimate: room Rs 7,000; OT Rs 7,500; surgeon and anaesthetist Rs 11,500; consumables Rs 5,500; medicines Rs 4,500; investigations Rs 4,500. Total Rs 40,500.\nDocuments attached: Admission note, Itemised cost estimate, Obstetric ultrasound report, Patient ID proof.\n\nTreating doctor: Dr. Deepa Acharya.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 6.2
+  }
+}

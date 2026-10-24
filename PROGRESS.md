@@ -30,11 +30,18 @@ Stretch: a `Dockerfile` (replay mode by default, `$PORT`, non-root) was added af
 - First deploy served an empty console: `.gitignore`'s `data/` also matched `packs/health_preauth/data/`, so the pack's data was never committed. Fixed by ignoring `/data/` only, committing the 15 data files, a packaging test that fails if pack data is untracked, and a case count in `/api/health`.
 - `render.yaml` blueprint (Render, Docker, free plan, auto-deploy from `main`, `LLM_MODE=groq`). The owner applies it with the Deploy to Render link in README.md and enters `GROQ_API_KEY` in Render's prompt. The build session had no Render credentials, so the service itself was not created from here.
 
+## Post-launch changes
+- Dataset: 16 policies, 24 procedures, 6 hospitals, 40 cases. PA-1011 to PA-1040 come from the deterministic generator; their outcomes are decided at startup by the same desk logic the live feed uses.
+- Live feed: `core/feed.py` thread adds a synthetic request about every 40 s, processed on arrival (mock pipeline by default); a simulated desk signs live-feed cases off within 1-7 minutes; `/api/stream` pushes desk events to the console (ticker, inbox, badges, dashboard, audit pill); retention keeps the newest 40 feed cases.
+- Console: the demo button is a 20 px icon-only ▶; L1/L2/L3 and the power button are always clickable and switch the demo role to Admin, since they are Admin controls; inbox filter chips; live chips on feed cases.
+- Replay cache re-recorded on live Groq (42 entries; A, B, C replay with zero misses). The first re-record hit a transient Groq 500 from Prompt Guard on case B: the guard degraded to regex as designed, and a second pass recorded it.
+- Tests: 71 (generator, feed, simulated desk, retention, desk stream, feed RBAC).
+
 ## How to run
 ```
 pip install -r requirements.txt
 cp .env.example .env              # LLM_MODE=mock by default
-LLM_MODE=mock pytest -q           # 61 tests, no network
+LLM_MODE=mock pytest -q           # 71 tests, no network
 python run.py                     # http://127.0.0.1:8000  -> / and /console
 python scripts/smoke_http.py      # HTTP checks for hero cases A/B/C + audit (server must be running)
 LLM_MODE=replay python run.py     # recorded Groq runs, for the demo video

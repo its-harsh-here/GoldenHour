@@ -1,0 +1,54 @@
+{
+  "case_id": "PA-1025",
+  "hero": null,
+  "title": "Acute gastroenteritis with dehydration",
+  "source": "history",
+  "received_offset_min": 330,
+  "hospital": {
+    "name": "Kaveri City Hospital",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-KCH-0192",
+    "tpa_email": "tpa.desk@kavericity.example",
+    "phone": "+91 80 4110 2290"
+  },
+  "form": {
+    "patient_name": "Nisha Menon",
+    "age": 41,
+    "gender": "F",
+    "patient_phone": "+91 95431 53832",
+    "patient_email": "nisha.menon@example.com",
+    "aadhaar": "8061 9782 1161",
+    "policy_number": "GH-POL-100231",
+    "relationship_to_holder": "spouse",
+    "admission_date": "2026-10-24",
+    "admission_type": "emergency",
+    "treating_doctor": "Dr. Prakash Hegde",
+    "provisional_diagnosis": "Acute gastroenteritis with dehydration",
+    "icd10": "A09",
+    "proposed_procedure": "Acute gastroenteritis with dehydration (medical)",
+    "room_category": "Single room",
+    "room_rent_per_day": 3000,
+    "expected_los_days": 3,
+    "is_accident": false,
+    "estimate": {
+      "room": 9000,
+      "ot": 0,
+      "surgeon": 7000,
+      "consumables": 3500,
+      "medicines": 10500,
+      "investigations": 7000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "stool_report",
+    "electrolytes_report",
+    "id_proof"
+  ],
+  "admission_note": "KAVERI CITY HOSPITAL - Department of Internal Medicine\nCashless pre-authorization request: emergency admission\n\nPatient: Nisha Menon, 41 years, female. Contact +91 95431 53832, nisha.menon@example.com. Aadhaar 8061 9782 1161.\nPolicy no. GH-POL-100231 (spouse of holder).\n\nHistory: 4 days of loose stools and vomiting with reduced urine output.\nFindings: dry mucosa, pulse 112/min; serum sodium 131 mmol/L.\nProvisional diagnosis: acute gastroenteritis with dehydration (ICD-10 A09).\n\nProposed treatment: acute gastroenteritis with dehydration (medical) on 24-Oct-2026. Expected stay 3 days in a single room at Rs 3,000 per day.\nCost estimate: room Rs 9,000; OT Rs 0; surgeon and anaesthetist Rs 7,000; consumables Rs 3,500; medicines Rs 10,500; investigations Rs 7,000. Total Rs 37,000.\nDocuments attached: Admission note, Itemised cost estimate, Stool examination report, Serum electrolytes report, Patient ID proof.\n\nTreating doctor: Dr. Prakash Hegde.",
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 20.3
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "case_id": "PA-1030",
+  "hero": null,
+  "title": "Lumbar microdiscectomy",
+  "source": "history",
+  "received_offset_min": 266,
+  "hospital": {
+    "name": "Nandi Valley Medical Centre",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-NVM-0417",
+    "tpa_email": "preauth@nandivalley.example",
+    "phone": "+91 80 4725 3381"
+  },
+  "form": {
+    "patient_name": "Suresh Patil",
+    "age": 48,
+    "gender": "M",
+    "patient_phone": "+91 95420 29267",
+    "patient_email": "suresh.patil@example.com",
+    "aadhaar": "3236 1071 3815",
+    "policy_number": "GH-POL-103052",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-24",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Lakshmi Pai",
+    "provisional_diagnosis": "Lumbar disc prolapse with radiculopathy",
+    "icd10": "M51.26",
+    "proposed_procedure": "Lumbar microdiscectomy",
+    "room_category": "Single room",
+    "room_rent_per_day": 13500,
+    "expected_los_days": 3,
+    "is_accident": false,
+    "estimate": {
+      "room": 40500,
+      "ot": 25500,
+      "surgeon": 42500,
+      "consumables": 32000,
+      "medicines": 13000,
+      "investigations": 15500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "neurosurgery_consult",
+    "id_proof"
+  ],
+  "admission_note": "NANDI VALLEY MEDICAL CENTRE - Department of Neurosurgery\nCashless pre-authorization request: planned admission\n\nPatient: Suresh Patil, 48 years, male. Contact +91 95420 29267, suresh.patil@example.com. Aadhaar 3236 1071 3815.\nPolicy no. GH-POL-103052 (self).\n\nHistory: low back pain radiating down the leg for 6 months, not settling with physiotherapy.\nFindings: positive straight-leg raise at 30 degrees; MRI shows an L4-L5 disc prolapse compressing the nerve root.\nProvisional diagnosis: lumbar disc prolapse with radiculopathy (ICD-10 M51.26).\n\nProposed treatment: lumbar microdiscectomy on 24-Oct-2026. Expected stay 3 days in a single room at Rs 13,500 per day.\nCost estimate: room Rs 40,500; OT Rs 25,500; surgeon and anaesthetist Rs 42,500; consumables Rs 32,000; medicines Rs 13,000; investigations Rs 15,500. Total Rs 1,69,000.\nDocuments attached: Admission note, Itemised cost estimate, Neurosurgery consultation note, Patient ID proof.\n\nTreating doctor: Dr. Lakshmi Pai.",
+  "upload_on_query": [
+    "mri_spine_report"
+  ],
+  "seed_outcome": {
+    "auto": true,
+    "tat_min": 20.2
+  }
+}
