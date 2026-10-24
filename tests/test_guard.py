@@ -19,7 +19,7 @@ def note(case_id: str) -> str:
 def test_regex_flags_hero_c_hidden_text():
     res = screen(note("PA-1003"))
     assert res.detected and res.method == "regex"
-    assert any(ATTACK in s["text"] for s in res.sentences)
+    assert [s["text"] for s in res.sentences] == [ATTACK]
 
 
 @pytest.mark.parametrize("case_id", ["PA-1001", "PA-1002", "PA-1004", "PA-1005", "PA-1006", "PA-1007", "PA-1008", "PA-1009", "PA-1010"])

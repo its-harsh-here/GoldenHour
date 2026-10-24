@@ -65,7 +65,10 @@ def find_injection_spans(text: str) -> list[dict]:
     spans: list[tuple[int, int]] = []
     for pattern in _COMPILED:
         for m in pattern.finditer(text):
-            spans.append(_sentence_bounds(text, m.start(), m.end()))
+            start = m.start()
+            while start < m.end() and text[start].isspace():  # patterns may anchor on the preceding newline
+                start += 1
+            spans.append(_sentence_bounds(text, start, m.end()))
     merged: list[list[int]] = []
     for s, e in sorted(set(spans)):
         if merged and s <= merged[-1][1]:

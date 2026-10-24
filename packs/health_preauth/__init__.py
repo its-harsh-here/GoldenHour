@@ -33,6 +33,47 @@ class HealthPreauthPack:
 
         actions.register(rt)
 
+    # ---- hooks used by the pack-agnostic API in app/main.py ----
+    @property
+    def decision_error(self):
+        from packs.health_preauth.actions import DecisionError
+
+        return DecisionError
+
+    def seed(self, rt, history: bool = True) -> dict:
+        from packs.health_preauth import actions
+
+        return actions.seed_demo(rt, history)
+
+    def decide(self, rt, case_id: str, role: str, actor: str, action: str, amount=None, reason: str = "") -> dict:
+        from packs.health_preauth import actions
+
+        return actions.human_decision(rt, case_id, role, actor, action, amount=amount, reason=reason)
+
+    def case_summary(self, rt, case: dict, role: str) -> dict:
+        from packs.health_preauth import actions
+
+        return actions.case_summary(rt, case, role)
+
+    def case_view(self, rt, case: dict, role: str) -> dict:
+        from packs.health_preauth import actions
+
+        return actions.case_view(rt, case, role)
+
+    def dashboard(self, rt) -> dict:
+        from packs.health_preauth import actions
+
+        return actions.dashboard(rt)
+
+    def mask_outbox(self, rt, rows: list[dict]) -> list[dict]:
+        from packs.health_preauth import actions
+
+        out = []
+        for row in rows:
+            case = rt.cases.get(row["case_id"])
+            out.append(actions._mask(row, case["state"].get("intake", {}).get("phi_map", {})) if case else row)
+        return out
+
     def audit_summary(self, step: str, out: dict) -> dict:
         """A few fields per step for the audit chain (full output stays in the case state)."""
         if step == "intake":

@@ -6,8 +6,8 @@
 | M0 Scaffold, settings, LLM gateway, seed data | done |
 | M1 Redaction, injection guard, intake, rules | done |
 | M2 Docs/coding + risk agents, orchestrator, trace + SSE | done |
-| M3 REST API, action gateway, RBAC, audit chain, e2e | next |
-| M4 Console UI | todo |
+| M3 REST API, action gateway, RBAC, audit chain, e2e | done |
+| M4 Console UI | next |
 | M5 Dashboard, audit tab, autonomy, guided demo, landing | todo |
 | M6 Groq live verification + replay cache | todo |
 | M7 Visual QA, README, DEMO_SCRIPT | todo |
@@ -19,12 +19,15 @@
 
 - M2: Policy agent (tool calls get_policy/get_claim_history, then rules.py), Docs & Coding agent (lookup_procedure/required_docs/benchmark_rate), Risk agent (weighted signals from pack.yaml + LLM rationale), decision policy, grounded explainer (rejects unsupported rupee figures), action routing; `core/orchestrator.py` state machine with persisted state, pause/resume and failure-to-human; `core/events.py` trace log + SSE; action gateway, RBAC and hash-chained audit wired in early because the autonomous hospital query needs them.
 
+- M3: pack-agnostic REST API (`app/main.py`) over core + pack hooks; RBAC via `X-Role` enforced in the Action Gateway (403 + audit block on every rejected attempt); audit verify / Admin tamper test / restore; SSE trace stream; HTTP e2e tests for A/B/C; `scripts/smoke_http.py` drives the same flows against a live server.
+
 ## How to run
 ```
 pip install -r requirements.txt
 cp .env.example .env        # LLM_MODE=mock by default
 LLM_MODE=mock pytest -q
 python run.py               # http://127.0.0.1:8000
+python scripts/smoke_http.py  # HTTP checks for hero cases A/B/C + audit (server must be running)
 ```
 
 ## Known issues
