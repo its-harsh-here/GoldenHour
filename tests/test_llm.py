@@ -87,3 +87,31 @@ def test_parse_json_handles_fences():
 def test_token_bucket_allows_burst_then_throttles():
     bucket = TokenBucket(rpm=600, tpm=100000)
     assert bucket.acquire(10) == 0.0
+
+
+def test_rejected_tool_call_falls_back_to_local_tools(client, monkeypatch):
+    seen = []
+    tools = [Tool("get_policy", "p", {"type": "object", "properties": {}}, lambda policy_ref: {"product": "X", "ref": policy_ref})]
+    calls = {"n": 0}
+
+    def fake_complete(**kwargs):
+        calls["n"] += 1
+        if kwargs.get("tools"):
+            raise LLMError("Groq rejected the call (400): tool call validation failed")
+        assert "TOOL RESULTS" in kwargs["messages"][1]["content"] and '"product": "X"' in kwargs["messages"][1]["content"]
+        from core.llm import Completion
+        return Completion('{"ok": true, "n": 2}', [], "m", 1, 1, "groq")
+
+    monkeypatch.setattr(client, "complete", fake_complete)
+    res = client.run_agent(agent="t", model="m", system="s", user="u", schema=Answer, mock=lambda m: {}, tools=tools,
+                           on_tool=lambda *a: seen.append(a[0]), fallback_calls=[("get_policy", {"policy_ref": "[POLICY_1]"})])
+    assert res.data.n == 2 and res.degraded and seen == ["get_policy"]
+
+
+def test_recorded_rejection_replays_as_error(tmp_path):
+    settings = replace(get_settings(), llm_mode="replay", db_path=tmp_path / "t.db")
+    msgs = [{"role": "system", "content": "s"}, {"role": "user", "content": "u"}]
+    ReplayCache(tmp_path / "replay.json").put(cache_key("m", msgs), {"model": "m", "error": "Groq rejected the call (400): x"})
+    client = LLMClient(settings, Store(settings.db_path), tmp_path / "replay.json")
+    with pytest.raises(LLMError):
+        client.complete(model="m", messages=msgs, mock=lambda m: {"content": "{}"})

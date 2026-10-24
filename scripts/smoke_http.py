@@ -93,9 +93,11 @@ def main() -> None:
     call("POST", "/api/cases/PA-1003/process")
     v = wait_for("PA-1003", {"ESCALATED", "AWAITING_APPROVAL"})
     print(f"status={v['status']} assigned={v['assigned_role']} injection_detected={v['guard']['detected']} "
-          f"guard={v['guard']['method']} score={v['guard']['score']} risk={v['risk']['score']}")
+          f"guard={v['guard']['method']} score={v['guard']['score']} risk={(v.get('risk') or {}).get('score')}")
+    if v.get("step_failure"):
+        print("  step failure routed to a human:", v["step_failure"]["reason"][:160])
     print("  flagged:", [s["text"] for s in v["guard"]["sentences"]])
-    print("  failed rules:", v["policy"]["evaluation"]["failed_rules"])
+    print("  failed rules:", ((v.get("policy") or {}).get("evaluation") or {}).get("failed_rules"))
     print("  reasons:", v["decision"]["reasons"])
     code, res = call("POST", "/api/cases/PA-1003/decision", "PROCESSOR", {"action": "approve"})
     print(f"Processor approve attempt -> HTTP {code} {res}")

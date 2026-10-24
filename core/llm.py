@@ -67,6 +67,7 @@ class AgentResult:
     latency_ms: int
     sources: list[str] = field(default_factory=list)
     tool_calls: list[dict] = field(default_factory=list)
+    degraded: str | None = None  # set when tools were run locally after the model's tool call was rejected
 
     @property
     def replay_miss(self) -> bool:
@@ -220,6 +221,8 @@ class LLMClient:
         key = cache_key(model, messages)
         if mode == "replay":
             hit = self.replay.get(key)
+            if hit and hit.get("error"):
+                raise LLMError(hit["error"])
             if hit:
                 return Completion(hit.get("content"), hit.get("tool_calls", []), model, hit.get("tokens", 0), 0, "replay")
             return self._mock(model, messages, mock, "replay_miss")
@@ -227,7 +230,12 @@ class LLMClient:
         if cached:
             comp = Completion(cached.get("content"), cached.get("tool_calls", []), model, cached.get("tokens", 0), 0, "cache")
         else:
-            comp = self._call_groq(model, messages, tools, max_tokens, json_mode, reasoning_effort)
+            try:
+                comp = self._call_groq(model, messages, tools, max_tokens, json_mode, reasoning_effort)
+            except LLMError as err:
+                if self.settings.replay_record and "rejected the call (400)" in str(err):
+                    self.replay.put(key, {"model": model, "error": str(err)})  # so replay takes the same degrade path
+                raise
             self.store.cache_put(key, model, {"content": comp.content, "tool_calls": comp.tool_calls, "tokens": comp.tokens})
         if self.settings.replay_record:
             self.replay.put(key, {"model": model, "content": comp.content, "tool_calls": comp.tool_calls, "tokens": comp.tokens})
@@ -261,9 +269,11 @@ class LLMClient:
                 time.sleep(1.5 * attempt)
                 continue
             except APIStatusError as err:
-                if attempt > 1:
+                # gpt-oss occasionally emits a malformed tool call (Groq answers 400 "tool call validation
+                # failed"); the same request usually succeeds on a fresh sample, so allow two retries.
+                if attempt > (3 if err.status_code == 400 else 1):
                     raise LLMError(f"Groq rejected the call ({err.status_code}): {_short(err)}") from err
-                time.sleep(0.5)
+                time.sleep(0.5 * attempt)
                 continue
             msg = resp.choices[0].message
             calls = [
@@ -274,7 +284,27 @@ class LLMClient:
             return Completion(msg.content, calls, model, tokens or 0, int((time.perf_counter() - t0) * 1000), "groq")
 
     # ---------- agent loop ----------
-    def run_agent(
+    def run_agent(self, *, fallback_calls: list[tuple[str, dict]] | None = None, **kwargs) -> AgentResult:
+        """Run one agent turn. If Groq rejects the model's tool call (HTTP 400), run `fallback_calls`
+        locally with the same allow-listed tools and ask once more without tools."""
+        try:
+            return self._run_agent(**kwargs)
+        except LLMError as err:
+            tools = kwargs.get("tools")
+            if not (tools and fallback_calls) or "rejected the call (400)" not in str(err):
+                raise
+            by_name = {t.name: t for t in tools}
+            outputs = {}
+            for i, (name, args) in enumerate(fallback_calls):
+                call = {"id": f"local_{i}", "name": name, "arguments": json.dumps(args, sort_keys=True)}
+                outputs[name] = self._run_tool(call, by_name, kwargs.get("on_tool"))
+            retry = dict(kwargs, tools=None, user=kwargs["user"] + "\n\nTOOL RESULTS (the tools were run for you; do not call tools):\n"
+                         + json.dumps(outputs, ensure_ascii=False, sort_keys=True))
+            result = self._run_agent(**retry)
+            result.degraded = f"tool call rejected by Groq; {len(fallback_calls)} allow-listed tool(s) run locally"
+            return result
+
+    def _run_agent(
         self,
         *,
         agent: str,

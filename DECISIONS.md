@@ -21,3 +21,8 @@ One line per judgement call made during the unattended build.
 - Non-hero cases are pre-processed at startup with the deterministic mock LLM (labelled "seeded") and backdated human sign-offs, so the dashboard shows a realistic recent history without spending Groq quota.
 - The synthetic insurer is "Kestrel Mutual Health"; letters are clearly marked as synthetic.
 - The audit chain records case receipt, each agent step (digest + key fields), every gateway action (allowed or blocked), human decisions and admin changes; individual tool calls stay in the trace log.
+- Groq call budget used during the build: hero cases A, B, C ran live (plus one partial C run that exposed the tool-call 400); everything else used mock or the SQLite response cache.
+- Groq 400 "tool call validation failed" (malformed gpt-oss tool name) is retried twice, then the agent's allow-listed tools run locally and the model gets their results in a plain JSON call. This keeps tool use governed by the same allow-list and records the degradation in the trace.
+- Screenshots in docs/screenshots are taken from `LLM_MODE=replay`, so explanations and drafts are the recorded Groq outputs, not mock templates.
+- Screenshots use the preinstalled Node Playwright + Chromium (`scripts/screenshots.mjs`) instead of `pip install playwright`, as the build environment instructs not to install a second browser.
+- Alpine.js was not needed; the console is vanilla JS, so it is not vendored.

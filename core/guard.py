@@ -105,7 +105,7 @@ def screen(text: str, llm: LLMClient | None = None, model: str | None = None, fo
     if not use_model:
         return GuardResult(bool(sentences), regex_score, "regex", None, sentences)
     try:
-        scores = []
+        scores, sources = [], set()
         for chunk in _chunks(text):
             comp = llm.complete(
                 model=model,
@@ -114,8 +114,11 @@ def screen(text: str, llm: LLMClient | None = None, model: str | None = None, fo
                 max_tokens=8,
             )
             scores.append(parse_score(comp.content))
+            sources.add(comp.source)
         score = max(scores)
     except (LLMError, ValueError) as err:
         return GuardResult(bool(sentences), regex_score, "regex (guard model unavailable)", model, sentences, str(err)[:200])
     detected = score >= THRESHOLD or bool(sentences)
+    if "replay_miss" in sources:
+        return GuardResult(detected, round(score, 4), "regex (replay miss)", "replay_miss:" + model.split("/")[-1], sentences)
     return GuardResult(detected, round(score, 4), "prompt_guard+regex", model, sentences)

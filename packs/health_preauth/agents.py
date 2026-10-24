@@ -225,6 +225,11 @@ def _tool_outputs(messages: list[dict]) -> list[dict]:
     return outs
 
 
+def _note_degraded(ctx: StepContext, agent: str, result) -> None:
+    if result.degraded:
+        ctx.emit(agent, "tool_fallback", tool="local tools", status="alert", output={"reason": result.degraded})
+
+
 def _admission(ctx: StepContext) -> date:
     return date.fromisoformat(ctx.request["form"]["admission_date"])
 
@@ -288,7 +293,9 @@ def policy_agent(ctx: StepContext) -> dict:
             f"(ICD-10 {', '.join(ex['icd10_codes']) or 'not stated'}). Proposed procedure: {ex['proposed_procedure']}.")
     result = ctx.llm.run_agent(agent="policy", model=ctx.settings.model_fast, system=prompt("policy"), user=user,
                                schema=PolicyFindings, mock=mock_policy(ref), tools=allow, on_tool=_tool_hook(ctx, "policy"),
-                               force_mock=ctx.force_mock)
+                               force_mock=ctx.force_mock,
+                               fallback_calls=[("get_policy", {"policy_ref": ref}), ("get_claim_history", {"policy_ref": ref})])
+    _note_degraded(ctx, "policy", result)
     findings: PolicyFindings = result.data
     ctx.emit("policy", "coverage_review", input_summary="policy terms + claim history", output=findings.model_dump(),
              model=ctx.model_label(ctx.settings.model_fast, result.source), tokens=result.tokens, latency_ms=result.latency_ms)
@@ -368,9 +375,15 @@ def docs_agent(ctx: StepContext) -> dict:
     ]
     user = (f"Proposed procedure: {ex['proposed_procedure']}. Diagnosis: {ex['provisional_diagnosis']}. "
             f"ICD-10 codes: {', '.join(ex['icd10_codes']) or 'none'}. Attached document codes: {', '.join(attached)}.")
+    guess = resolve_procedure(form)
+    key = guess["key"] if guess else ""
     result = ctx.llm.run_agent(agent="docs", model=ctx.settings.model_fast, system=prompt("docs"), user=user,
                                schema=DocsFindings, mock=mock_docs(ex, attached), tools=allow, on_tool=_tool_hook(ctx, "docs"),
-                               force_mock=ctx.force_mock)
+                               force_mock=ctx.force_mock,
+                               fallback_calls=[("lookup_procedure", {"query": f"{ex['proposed_procedure']} {ex['provisional_diagnosis']}",
+                                                                     "icd10": (ex.get("icd10_codes") or [""])[0]}),
+                                               ("required_docs", {"procedure_key": key}), ("benchmark_rate", {"procedure_key": key})])
+    _note_degraded(ctx, "docs", result)
     f: DocsFindings = result.data
     ctx.emit("docs", "coding_review", input_summary="package table lookups", output=f.model_dump(),
              model=ctx.model_label(ctx.settings.model_fast, result.source), tokens=result.tokens, latency_ms=result.latency_ms)
