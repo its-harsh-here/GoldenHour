@@ -7,8 +7,8 @@
 | M1 Redaction, injection guard, intake, rules | done |
 | M2 Docs/coding + risk agents, orchestrator, trace + SSE | done |
 | M3 REST API, action gateway, RBAC, audit chain, e2e | done |
-| M4 Console UI | next |
-| M5 Dashboard, audit tab, autonomy, guided demo, landing | todo |
+| M4 Console UI | done |
+| M5 Dashboard, audit tab, autonomy, guided demo, landing | next |
 | M6 Groq live verification + replay cache | todo |
 | M7 Visual QA, README, DEMO_SCRIPT | todo |
 
@@ -20,6 +20,8 @@
 - M2: Policy agent (tool calls get_policy/get_claim_history, then rules.py), Docs & Coding agent (lookup_procedure/required_docs/benchmark_rate), Risk agent (weighted signals from pack.yaml + LLM rationale), decision policy, grounded explainer (rejects unsupported rupee figures), action routing; `core/orchestrator.py` state machine with persisted state, pause/resume and failure-to-human; `core/events.py` trace log + SSE; action gateway, RBAC and hash-chained audit wired in early because the autonomous hospital query needs them.
 
 - M3: pack-agnostic REST API (`app/main.py`) over core + pack hooks; RBAC via `X-Role` enforced in the Action Gateway (403 + audit block on every rejected attempt); audit verify / Admin tamper test / restore; SSE trace stream; HTTP e2e tests for A/B/C; `scripts/smoke_http.py` drives the same flows against a live server.
+
+- M4: console (`/console`): inbox with live SLA sun-dials, case view with live SSE agent trace, decision card (outcome, grounded summary, waterfall, clause-cited rule ledger), redaction view with "What the model saw" toggle, injection quarantine banner, role-gated approvals (one-click at level 2, manual at level 1, Medical Officer amount/deny with mandatory reason, Processor 403 shown as a toast), outbox (paper letter, email card, phone SMS). Vendored fonts, Chart.js and a hand-drawn icon sprite; no CDN.
 
 ## How to run
 ```

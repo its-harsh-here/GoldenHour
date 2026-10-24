@@ -1,1 +1,58 @@
-<!doctype html><title>GoldenHour console</title><p>Console</p>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GoldenHour · Cashless desk</title>
+  <meta name="description" content="Governed multi-agent desk for cashless pre-authorization">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23F5B942' stroke-width='3' opacity='.4'/%3E%3Cpath d='M16 4a12 12 0 0 1 12 12' fill='none' stroke='%23F5B942' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script>try { if (localStorage.getItem('gh.present') === '1') document.documentElement.classList.add('presentation'); } catch (e) {}</script>
+</head>
+<body class="console">
+  <header class="topnav">
+    <a class="brand" href="/" aria-label="GoldenHour home">
+      <svg class="logo" aria-hidden="true"><use href="/static/vendor/icons.svg#logo"/></svg>
+      <span class="name">GoldenHour</span><span class="sub">Cashless desk</span>
+    </a>
+    <nav class="tabs" role="tablist" aria-label="Console sections">
+      <button class="tab" role="tab" data-tab="inbox"><svg class="icon sm"><use href="/static/vendor/icons.svg#i-inbox"/></svg>Inbox <span class="count" id="inbox-count" hidden></span></button>
+      <button class="tab" role="tab" data-tab="case"><svg class="icon sm"><use href="/static/vendor/icons.svg#i-file"/></svg>Case</button>
+      <button class="tab" role="tab" data-tab="dashboard"><svg class="icon sm"><use href="/static/vendor/icons.svg#i-chart"/></svg>Dashboard</button>
+      <button class="tab" role="tab" data-tab="audit"><svg class="icon sm"><use href="/static/vendor/icons.svg#i-chain"/></svg>Audit</button>
+    </nav>
+    <div class="nav-right">
+      <span class="mode-badge" id="mode-badge" title="LLM mode">mock</span>
+      <div class="control"><label for="autonomy">Autonomy</label>
+        <div class="segmented" id="autonomy" role="group" aria-label="Autonomy level">
+          <button data-level="1" title="Level 1: every decision needs a human">L1</button>
+          <button data-level="2" title="Level 2: clean low-value cases get a one-click sign-off">L2</button>
+          <button data-level="3" title="Level 3: clean low-value cases auto-execute, 10% post-audit">L3</button>
+        </div>
+      </div>
+      <button class="btn icon-only sm" id="kill" title="Kill switch (Admin): force autonomy level 1" aria-label="Kill switch"><svg class="icon"><use href="/static/vendor/icons.svg#i-power"/></svg></button>
+      <div class="control"><label for="role">Role</label><select class="select" id="role" aria-label="Demo role"></select></div>
+      <button class="btn icon-only sm" id="present" aria-pressed="false" title="Presentation mode" aria-label="Presentation mode"><svg class="icon"><use href="/static/vendor/icons.svg#i-present"/></svg></button>
+      <button class="btn primary sm" id="demo"><svg class="icon sm"><use href="/static/vendor/icons.svg#i-play"/></svg>Run guided demo</button>
+    </div>
+  </header>
+  <div class="banner kill" id="kill-banner" hidden><svg class="icon"><use href="/static/vendor/icons.svg#i-power"/></svg>
+    <span>Kill switch engaged. Autonomy is forced to level 1: every decision needs a human.</span>
+    <button class="btn sm danger" id="kill-release" style="margin-left:auto">Release (Admin)</button></div>
+
+  <main class="page">
+    <section class="view" id="view-inbox" aria-label="Inbox"></section>
+    <section class="view" id="view-case" aria-label="Case" hidden></section>
+    <section class="view" id="view-dashboard" aria-label="Dashboard" hidden></section>
+    <section class="view" id="view-audit" aria-label="Audit" hidden></section>
+    <p class="footer-note"><svg class="icon sm"><use href="/static/vendor/icons.svg#i-shield"/></svg>
+      Synthetic data only. Not a clinical decision tool: GoldenHour checks coverage, documentation, coding and cost reasonableness, then routes to humans. It never diagnoses or recommends treatment.</p>
+  </main>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <div id="caption-slot" aria-live="polite"></div>
+
+  <script src="/static/vendor/chart.umd.min.js"></script>
+  <script src="/static/js/common.js"></script>
+  <script src="/static/js/console.js"></script>
+</body>
+</html>
