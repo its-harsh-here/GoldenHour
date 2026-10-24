@@ -167,6 +167,8 @@ class Orchestrator:
                 continue
             pause = out.pop("_pause", None) or pause
             resume_at = out.pop("_resume_at", None)
+            for key, value in rt.cases.get(case_id)["state"].items():  # keep what gateway handlers saved meanwhile
+                state.setdefault(key, value)
             state.update(out)
             if resume_at:
                 state["resume_at"] = resume_at
