@@ -26,6 +26,8 @@ Stretch: a `Dockerfile` (replay mode by default, `$PORT`, non-root) was added af
 - M7: headless screenshots at 1440x900 (landing, inbox, case A, case C, dashboard, audit, plus tamper test, case B query, full-page and presentation variants) taken in replay mode. I reviewed each one and fixed what was visibly wrong: kill-switch banner ignoring `hidden`, trace column overflowing its grid track, cramped card headings and document toggle, re-render restarting animations, pipeline node text overflow, zero-height live bars, audit auto-scroll hiding the result banner, and top-nav overflow at 1440 px. All were re-shot after the fixes. README.md and DEMO_SCRIPT.md are complete.
 
 ## Deployment
+- Live on Render: https://goldenhour-7xuc.onrender.com (`LLM_MODE=groq`, key set in Render). Verified after deploy: 10 cases, 42 replay entries, all console views render, SSE trace streams through Render's proxy, case A ran on live Groq in 10 s and was approved from the console with letter, email and SMS in the outbox.
+- First deploy served an empty console: `.gitignore`'s `data/` also matched `packs/health_preauth/data/`, so the pack's data was never committed. Fixed by ignoring `/data/` only, committing the 15 data files, a packaging test that fails if pack data is untracked, and a case count in `/api/health`.
 - `render.yaml` blueprint (Render, Docker, free plan, auto-deploy from `main`, `LLM_MODE=groq`). The owner applies it with the Deploy to Render link in README.md and enters `GROQ_API_KEY` in Render's prompt. The build session had no Render credentials, so the service itself was not created from here.
 
 ## How to run

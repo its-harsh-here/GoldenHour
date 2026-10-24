@@ -96,6 +96,8 @@ python run.py                   # http://127.0.0.1:8000  (or: uvicorn app.main:a
 
 ### Deploy on Render
 
+Live demo: **https://goldenhour-7xuc.onrender.com** (console at `/console`, guided demo at `/console?demo=1`).
+
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/its-harsh-here/GoldenHour)
 
 `render.yaml` defines one free Docker web service built from `main` (auto-deploys on push, health check
