@@ -94,6 +94,18 @@ python run.py                   # http://127.0.0.1:8000  (or: uvicorn app.main:a
   against a running server and prints each result.
 * `node scripts/screenshots.mjs http://127.0.0.1:8000` regenerates `docs/screenshots/` (Playwright + Chromium).
 
+### Container
+
+```bash
+docker build -t goldenhour .
+docker run -p 8000:8000 goldenhour                       # replay mode, no key needed
+docker run -p 8000:8000 -e LLM_MODE=groq -e GROQ_API_KEY=... goldenhour
+```
+
+The image binds `0.0.0.0`, honours `$PORT` (Cloud Run, Render and Fly set it), defaults to `LLM_MODE=replay` so a
+public deployment never spends a Groq key, and keeps `.env` out of the build context. The demo RBAC trusts the
+`X-Role` header, so anyone who can reach a public deployment can act as Admin (reset the demo, run the tamper test).
+
 ### LLM modes (`LLM_MODE`)
 
 | Mode | What it does | When |

@@ -12,7 +12,7 @@
 | M6 Groq live verification + replay cache | done |
 | M7 Visual QA, README, DEMO_SCRIPT | done |
 
-Stretch items (second `motor_claim` pack, Dockerfile) were not started.
+Stretch: a `Dockerfile` (replay mode by default, `$PORT`, non-root) was added after M7; its runtime settings were verified by running the app with the same environment, but the image was not built in the build session (no Docker daemon). The second `motor_claim` pack was not started.
 
 ## Done
 - M0: `run.py`, `core/settings.py` (.env via python-dotenv), `core/store.py` (SQLite), `core/llm.py` (groq/mock/replay, per-model token bucket, SQLite response cache keyed by sha256(model + messages), retry-after on 429, pydantic validation with one retry, OpenAI-style tool loop with allow-list), seed data (6 policies, 16 procedures, 10 cases including 2 generated PDFs), vendored fonts and Chart.js.
