@@ -10,3 +10,4 @@ os.environ["LLM_MODE"] = "mock"
 os.environ.setdefault("SEED_HISTORY", "false")
 os.environ["REPLAY_RECORD"] = "false"
 os.environ["LIVE_FEED"] = "false"  # tests drive the feed with Feed.tick()
+os.environ["SIM_PACE"] = "0"  # simulated runs without model-like pauses

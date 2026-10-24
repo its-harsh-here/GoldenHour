@@ -58,7 +58,7 @@ class Store:
             self._conn.commit()
 
     MIGRATIONS = {"cases": {"source": "TEXT", "injection": "INTEGER DEFAULT 0", "deductions_inr": "INTEGER DEFAULT 0",
-                            "auto": "INTEGER DEFAULT 0"}}
+                            "auto": "INTEGER DEFAULT 0", "run_mode": "TEXT"}}
 
     def _migrate(self) -> None:
         """Add columns introduced after a database was created (SQLite has no ADD COLUMN IF NOT EXISTS)."""

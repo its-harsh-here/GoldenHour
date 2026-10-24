@@ -32,18 +32,19 @@ Stretch: a `Dockerfile` (replay mode by default, `$PORT`, non-root) and a Render
 
 ## Post-launch changes
 - Dataset: 16 policies, 24 procedures, 6 hospitals, 40 inbox cases; PA-1011 to PA-1040 come from the deterministic generator.
-- Live feed (`core/feed.py`): requests arrive at random (a Poisson process, mean `FEED_INTERVAL_S`, default 40 s) and are processed on arrival. A simulated desk (`sim:*` actors) signs generated cases off within minutes. `/api/stream` pushes desk events to the console.
+- Live feed (`core/feed.py`): requests arrive at random (a Poisson process, mean `FEED_INTERVAL_S`, default 40 s), land as New and are picked up by the agents 3–8 s later. Up to `FEED_LIVE_PER_HOUR` (6) an hour run on the live model in live mode, the rest on the simulator with model-like timing. A simulated desk (`sim:*` actors) signs generated cases off within minutes. `/api/stream` pushes desk events to the console.
 - A day of case solving: at startup (and after a demo reset) the server plays the last 24 hours on a simulated business clock (`core/clock.py`): about 200 requests shaped by an IST intraday profile (`DAY_VOLUME`), each processed by the agent pipeline and worked by the simulated desk, so the dashboard opens on a full day. It takes about 5 s. "Replay the day" (inbox live panel or dashboard) plays the same day paced over `DAY_REPLAY_MINUTES` (default 3), with a moving clock, progress bar, ticker and an hour-by-hour chart that fills in. Every timestamp (case, trace, audit, notification) is on the simulated timeline; open replay cases show SLA on the replay's clock.
 - Smooth UI: tab, role, filter, document-view and theme changes cross-fade with the View Transitions API (skipped under reduced motion). Live updates patch the DOM in place (keyed rows, appended trace lines, in-place chart updates), so nothing re-renders or replays its entrance animation. Refreshes during a replay are throttled rather than debounced, so screens keep moving while events stream.
 - De-branding: the provider and model names are gone from code, config and docs. Agents ask for a role (`fast`, `reason`, `guard`) and env maps roles to model ids. the provider-named mode became `live`, and `LLM_REASONING_EFFORT` makes the reasoning hint optional. The landing page and console footer credit the builder (github.com/its-harsh-here).
 - Autonomy L3 fix: L3 used to look like L1, for three reasons. The sign-off panel offered the pre-filled one-click approval only at exactly level 2, so L3 fell through to L1's manual form and its "Autonomy level 1" text. Switching levels changed nothing already in the queue. And the Admin view (clicking a level switches to Admin) said "read-only" at every level. Now L2 and L3 both offer one-click sign-off and only L1 is manual. Switching to L3 auto-executes the clean cases waiting for a Processor (trace step `auto_execute`, 10% post-audit sample). Toasts and the read-only panel spell out what each level does. Verified in the browser in replay mode: case A and four waiting day cases auto-executed with zero replay misses.
-- Tests: 84 (autonomy levels L1/L2/L3 and the kill switch over HTTP; adds the business clock, day replay, replay-clock SLA, light case list, hour-by-hour dashboard, day API, live-mode settings, the reasoning-effort switch, and leftover replay cases keeping their planned timing).
+- One header indicator and new cases that arrive New: the header had a "Live" stream pill next to the LLM mode badge, which also read LIVE once Render ran live, so the stream state now lives in the badge's pulsing dot. Feed arrivals used to arrive already processed; now they land as New, the agents pick them up within seconds, a few an hour run on the live model and the rest on the simulator with model-like timing (`run_mode` column, "Live model" chip, "picked up by the agents" ticker line). Verified locally in live mode: PA-2001 ran on the live model, PA-2002..2013 on the simulator, each New -> Agents working -> settled in the inbox, trace streaming step by step.
+- Tests: 86 (arrive-as-New and pickup, the live-model share and hourly cap, simulated timing on a simulated clock; autonomy levels L1/L2/L3 and the kill switch over HTTP; adds the business clock, day replay, replay-clock SLA, light case list, hour-by-hour dashboard, day API, live-mode settings, the reasoning-effort switch, and leftover replay cases keeping their planned timing).
 
 ## How to run
 ```
 pip install -r requirements.txt
 cp .env.example .env              # LLM_MODE=mock by default
-LLM_MODE=mock pytest -q           # 84 tests, no network
+LLM_MODE=mock pytest -q           # 86 tests, no network
 python run.py                     # http://127.0.0.1:8000  -> / and /console
 python scripts/smoke_http.py      # HTTP checks for hero cases A/B/C + audit (server must be running)
 LLM_MODE=replay python run.py     # recorded live runs, for the demo video
@@ -52,14 +53,14 @@ node scripts/screenshots.mjs      # regenerate docs/screenshots (needs Playwrigh
 ```
 
 ## Verified in the build session
-- `LLM_MODE=mock pytest -q`: 84 passed.
+- `LLM_MODE=mock pytest -q`: 86 passed.
 - Replay mode with the feed and the day backfill running: hero cases A, B, C reached their end states over HTTP (`scripts/smoke_http.py`) with zero replay misses. The guided demo ran headless in 69 s, also with zero misses; the only console error is case C's intended 403.
 - Day replay in the browser: backfill of 192 requests (398 simulated events) in about 5 s; a paced replay filled the hour-by-hour chart in place (bar totals 56 -> 163 over 24 s) without rebuilding the inbox or the dashboard; the audit chain verifies afterwards.
 - Audit verify returned valid; the Admin tamper test was detected at the edited block; restore made the chain valid again.
 
 ## Known issues
 - Free-tier provider limits (often about 30 RPM / 8K TPM per model) mean a live run of one case takes 5-60 s under throttling, and back-to-back hero cases can hit a 429 (the case then goes to a human with the reason). Use `LLM_MODE=replay` for the recorded demo.
-- Live-feed and day-replay cases always run the mock pipeline by default (`FEED_LLM=mock`): a day is about 200 cases, far beyond a free tier.
+- Only up to `FEED_LIVE_PER_HOUR` live-feed arrivals an hour use the live model; day-replay, history and the other feed cases run on the simulator, because a day is about 200 cases, far beyond a free tier. At the default of 6 an hour, the feed uses roughly 40K fast-model tokens an hour while the server is awake.
 - If `pytest` on your PATH is an isolated tool install (e.g. `uv tool install pytest`), it cannot see the project's packages; install `requirements.txt` into that environment or run `LLM_MODE=mock python -m pytest -q`.
 - Demo RBAC trusts the `X-Role` header (no real authentication).
 - Changing any prompt in `packs/health_preauth/prompts/` changes the replay keys; re-record with `LLM_MODE=live REPLAY_RECORD=true` and `scripts/smoke_http.py`.

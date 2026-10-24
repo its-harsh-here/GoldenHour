@@ -80,10 +80,10 @@ class HealthPreauthPack:
         return actions.apply_autonomy(rt, level)
 
     # ---- live feed hooks used by core/feed.py ----
-    def feed_arrival(self, rt, force_mock: bool = True) -> str:
+    def feed_arrival(self, rt) -> str:
         from packs.health_preauth import actions
 
-        return actions.feed_arrival(rt, force_mock)
+        return actions.feed_arrival(rt)
 
     def feed_desk(self, rt, force_mock: bool = True, force: bool = False) -> list:
         from packs.health_preauth import actions

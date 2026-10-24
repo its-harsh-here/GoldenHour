@@ -58,10 +58,10 @@ class CaseStore:
     FIELDS = ("pack", "status", "title", "hero", "received_at", "updated_at", "decided_at", "sla_paused_at",
               "sla_paused_seconds", "assigned_role", "recommendation", "recommended_amount", "final_amount",
               "risk_score", "override", "seeded", "request_json", "state_json", "source", "injection",
-              "deductions_inr", "auto")
+              "deductions_inr", "auto", "run_mode")
     LIGHT = ("case_id, pack, status, title, hero, received_at, updated_at, decided_at, sla_paused_at, sla_paused_seconds, "
              "assigned_role, recommendation, recommended_amount, final_amount, risk_score, override, seeded, source, "
-             "injection, deductions_inr, auto, request_json")
+             "injection, deductions_inr, auto, run_mode, request_json")
 
     def __init__(self, store: Store):
         self.store = store
@@ -162,9 +162,10 @@ class Orchestrator:
         state.pop("step_failure", None)
         names = [s.name for s in pack.pipeline]
         start = names.index(from_step) if from_step else 0
-        rt.cases.update(case_id, status="PROCESSING", assigned_role=None)
+        run_mode = "simulated" if force_mock or rt.llm.mode == "mock" else rt.llm.mode
+        rt.cases.update(case_id, status="PROCESSING", assigned_role=None, run_mode=run_mode)
         rt.events.emit(case_id, "orchestrator", "resume" if from_step else "start", input_summary=f"pipeline from '{names[start]}'",
-                       output={"steps": names[start:], "llm_mode": "mock (seed)" if force_mock else rt.llm.mode})
+                       output={"steps": names[start:], "llm_mode": run_mode})
         pause = None
         for step in pack.pipeline[start:]:
             if state.get("step_failure") and not step.always:

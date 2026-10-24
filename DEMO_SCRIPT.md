@@ -23,7 +23,7 @@ five judging criteria (Reusability, Responsible AI & Governance, AI-to-ROI, MVP 
 |---|---|---|---|
 | 0:00 | Landing `/` | Scroll hero → problem strip | "IRDAI says one hour for a cashless decision. Six in ten patients wait six to forty-eight. GoldenHour is a governed agent desk built to hit the hour, with a human in charge of every denial." |
 | 0:20 | Landing | Point at the pipeline and guardrails grid | "Six agents, one fixed decision policy, eight controls you will see working." Click **Open the console**. |
-| 0:30 | Inbox | Point at the sun-dials, the live ticker, the 3 hero cases | "Every request has a 60-minute clock that fills gold, then turns coral if breached. Requests keep arriving; the agents process each one on arrival." |
+| 0:30 | Inbox | Point at the sun-dials, the live ticker, the 3 hero cases | "Every request has a 60-minute clock that fills gold, then turns coral if breached. Requests keep arriving: each lands as New, and seconds later the agents pick it up. A few an hour run on the live model, the rest on the simulator." |
 | 0:40 | Case A `PA-1001` | Click **Process** | Trace streams in: "Intake redacts patient data before any model sees it, screens for injection, extracts the case. Policy calls tools for the policy and claim history. Then the rule engine, not the model, does the money." |
 | 1:05 | Case A decision card | Point at waterfall + ledger | "Room rent is ₹8,000 against a ₹5,000 cap: ₹9,000 deducted, cited to Sec 4.2. The summary is from the model, and it is checked: any rupee figure not in the rule results is rejected." |
 | 1:15 | Case A document | Toggle **What the model saw** | "Black bars for a human, tokens for the model. Names, phone, Aadhaar, policy number never leave the building." |
@@ -69,7 +69,7 @@ five judging criteria (Reusability, Responsible AI & Governance, AI-to-ROI, MVP 
 
 ### 4. MVP readiness (1:00)
 * Runs with one command (`python run.py`), no Node, no CDN; fonts and charts vendored for offline demos.
-* 84 automated tests run offline (`LLM_MODE=mock pytest -q`), including HTTP end-to-end tests for all three hero
+* 86 automated tests run offline (`LLM_MODE=mock pytest -q`), including HTTP end-to-end tests for all three hero
   cases and the day replay, plus `scripts/smoke_http.py` against a running server.
 * Verified on real hosted models; live testing surfaced a malformed tool-call quirk that is now handled. A recorded
   replay makes the demo deterministic.
@@ -90,7 +90,8 @@ five judging criteria (Reusability, Responsible AI & Governance, AI-to-ROI, MVP 
   For the demo, `replay` mode serves recorded responses, and `mock` needs no network at all.
 * **"Is the day replay real?"** The requests are synthetic and the desk's sign-offs are simulated (actors `sim:*`),
   but every case runs the real pipeline: redaction, injection screen, rule engine, decision policy, gateway and
-  audit chain. The day's cases use the deterministic mock LLM so a public demo never burns API quota.
+  audit chain. The day's cases use the simulator (deterministic model answers with model-like timing, labelled
+  "simulated" in the trace) so a public demo never burns API quota; a few live-feed arrivals an hour use the live model.
 * **"Can the model approve more than the policy allows?"** No. Amounts come from `rules.py` on structured form data;
   the model's text is checked for unsupported figures, and only people can change an amount.
 * **"Is patient data sent to the LLM?"** Only tokenised text. Tools resolve tokens locally; letters are rehydrated

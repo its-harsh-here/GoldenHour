@@ -14,19 +14,27 @@ which the orchestrator turns into "route to a human with the reason".
 """
 from __future__ import annotations
 
+import contextvars
 import hashlib
 import json
+import random
 import re
 import threading
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Iterator
 
 from pydantic import BaseModel, ValidationError
 
+from core import clock
 from core.settings import Settings
 from core.store import Store
+
+# Simulated runs: how long a mock call "takes" per model role (seconds, before a small per-token share).
+SIM_LATENCY_S = {"guard": (0.3, 0.9), "fast": (0.6, 1.3), "reason": (0.4, 1.0)}
+_PACED: contextvars.ContextVar[bool] = contextvars.ContextVar("paced_mock", default=False)
 
 MockFn = Callable[[list[dict]], dict]
 ToolHook = Callable[[str, dict, Any, int], None]
@@ -194,8 +202,31 @@ class LLMClient:
             )
         return self._sdk_client
 
+    @staticmethod
+    @contextmanager
+    def paced() -> Iterator[None]:
+        """Mock calls made inside this block take a model-like time, so a simulated run streams like a live one.
+
+        On the real clock the call sleeps; on a simulated clock (`core.clock.at`) it advances simulated time
+        instead, so a replayed day's traces show realistic timings without the replay waiting for them.
+        """
+        token = _PACED.set(True)
+        try:
+            yield
+        finally:
+            _PACED.reset(token)
+
+    def _simulated_latency(self, role: str, messages: list[dict]) -> float:
+        low, high = SIM_LATENCY_S.get(role, (0.5, 1.2))
+        return (random.uniform(low, high) + estimate_tokens(messages) / 6000) * self.settings.sim_pace
+
     def _mock(self, model: str, messages: list[dict], mock: MockFn, source: str) -> Completion:
         t0 = time.perf_counter()
+        simulated_s = self._simulated_latency(model, messages) if _PACED.get() and source == "mock" else 0.0
+        if simulated_s and clock.simulated():
+            clock.advance(simulated_s)
+        elif simulated_s:
+            time.sleep(simulated_s)
         out = mock(messages) or {}
         calls = [
             {"id": f"call_mock_{i}_{c['name']}", "name": c["name"], "arguments": json.dumps(c.get("arguments", {}), sort_keys=True)}
@@ -204,7 +235,8 @@ class LLMClient:
         content = out.get("content")
         if isinstance(content, (dict, list)):
             content = json.dumps(content, ensure_ascii=False)
-        return Completion(content, calls, model, estimate_tokens(messages), int((time.perf_counter() - t0) * 1000), source)
+        latency_ms = int((simulated_s if clock.simulated() else time.perf_counter() - t0) * 1000)
+        return Completion(content, calls, model, estimate_tokens(messages), latency_ms, source)
 
     def complete(
         self,

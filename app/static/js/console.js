@@ -48,7 +48,8 @@
     if (!m) return '';
     if (m.startsWith('replay_miss')) return '<span class="k" style="color:var(--coral)">replay miss</span>';
     const [src, name] = m.includes(':') ? m.split(':') : ['', m];
-    return `<span class="k">${esc((src ? src + ' · ' : '') + (ROLE[name] || name))}</span>`;
+    const label = { mock: 'simulated' }[src] || src;
+    return `<span class="k">${esc((label ? label + ' · ' : '') + (ROLE[name] || name))}</span>`;
   };
 
   // ------------------------------------------------------------------ smooth updates
@@ -68,10 +69,7 @@
   // ------------------------------------------------------------------ boot + header
   async function loadMeta() {
     S.meta = await api('GET', '/api/meta');
-    const badge = $('#mode-badge');
-    badge.className = `mode-badge ${S.meta.llm_mode}`;
-    badge.textContent = S.meta.llm_mode;
-    badge.title = `LLM mode: ${S.meta.llm_mode}${S.meta.llm_mode_note ? ' (' + S.meta.llm_mode_note + ')' : ''}`;
+    paintBadge();
     const sel = $('#role');
     if (!sel.options.length) {
       sel.innerHTML = S.meta.roles.map((r) => `<option value="${r.id}">${esc(r.label)}${r.phi_access ? '' : ' (no PHI)'}</option>`).join('');
@@ -244,7 +242,7 @@
     paintTicker();
   }
   const rowSig = (c) => JSON.stringify([c.status, c.running, c.patient, c.recommendation, c.recommended_amount, c.final_amount,
-    c.risk_score, c.injection, c.override, c.decided_at, c.sla.paused, c.source, c.hero]);
+    c.risk_score, c.injection, c.override, c.decided_at, c.sla.paused, c.source, c.hero, c.run_mode]);
   function patchRows(list, rows, flash) {
     [...list.children].forEach((el) => { if (!el.dataset.id) el.remove(); });
     const existing = new Map([...list.children].map((el) => [el.dataset.id, el]));
@@ -279,7 +277,7 @@
       : `<span class="live-pill ${on ? 'on' : 'off'}"><i></i>${on ? 'Live feed' : 'Feed paused'}</span>`;
     const text = day
       ? `Replaying the last 24 hours on a simulated clock: <b class="mono">${clockMin(day.sim_now)}</b> · ${day.arrivals_done} of ${day.arrivals_total} requests${day.mode === 'paced' ? ` · about ${day.minutes} min end to end` : ' · catching up as fast as the server allows'}`
-      : on ? `New hospital requests arrive at random, about one every ${Math.round(f.interval_s || 40)} s, and the agents process each on arrival${f.simulate_desk ? '; a simulated desk signs off generated cases within minutes' : ''}. <span class="mono" id="feed-next"></span>`
+      : on ? `New hospital requests arrive at random, about one every ${Math.round(f.interval_s || 40)} s. Each lands as New and the agents pick it up within seconds${f.live_per_hour ? `; up to ${f.live_per_hour} an hour run on the live model` : ''}${f.simulate_desk ? '. A simulated desk signs generated cases off within minutes' : ''}. <span class="mono" id="feed-next"></span>`
         : 'No new requests are arriving.';
     head.innerHTML = `${pill}<span class="lp-meta">${text}</span><span class="lp-actions">
       ${day ? '' : `<button class="btn sm ghost" id="day-replay" title="Play the last 24 hours on a simulated clock">${icon('i-clock', 'sm')}Replay the day</button>`}
@@ -339,6 +337,7 @@
     const who = s.actor ? ` · <span class="muted">${esc(s.actor)}</span>` : '';
     switch (n.kind) {
       case 'arrived': return { cls: 'sky', text: `${id}arrived from ${esc(s.hospital)} · ${esc(s.title)} · ${inr(s.requested)}` };
+      case 'picked_up': return { cls: 'gold', text: `${id}picked up by the agents${s.model === 'live' ? ' · <b>live model</b>' : ''}` };
       case 'settled': { const [t, cls] = outcomeText(s); return { cls, text: `${id}${esc(s.title || '')} → ${t}` }; }
       case 'approve': return { cls: 'teal', text: `${id}approved ${inr(s.amount)}${who}` };
       case 'auto_approve': return { cls: 'teal', text: `${id}auto-approved ${inr(s.amount)} at autonomy level 3` };
@@ -366,7 +365,15 @@
     if (S.timers[key]) return;
     S.timers[key] = setTimeout(() => { S.timers[key] = null; fn(); }, ms);
   }
-  function setLive(on) { const p = $('#live-pill'); if (p) { p.classList.toggle('on', on && !!(S.meta && S.meta.feed && S.meta.feed.enabled)); p.classList.toggle('off', !on); } }
+  function setLive(on) { S.connected = on; paintBadge(); }
+  function paintBadge() {
+    const badge = $('#mode-badge');
+    if (!badge || !S.meta) return;
+    const mode = S.meta.llm_mode;
+    badge.className = `mode-badge ${mode}${S.connected ? ' connected' : ''}`;
+    badge.textContent = mode;
+    badge.title = `LLM mode: ${mode}${S.meta.llm_mode_note ? ' (' + S.meta.llm_mode_note + ')' : ''} · ${S.connected ? 'live updates connected' : 'live updates reconnecting'}`;
+  }
   function onDeskEvent(n) {
     if (n.kind === 'reset') { S.ticker = []; S.known = new Set(); S.tickerShown = 0; }
     addTicker(n);
@@ -384,7 +391,7 @@
       every('day', 250, () => { paintLivePanel(); paintDayStatus(); });
       if (n.kind === 'day_done') later('meta', 300, async () => { await refreshFeedStatus(); paintLivePanel(); paintDayStatus(); });
     }
-    if (['set_autonomy', 'kill_switch', 'set_feed', 'reset'].includes(n.kind)) later('meta', 300, async () => { await loadMeta(); setLive(!!S.desk); refreshSoon(); });
+    if (['set_autonomy', 'kill_switch', 'set_feed', 'reset'].includes(n.kind)) later('meta', 300, async () => { await loadMeta(); refreshSoon(); });
     if (n.kind === 'arrived' && !(S.meta.feed && S.meta.feed.day && S.meta.feed.day.active)) refreshFeedStatus().then(paintFeedNext);
     if (S.tab === 'inbox') every('inbox', 700, renderInbox);
     else every('badge', 2500, loadCases);
@@ -435,7 +442,7 @@
         <div class="sub">${esc(c.hospital)}, ${esc(c.city)}</div></div>
       <div><div>${esc(c.patient)}</div><div class="sub">${c.age} ${c.gender} · received ${GH.agoHtml(c.received_at + (c.clock_shift_s || 0))}</div></div>
       <div class="amt">${amount}</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${chip(c.running ? 'PROCESSING' : c.status)}${c.injection ? `<span class="chip coral" title="Prompt injection quarantined">${icon('i-alert', 'sm')}Injection</span>` : ''}${c.override ? '<span class="chip plain">Override</span>' : ''}${c.source === 'feed' ? '<span class="chip sky" title="Arrived through the live feed">Live</span>' : ''}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${chip(c.running ? 'PROCESSING' : c.status)}${c.injection ? `<span class="chip coral" title="Prompt injection quarantined">${icon('i-alert', 'sm')}Injection</span>` : ''}${c.override ? '<span class="chip plain">Override</span>' : ''}${c.run_mode === 'live' ? '<span class="chip gold" title="The agents ran on the live model">Live model</span>' : ''}${c.source === 'feed' ? '<span class="chip sky" title="Arrived through the live feed">Feed</span>' : ''}</div>
       <div><span class="risk-pill ${riskClass(c.risk_score)}">${c.risk_score ?? '—'}</span></div>
       <div class="open">${action}</div></div>`;
   }
@@ -530,7 +537,7 @@
       : v.sla.paused ? 'SLA clock paused while the hospital uploads documents' : `of the ${S.meta.sla_minutes}-minute IRDAI cashless window`;
     $('#c-head').innerHTML = `<div class="case-head">
       <div class="ids"><div class="crumb"><a href="#/inbox">${icon('i-inbox', 'sm')} Inbox</a><span>/</span><span class="mono">${v.case_id}</span>
-        ${v.hero ? `<span class="hero-tag">Case ${v.hero}</span>` : ''}${v.seeded ? '<span class="chip plain">seeded history</span>' : ''}${v.source === 'feed' ? '<span class="chip sky">live feed</span>' : ''}</div>
+        ${v.hero ? `<span class="hero-tag">Case ${v.hero}</span>` : ''}${v.seeded ? '<span class="chip plain">seeded history</span>' : ''}${v.source === 'feed' ? '<span class="chip sky">live feed</span>' : ''}${v.run_mode === 'live' ? '<span class="chip gold">live model</span>' : ''}</div>
         <h1>${esc(v.title)}</h1>
         <div class="meta"><span>${icon('i-human', 'sm')} ${esc(v.patient)}, ${v.age} ${v.gender}</span><span>${esc(v.hospital)}, ${esc(v.city)}</span>
           <span class="mono">${esc(v.form.policy_number)}</span>${v.policy ? `<span>${esc(v.policy.product)}</span>` : ''}
@@ -607,10 +614,11 @@
       const alert = evs.some((e) => ['alert', 'error', 'blocked'].includes(e.status));
       if (seen && !card.classList.contains('seen')) card.classList.add('seen', 'enter');
       card.classList.toggle('active', a.id === activeId);
-      card.classList.toggle('done', seen && a.id !== activeId);
+      const done = seen && a.id !== activeId && !(running && a.id === 'orchestrator');  // it opens the run and closes it
+      card.classList.toggle('done', done);
       card.classList.toggle('alert', alert);
       const state = card.querySelector('.a-state');
-      const want = seen && a.id !== activeId ? (alert ? 'i-alert' : 'i-check') : '';
+      const want = done ? (alert ? 'i-alert' : 'i-check') : '';
       if (state.dataset.icon !== want) { state.dataset.icon = want; state.innerHTML = want ? icon(want, 'sm') : ''; }
     });
     const tokens = S.events.reduce((n, e) => n + (e.tokens || 0), 0);
@@ -670,7 +678,7 @@
   }
   function sourceLabel(src, role = 'reason') {
     if (!src) return 'model';
-    if (src === 'mock') return 'mock fixture';
+    if (src === 'mock') return `simulated ${ROLE[role]}`;
     if (src === 'replay') return `recorded ${ROLE[role]} run (replay)`;
     if (src === 'replay_miss') return 'mock fallback (replay miss)';
     return `live ${ROLE[role]}`;
@@ -939,7 +947,7 @@
     const k = d.kpis;
     const fed = S.meta.feed || {};
     const replaying = fed.day && fed.day.active;
-    $('#dash-actions').innerHTML = `<span class="live-pill ${replaying || fed.enabled ? 'on' : 'off'}"><i></i>${replaying ? 'Day replay' : fed.enabled ? 'Live' : 'Feed paused'}</span><span class="chip plain">IRDAI cashless window ${d.sla_minutes} min</span><span class="chip ${d.kill_switch ? 'coral' : 'gold'}">Autonomy level ${d.autonomy_level}${d.kill_switch ? ' · kill switch' : ''}</span>`;
+    $('#dash-actions').innerHTML = `<span class="live-pill ${replaying || fed.enabled ? 'on' : 'off'}"><i></i>${replaying ? 'Day replay' : fed.enabled ? 'Feed on' : 'Feed paused'}</span><span class="chip plain">IRDAI cashless window ${d.sla_minutes} min</span><span class="chip ${d.kill_switch ? 'coral' : 'gold'}">Autonomy level ${d.autonomy_level}${d.kill_switch ? ' · kill switch' : ''}</span>`;
     $('#dash-kpis').innerHTML = `${kpi('Median turnaround', 'k-tat', 'min', `decision time vs the ${d.sla_minutes}-minute rule`, 'accent', 'i-clock')}
       ${kpi('Within 60-minute SLA', 'k-sla', '%', `${k.decided} decided cases`, '', 'i-check')}
       ${kpi('Cases processed', 'k-proc', '', 'by the agent pipeline', '', 'i-flow')}
@@ -976,7 +984,7 @@
     if (pill) {
       const fed = S.meta.feed || {};
       pill.className = `live-pill ${(day && day.active) || fed.enabled ? 'on' : 'off'}`;
-      pill.innerHTML = `<i></i>${day && day.active ? 'Day replay' : fed.enabled ? 'Live' : 'Feed paused'}`;
+      pill.innerHTML = `<i></i>${day && day.active ? 'Day replay' : fed.enabled ? 'Feed on' : 'Feed paused'}`;
     }
     if (day && day.active) {
       head.innerHTML = `<span class="live-pill on"><i></i>Replaying · <span class="mono">${clockMin(day.sim_now)}</span></span><span class="chip plain">${day.arrivals_done} of ${day.arrivals_total} requests</span>`;

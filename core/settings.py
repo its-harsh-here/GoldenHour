@@ -41,7 +41,8 @@ class Settings:
     live_feed: bool
     feed_interval_s: float
     feed_max_cases: int
-    feed_llm: str
+    feed_live_per_hour: int
+    sim_pace: float
     feed_simulate_desk: bool
     day_volume: int
     day_backfill: bool
@@ -89,7 +90,8 @@ def get_settings() -> Settings:
         live_feed=_bool(os.getenv("LIVE_FEED"), True),
         feed_interval_s=float(os.getenv("FEED_INTERVAL_S", "40")),
         feed_max_cases=int(os.getenv("FEED_MAX_CASES", "40")),
-        feed_llm=os.getenv("FEED_LLM", "mock").strip().lower(),
+        feed_live_per_hour=int(os.getenv("FEED_LIVE_PER_HOUR", "6")),
+        sim_pace=float(os.getenv("SIM_PACE", "1")),
         feed_simulate_desk=_bool(os.getenv("FEED_SIMULATE_DESK"), True),
         day_volume=int(os.getenv("DAY_VOLUME", "200")),
         day_backfill=_bool(os.getenv("DAY_BACKFILL"), True),

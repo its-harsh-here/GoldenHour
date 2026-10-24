@@ -55,12 +55,19 @@ and the inbox and KPIs move with it. Every timestamp (case, trace, audit block, 
 timeline (`core/clock.py`), while API requests keep real time.
 
 After the replay, **new requests keep arriving at random**: a Poisson process with a mean gap of `FEED_INTERVAL_S`
-(default 40 s) (`core/feed.py`). Each is processed on arrival and pushed to every open console over one desk-wide
-server-sent-event stream (`/api/stream`).
+(default 40 s) (`core/feed.py`). Each one lands in the inbox as **New**, and 3–8 seconds later the agents pick it up.
+The row turns to "Agents working" while the trace streams step by step, then shows the outcome. Every change is pushed
+to every open console over one desk-wide server-sent-event stream (`/api/stream`).
 
-Hero cases A, B and C are never touched by the simulated desk (actors `sim:*`). Generated cases run the deterministic
-mock pipeline by default (`FEED_LLM=mock`), so a public deployment never spends LLM quota by itself. Anyone except an
-Auditor can pause the feed or start a replay.
+In `live` mode, up to `FEED_LIVE_PER_HOUR` arrivals an hour (default 6, spread through the hour) run on the live model;
+they carry a **Live model** chip. The rest run on the **simulator**. The simulator is the same agent pipeline (redaction,
+injection screen, tools, rule engine, decision policy, gateway, audit) with deterministic model answers that take a
+model-like 0.3–1.3 s each (`SIM_PACE`). So every arrival is visibly worked by the agents while a public deployment stays
+inside a free tier, and the trace labels those calls "simulated". The replayed day and the startup history use the same
+simulated timing on their own clock, so their traces read like real runs without anyone waiting for them.
+
+Hero cases A, B and C are never touched by the simulated desk (actors `sim:*`) and always use the server's LLM mode.
+Anyone except an Auditor can pause the feed or start a replay.
 
 Around all this sits a synthetic book of **16 policies, 24 procedure packages, 6 hospitals and 40 inbox cases**. It covers
 pneumonia inside the initial waiting period, an accident exempt from it, bariatric surgery excluded, a PTCA above the
@@ -124,7 +131,7 @@ Python 3.11+ (built and tested on 3.13). No Node at runtime; all fonts and scrip
 ```bash
 pip install -r requirements.txt
 cp .env.example .env            # LLM_MODE=mock by default: no network needed
-LLM_MODE=mock pytest -q         # 84 tests, offline
+LLM_MODE=mock pytest -q         # 86 tests, offline
 python run.py                   # http://127.0.0.1:8000  (or: uvicorn app.main:app)
 ```
 
@@ -166,7 +173,8 @@ Set `REPLAY_RECORD=true` to re-record the replay file.
 | `MODEL_FAST`, `MODEL_REASON`, `MODEL_GUARD` | | provider model ids for the three roles |
 | `LIVE_FEED` | `true` | start the feed thread (random arrivals, simulated desk, day replay) with the server |
 | `FEED_INTERVAL_S` | `40` | mean seconds between live arrivals (Poisson) |
-| `FEED_LLM` | `mock` | `mock`, or `inherit` to use `LLM_MODE` for live-feed cases |
+| `FEED_LIVE_PER_HOUR` | `6` | live-feed arrivals an hour that run on the live model in `live` mode (0 = none); the rest run on the simulator |
+| `SIM_PACE` | `1` | scales the simulator's model-like timing (0 = instant) |
 | `FEED_SIMULATE_DESK` | `true` | let the simulated desk decide pending generated cases |
 | `FEED_MAX_CASES` | `40` | live-feed cases kept in the inbox (the audit chain keeps everything) |
 | `DAY_VOLUME` | `200` | requests in a replayed day (± random variation) |

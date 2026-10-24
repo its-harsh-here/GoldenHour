@@ -24,6 +24,13 @@ def simulated() -> bool:
     return _SIM_TS.get() is not None
 
 
+def advance(seconds: float) -> None:
+    """Inside `at()`, move simulated time forward, as if the step just done had taken `seconds`."""
+    ts = _SIM_TS.get()
+    if ts is not None:
+        _SIM_TS.set(ts + seconds)
+
+
 @contextmanager
 def at(ts: float) -> Iterator[None]:
     token = _SIM_TS.set(ts)

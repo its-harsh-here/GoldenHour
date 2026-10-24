@@ -1,16 +1,17 @@
 """Live feed and day replay: a background thread that keeps work arriving at the desk.
 
 Domain-agnostic. The pack supplies:
-- `feed_arrival` (a new request, processed on arrival), `feed_desk` (simulated staff acting on pending
+- `feed_arrival` (a new request lands in the inbox as NEW), `feed_desk` (simulated staff acting on pending
   generated cases) and `feed_prune` (retention) for the real-time feed;
 - `day_plan` (arrivals across a window) and `day_event` (handle one simulated event, returning follow-ups)
   plus `day_clear` for a day replay.
 
-Live arrivals are a Poisson process (exponential gaps around FEED_INTERVAL_S). A day replay plays the last
-24 hours on a simulated clock (`core.clock.at`), either as fast as the machine allows (startup backfill) or
-paced over a few minutes for a demo. While a replay runs, live arrivals wait.
-By default generated cases run the deterministic mock pipeline, so a public deployment never spends LLM
-quota on its own; set FEED_LLM=inherit to use the server's LLM mode for live-feed cases.
+Live arrivals are a Poisson process (exponential gaps around FEED_INTERVAL_S). Each one waits a few seconds
+as NEW, then the agents pick it up. In live mode up to FEED_LIVE_PER_HOUR arrivals an hour run on the live
+model; the rest run on the simulator (mock answers with model-like timing, `LLMClient.paced`), so every
+arrival is visibly worked by the agents while a public deployment stays inside a free tier.
+A day replay plays the last 24 hours on a simulated clock (`core.clock.at`), either as fast as the machine
+allows (startup backfill) or paced over a few minutes for a demo. While a replay runs, live arrivals wait.
 """
 from __future__ import annotations
 
@@ -18,6 +19,7 @@ import heapq
 import random
 import threading
 import time
+from contextlib import nullcontext
 
 from core import clock
 
@@ -64,13 +66,14 @@ class DayReplay:
 class Feed:
     DESK_EVERY_S = 10
     DAY_TICK_S = 0.2
+    PICKUP_S = (3.0, 8.0)  # how long a new arrival waits as NEW before the agents pick it up
 
     def __init__(self, runtime):
         s = runtime.settings
         self.rt = runtime
         self.interval_s = max(5.0, s.feed_interval_s)
         self.max_cases = s.feed_max_cases
-        self.force_mock = s.feed_llm != "inherit"
+        self.live_per_hour = max(0, s.feed_live_per_hour)
         self.simulate_desk = s.feed_simulate_desk
         self.busy = threading.RLock()  # held during a tick; a demo reset and a day replay take it too
         self.next_at: float | None = None
@@ -80,6 +83,8 @@ class Feed:
         self._thread: threading.Thread | None = None
         self._last_desk = 0.0
         self._last_progress = 0.0
+        self._pending: list[tuple[float, str, bool]] = []  # (pick up at, case id, run on the live model)
+        self._live_times: list[float] = []
 
     # ---------------- live feed ----------------
     @property
@@ -121,6 +126,10 @@ class Feed:
 
     def _loop(self) -> None:
         while not self._stop.wait(self.DAY_TICK_S if self.day_active else 1.0):
+            try:
+                self.start_due()
+            except Exception as err:
+                print(f"live feed pickup failed: {type(err).__name__}: {err}", flush=True)
             if self.day_active:
                 try:
                     self.day_step()
@@ -146,13 +155,45 @@ class Feed:
             now = time.time()
             if self.simulate_desk and (desk_now or now - self._last_desk >= self.DESK_EVERY_S):
                 self._last_desk = now
-                out["desk"] = self.rt.pack.feed_desk(self.rt, self.force_mock, force=desk_now)
+                out["desk"] = self.rt.pack.feed_desk(self.rt, True, force=desk_now)
             if arrive:
-                out["arrived"] = self.rt.pack.feed_arrival(self.rt, self.force_mock)
-                self.last_arrival = out["arrived"]
+                cid = out["arrived"] = self.rt.pack.feed_arrival(self.rt)
+                self._pending.append((now + random.uniform(*self.PICKUP_S), cid, self._live_slot(now)))
+                self.last_arrival = cid
                 self.next_at = self._next_gap()
             self.rt.pack.feed_prune(self.rt, self.max_cases)
         return out
+
+    def _live_slot(self, now: float) -> bool:
+        """Whether this arrival runs on the live model: live mode, under the hourly cap, spread through the hour."""
+        if not self.live_per_hour or self.rt.llm.mode != "live":
+            return False
+        self._live_times = [t for t in self._live_times if now - t < 3600]
+        spacing = 3600 / self.live_per_hour / 2
+        if len(self._live_times) >= self.live_per_hour or (self._live_times and now - self._live_times[-1] < spacing):
+            return False
+        self._live_times.append(now)
+        return True
+
+    def start_due(self, force: bool = False, wait: bool = False) -> list[str]:
+        """Hand the arrivals whose wait is over to the agents (in the background unless `wait`)."""
+        now = time.time()
+        due = [p for p in self._pending if force or p[0] <= now]
+        self._pending = [p for p in self._pending if p not in due]
+        for _, cid, live in due:
+            if wait:
+                self._process(cid, live)
+            else:
+                threading.Thread(target=self._process, args=(cid, live), daemon=True, name=f"feed-{cid}").start()
+        return [cid for _, cid, _ in due]
+
+    def _process(self, case_id: str, live: bool) -> None:
+        rt = self.rt
+        if rt.cases.status(case_id) != "NEW" or rt.orchestrator.is_running(case_id):
+            return  # reset, replaced by a replay, or someone pressed Process first
+        rt.events.notify(case_id, "picked_up", {"model": "live" if live else "simulated"})
+        with nullcontext() if live else rt.llm.paced():
+            rt.orchestrator.run(case_id, force_mock=not live)
 
     # ---------------- day replay ----------------
     def start_day(self, minutes: float | None = None, end: float | None = None) -> dict:
@@ -213,6 +254,8 @@ class Feed:
     def status(self) -> dict:
         return {"enabled": self.enabled, "running": self.running, "interval_s": self.interval_s,
                 "next_at": self.next_at if self.enabled and not self.day_active else None, "now": time.time(),
-                "last_arrival": self.last_arrival, "arrivals": "poisson",
-                "llm": "mock" if self.force_mock else "inherit", "simulate_desk": self.simulate_desk,
+                "last_arrival": self.last_arrival, "arrivals": "poisson", "llm_mode": self.rt.llm.mode,
+                "live_per_hour": self.live_per_hour if self.rt.llm.mode == "live" else 0,
+                "live_last_hour": len([t for t in self._live_times if time.time() - t < 3600]),
+                "waiting": len(self._pending), "simulate_desk": self.simulate_desk,
                 "max_cases": self.max_cases, "day": self.day.status() if self.day else None}

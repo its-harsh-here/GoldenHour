@@ -403,7 +403,7 @@ def case_summary(rt, c: dict, role: str) -> dict:
         "clock_shift_s": round(time.time() - sim_now, 1) if sim_now else 0,
         "injection": bool(c.get("injection")), "seeded": bool(c["seeded"]),
         "running": rt.orchestrator.is_running(c["case_id"]), "override": bool(c["override"]),
-        "source": source,
+        "source": source, "run_mode": c.get("run_mode"),
     }
 
 
@@ -548,7 +548,8 @@ def desk_decision(rt, case_id: str, tag: str, force_mock: bool = True) -> str | 
     status, st = case["status"], case["state"]
     if status == "QUERY_RAISED":
         out = rt.gateway.execute("simulate_upload", case_id=case_id, role="PROCESSOR", actor=f"{tag}:hospital")
-        rt.orchestrator.run(case_id, from_step=out["resume_at"], force_mock=force_mock)
+        with rt.llm.paced():
+            rt.orchestrator.run(case_id, from_step=out["resume_at"], force_mock=force_mock)
         return "upload"
     if status == "AWAITING_APPROVAL":
         human_decision(rt, case_id, "PROCESSOR", f"{tag}:processor", "approve", force_mock=force_mock)
@@ -590,8 +591,8 @@ GENERATED = ("feed", "day")
 PENDING = ("AWAITING_APPROVAL", "ESCALATED", "QUERY_RAISED")
 
 
-def _arrive(rt, seq: int, source: str, force_mock: bool = True) -> str:
-    """A generated hospital request arrives (at the business clock's time) and the agents process it."""
+def _arrive(rt, seq: int, source: str, process: bool) -> str:
+    """A generated hospital request arrives (at the business clock's time) as NEW; `process` runs the agents now."""
     now = clock.now()
     req = generate_request(seq, admission=datetime.fromtimestamp(now, IST).date(), source=source)
     cid = req["case_id"]
@@ -599,15 +600,17 @@ def _arrive(rt, seq: int, source: str, force_mock: bool = True) -> str:
     rt.audit.append(case_id=cid, actor=f"hospital:{req['hospital']['hospital_code']}", role="HOSPITAL", action="case_received",
                     details={"title": req["title"], "hospital": req["hospital"]["name"], "source": source})
     rt.events.notify(cid, "arrived", brief(rt.cases.get(cid)))
-    rt.orchestrator.run(cid, force_mock=force_mock)
+    if process:  # the simulator, with model-like timing on the simulated clock
+        with rt.llm.paced():
+            rt.orchestrator.run(cid, force_mock=True)
     return cid
 
 
-def feed_arrival(rt, force_mock: bool = True) -> str:
-    """Real-time feed: a new request arrives now."""
+def feed_arrival(rt) -> str:
+    """Real-time feed: a new request arrives now and waits as NEW until the feed hands it to the agents."""
     seq = int(rt.store.kv_get("feed_seq", 2000)) + 1
     rt.store.kv_set("feed_seq", seq)
-    return _arrive(rt, seq, "feed", force_mock)
+    return _arrive(rt, seq, "feed", process=False)
 
 
 def _desk_delay_s(case_id: str, status: str) -> int:
@@ -702,7 +705,7 @@ def _next_desk_event(rt, case_id: str) -> list[tuple[float, str, str]]:
 def day_event(rt, kind: str, ref) -> list[tuple[float, str, object]]:
     """Handle one simulated event; returns follow-up events (all timestamps on the simulated clock)."""
     if kind == "arrive":
-        return _next_desk_event(rt, _arrive(rt, int(ref), "day", force_mock=True))
+        return _next_desk_event(rt, _arrive(rt, int(ref), "day", process=True))
     if kind == "desk":
         if rt.cases.status(ref) not in PENDING:
             return []
@@ -730,15 +733,18 @@ def seed_demo(rt, history: bool = True) -> dict:
             if not outcome:
                 continue
             cid = req["case_id"]
-            rt.orchestrator.run(cid, force_mock=True)
-            if outcome.get("auto"):
-                for _ in range(3):  # a queried case resumes after the upload, then gets its decision
-                    if desk_decision(rt, cid, "seed") != "upload":
-                        break
-            elif outcome.get("action"):
-                action = "deny" if outcome["action"] == "deny" else "approve"
-                human_decision(rt, cid, outcome["human"], f"seed:{outcome['human'].lower()}", action,
-                               amount=outcome.get("amount"), reason=outcome.get("reason", ""), force_mock=True)
+            received = rt.cases.get(cid)["received_at"]
+            with clock.at(received + 4), rt.llm.paced():  # earlier today: the agents' run, on its own timeline
+                rt.orchestrator.run(cid, force_mock=True)
+            with clock.at(min(received + (outcome.get("tat_min") or 8) * 60, now - 30)):  # the human's sign-off, later on
+                if outcome.get("auto"):
+                    for _ in range(3):  # a queried case resumes after the upload, then gets its decision
+                        if desk_decision(rt, cid, "seed") != "upload":
+                            break
+                elif outcome.get("action"):
+                    action = "deny" if outcome["action"] == "deny" else "approve"
+                    human_decision(rt, cid, outcome["human"], f"seed:{outcome['human'].lower()}", action,
+                                   amount=outcome.get("amount"), reason=outcome.get("reason", ""), force_mock=True)
             c = rt.cases.get(cid)
             if c["decided_at"] and outcome.get("tat_min"):
                 rt.cases.update(cid, decided_at=c["received_at"] + outcome["tat_min"] * 60)
