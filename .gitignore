@@ -1,6 +1,7 @@
 # secrets and local state
 .env
-data/
+# local SQLite folder at the repo root only (packs/*/data/ is source data and must be committed)
+/data/
 *.db
 *.db-wal
 *.db-shm

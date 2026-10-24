@@ -1,0 +1,179 @@
+{
+  "_note": "Synthetic, illustrative policies. Not real people or products.",
+  "clause_refs_default": {
+    "policy_active": "Sec 2.1 Policy Period",
+    "initial_waiting": "Sec 3.1 Initial Waiting Period",
+    "ped_waiting": "Sec 3.2 Pre-existing Diseases",
+    "specific_disease_waiting": "Sec 3.3 Specified Disease Waiting",
+    "exclusions": "Sec 5 Permanent Exclusions",
+    "room_rent_cap": "Sec 4.2 Room Rent",
+    "sub_limit": "Sec 4.4 Procedure Sub-limits",
+    "copay": "Sec 4.6 Co-payment",
+    "balance_cap": "Sec 4.8 Available Sum Insured"
+  },
+  "ped_icd10_prefixes": {
+    "diabetes_type2": ["E11"],
+    "hypertension": ["I10", "I11"],
+    "osteoarthritis": ["M15", "M16", "M17"],
+    "asthma": ["J45"],
+    "hypothyroidism": ["E03"],
+    "ckd": ["N18"]
+  },
+  "policies": [
+    {
+      "policy_id": "GH-POL-100231",
+      "product": "GoldenShield Family Floater",
+      "holder_name": "Aarav Menon",
+      "phone": "+91 98450 21734",
+      "members": [
+        {"name": "Aarav Menon", "relationship": "self", "age": 34},
+        {"name": "Nisha Menon", "relationship": "spouse", "age": 41}
+      ],
+      "status": "active",
+      "sum_insured": 500000,
+      "balance": 481500,
+      "inception_date": "2023-09-12",
+      "expiry_date": "2027-09-11",
+      "ped_declared": [],
+      "waiting_periods": {
+        "initial_days": 30,
+        "ped_months": 36,
+        "specific_disease": {"cataract": 24, "joint_replacement": 24, "hernia": 24, "gall_bladder": 24, "prostate": 24, "hysterectomy": 24, "kidney_stone": 24, "tonsils": 24, "sinus_septum": 24}
+      },
+      "room_rent_cap_per_day": 5000,
+      "copay_pct": 0,
+      "sub_limits": {"cataract": 40000},
+      "exclusions": ["cosmetic_surgery", "obesity_surgery", "infertility", "dental", "experimental"],
+      "claim_history": [{"date": "2025-02-11", "procedure": "Viral fever (medical)", "amount": 18500}]
+    },
+    {
+      "policy_id": "GH-POL-100587",
+      "product": "GoldenShield Senior",
+      "holder_name": "Shanthamma Gowda",
+      "phone": "+91 94481 66302",
+      "members": [{"name": "Shanthamma Gowda", "relationship": "self", "age": 67}],
+      "status": "active",
+      "sum_insured": 300000,
+      "balance": 300000,
+      "inception_date": "2024-03-01",
+      "expiry_date": "2027-02-28",
+      "ped_declared": ["diabetes_type2", "hypertension"],
+      "waiting_periods": {
+        "initial_days": 30,
+        "ped_months": 36,
+        "specific_disease": {"cataract": 24, "joint_replacement": 24, "hernia": 24, "prostate": 24, "kidney_stone": 24}
+      },
+      "room_rent_cap_per_day": 4000,
+      "copay_pct": 10,
+      "sub_limits": {"cataract": 40000},
+      "exclusions": ["cosmetic_surgery", "obesity_surgery", "infertility", "dental", "experimental"],
+      "claim_history": []
+    },
+    {
+      "policy_id": "GH-POL-101942",
+      "product": "GoldenShield Individual",
+      "holder_name": "Vikram Rao",
+      "phone": "+91 99001 47258",
+      "members": [{"name": "Vikram Rao", "relationship": "self", "age": 61}],
+      "status": "active",
+      "sum_insured": 500000,
+      "balance": 500000,
+      "inception_date": "2026-02-20",
+      "expiry_date": "2027-02-19",
+      "ped_declared": [],
+      "waiting_periods": {
+        "initial_days": 30,
+        "ped_months": 36,
+        "specific_disease": {"cataract": 24, "joint_replacement": 24, "hernia": 24, "gall_bladder": 24, "prostate": 24, "kidney_stone": 24}
+      },
+      "room_rent_cap_per_day": 6000,
+      "copay_pct": 0,
+      "sub_limits": {"cataract": 35000, "joint_replacement": 250000},
+      "exclusions": ["cosmetic_surgery", "obesity_surgery", "infertility", "dental", "experimental"],
+      "claim_history": []
+    },
+    {
+      "policy_id": "GH-POL-100874",
+      "product": "GoldenShield Family Floater Plus",
+      "holder_name": "Fatima Sheikh",
+      "phone": "+91 98860 33419",
+      "members": [
+        {"name": "Fatima Sheikh", "relationship": "self", "age": 45},
+        {"name": "Imran Sheikh", "relationship": "spouse", "age": 52},
+        {"name": "Zara Sheikh", "relationship": "daughter", "age": 11}
+      ],
+      "status": "active",
+      "sum_insured": 1000000,
+      "balance": 1000000,
+      "inception_date": "2022-06-15",
+      "expiry_date": "2027-06-14",
+      "ped_declared": ["hypertension"],
+      "waiting_periods": {
+        "initial_days": 30,
+        "ped_months": 36,
+        "specific_disease": {"cataract": 24, "joint_replacement": 24, "hernia": 24, "gall_bladder": 24, "tonsils": 24}
+      },
+      "room_rent_cap_per_day": 10000,
+      "copay_pct": 0,
+      "sub_limits": {"cataract": 50000},
+      "exclusions": ["cosmetic_surgery", "obesity_surgery", "infertility", "dental", "experimental"],
+      "claim_history": [
+        {"date": "2024-08-03", "procedure": "Dengue fever (medical)", "amount": 38000},
+        {"date": "2025-11-19", "procedure": "Fracture radius ORIF", "amount": 72000}
+      ]
+    },
+    {
+      "policy_id": "GH-POL-102310",
+      "product": "GoldenShield Family Floater",
+      "holder_name": "Rohan Kulkarni",
+      "phone": "+91 97411 58026",
+      "members": [
+        {"name": "Rohan Kulkarni", "relationship": "self", "age": 39},
+        {"name": "Sneha Kulkarni", "relationship": "spouse", "age": 36}
+      ],
+      "status": "active",
+      "sum_insured": 500000,
+      "balance": 500000,
+      "inception_date": "2026-10-10",
+      "expiry_date": "2027-10-09",
+      "ped_declared": [],
+      "waiting_periods": {
+        "initial_days": 30,
+        "ped_months": 36,
+        "specific_disease": {"cataract": 24, "joint_replacement": 24, "hernia": 24, "gall_bladder": 24}
+      },
+      "room_rent_cap_per_day": 5000,
+      "copay_pct": 0,
+      "sub_limits": {"cataract": 40000},
+      "exclusions": ["cosmetic_surgery", "obesity_surgery", "infertility", "dental", "experimental"],
+      "claim_history": []
+    },
+    {
+      "policy_id": "GH-POL-100455",
+      "product": "GoldenShield Classic",
+      "holder_name": "Meera Iyer",
+      "phone": "+91 99452 70188",
+      "members": [{"name": "Meera Iyer", "relationship": "self", "age": 58}],
+      "status": "active",
+      "sum_insured": 140000,
+      "balance": 30000,
+      "inception_date": "2021-01-05",
+      "expiry_date": "2027-01-04",
+      "ped_declared": ["hypothyroidism"],
+      "waiting_periods": {
+        "initial_days": 30,
+        "ped_months": 48,
+        "specific_disease": {"cataract": 24, "joint_replacement": 48}
+      },
+      "room_rent_cap_per_day": 4000,
+      "copay_pct": 20,
+      "sub_limits": {"cataract": 30000},
+      "exclusions": ["cosmetic_surgery", "obesity_surgery", "infertility", "dental", "experimental"],
+      "claim_history": [
+        {"date": "2026-03-14", "procedure": "Pneumonia (medical)", "amount": 61000},
+        {"date": "2026-07-02", "procedure": "Cataract right eye", "amount": 30000},
+        {"date": "2026-09-21", "procedure": "Acute gastroenteritis (medical)", "amount": 19000}
+      ]
+    }
+  ]
+}

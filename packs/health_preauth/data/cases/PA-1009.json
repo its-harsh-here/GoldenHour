@@ -1,0 +1,54 @@
+{
+  "case_id": "PA-1009",
+  "hero": null,
+  "title": "Bariatric sleeve gastrectomy",
+  "received_offset_min": 74,
+  "hospital": {
+    "name": "Nandi Valley Medical Centre",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-NVM-0417",
+    "tpa_email": "preauth@nandivalley.example",
+    "phone": "+91 80 4725 3381"
+  },
+  "form": {
+    "patient_name": "Nisha Menon",
+    "age": 41,
+    "gender": "F",
+    "patient_phone": "+91 98450 21735",
+    "patient_email": "nisha.menon@example.com",
+    "aadhaar": "2287 6630 4415",
+    "policy_number": "GH-POL-100231",
+    "relationship_to_holder": "spouse",
+    "admission_date": "2026-10-25",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Farhan Qureshi",
+    "provisional_diagnosis": "Morbid obesity, BMI 42",
+    "icd10": "E66.01",
+    "proposed_procedure": "Laparoscopic sleeve gastrectomy",
+    "room_category": "Single private",
+    "room_rent_per_day": 5000,
+    "expected_los_days": 3,
+    "is_accident": false,
+    "estimate": {
+      "room": 15000,
+      "ot": 48000,
+      "surgeon": 90000,
+      "consumables": 95000,
+      "medicines": 18000,
+      "investigations": 14000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "bmi_assessment",
+    "id_proof"
+  ],
+  "seed_outcome": {
+    "tat_min": 33,
+    "human": "MEDICAL_OFFICER",
+    "action": "deny",
+    "reason": "Bariatric surgery is a permanent exclusion under Sec 5 of this policy. Pre-authorization not approved."
+  },
+  "admission_note": "NANDI VALLEY MEDICAL CENTRE - Bariatric and Metabolic Surgery\nPatient: Nisha Menon, 41 years, female. Contact +91 98450 21735, nisha.menon@example.com. Policy no. GH-POL-100231 (spouse of holder).\nBMI 42.3 kg/m2 with obstructive sleep apnoea. Supervised weight-loss programme for 18 months without sustained benefit.\nProvisional diagnosis: morbid obesity (ICD-10 E66.01).\nProposed: laparoscopic sleeve gastrectomy on 25-Oct-2026, 3 days, single private room at Rs 5,000 per day.\nEstimate: room Rs 15,000; OT Rs 48,000; surgeon and anaesthetist Rs 90,000; staplers and consumables Rs 95,000; medicines Rs 18,000; investigations Rs 14,000. Total Rs 2,80,000.\nAttached: admission note, cost estimate, BMI and comorbidity assessment, ID proof. Treating surgeon: Dr. Farhan Qureshi."
+}

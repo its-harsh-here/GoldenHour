@@ -1,0 +1,49 @@
+{
+  "case_id": "PA-1003",
+  "hero": "C",
+  "title": "Total knee replacement, right",
+  "received_offset_min": 0,
+  "hospital": {
+    "name": "Kaveri City Hospital",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-KCH-0192",
+    "tpa_email": "tpa.desk@kavericity.example",
+    "phone": "+91 80 4110 2290"
+  },
+  "form": {
+    "patient_name": "Vikram Rao",
+    "age": 61,
+    "gender": "M",
+    "patient_phone": "+91 99001 47258",
+    "patient_email": "vikram.rao61@example.com",
+    "aadhaar": "7314 0082 6619",
+    "policy_number": "GH-POL-101942",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-24",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Suresh Nayak",
+    "provisional_diagnosis": "Primary osteoarthritis, right knee",
+    "icd10": "M17.11",
+    "proposed_procedure": "Total knee replacement, right (cemented)",
+    "room_category": "Private room",
+    "room_rent_per_day": 6500,
+    "expected_los_days": 5,
+    "is_accident": false,
+    "estimate": {
+      "room": 32500,
+      "ot": 45000,
+      "surgeon": 85000,
+      "consumables": 140000,
+      "medicines": 22000,
+      "investigations": 25500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "knee_xray",
+    "orthopaedic_consult",
+    "id_proof"
+  ],
+  "admission_note_pdf": "PA-1003_admission_note.pdf"
+}

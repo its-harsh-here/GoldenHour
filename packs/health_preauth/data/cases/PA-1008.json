@@ -1,0 +1,54 @@
+{
+  "case_id": "PA-1008",
+  "hero": null,
+  "title": "ORIF tibia after road accident",
+  "received_offset_min": 96,
+  "hospital": {
+    "name": "Kaveri City Hospital",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-KCH-0192",
+    "tpa_email": "tpa.desk@kavericity.example",
+    "phone": "+91 80 4110 2290"
+  },
+  "form": {
+    "patient_name": "Sneha Kulkarni",
+    "age": 36,
+    "gender": "F",
+    "patient_phone": "+91 97411 58027",
+    "patient_email": "",
+    "aadhaar": "4410 7781 2265",
+    "policy_number": "GH-POL-102310",
+    "relationship_to_holder": "spouse",
+    "admission_date": "2026-10-22",
+    "admission_type": "emergency",
+    "treating_doctor": "Dr. Joseph Mathew",
+    "provisional_diagnosis": "Closed fracture shaft of right tibia (road traffic accident)",
+    "icd10": "S82.201A",
+    "proposed_procedure": "ORIF with intramedullary nail, right tibia",
+    "room_category": "Single room",
+    "room_rent_per_day": 5000,
+    "expected_los_days": 4,
+    "is_accident": true,
+    "estimate": {
+      "room": 20000,
+      "ot": 24000,
+      "surgeon": 38000,
+      "consumables": 36000,
+      "medicines": 9000,
+      "investigations": 8000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "xray_report",
+    "mlc_or_accident_report",
+    "id_proof"
+  ],
+  "seed_outcome": {
+    "tat_min": 21,
+    "human": "PROCESSOR",
+    "action": "approve"
+  },
+  "admission_note": "KAVERI CITY HOSPITAL - Department of Orthopaedics and Trauma\nPatient: Sneha Kulkarni, 36 years, female. Contact +91 97411 58027. Policy no. GH-POL-102310 (spouse of holder).\nTwo-wheeler road traffic accident on 22-Oct-2026; pain and deformity of the right leg. MLC registered. X-ray: displaced transverse fracture of the right tibial shaft. Neurovascular status intact.\nProvisional diagnosis: closed fracture shaft of right tibia (ICD-10 S82.201A).\nProposed: ORIF with intramedullary interlocking nail, 4 days, single room at Rs 5,000 per day.\nEstimate: room Rs 20,000; OT Rs 24,000; surgeon and anaesthetist Rs 38,000; implant and consumables Rs 36,000; medicines Rs 9,000; investigations Rs 8,000. Total Rs 1,35,000.\nAttached: admission note, cost estimate, X-ray report, MLC copy, ID proof. Treating surgeon: Dr. Joseph Mathew."
+}

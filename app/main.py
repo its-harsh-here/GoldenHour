@@ -51,6 +51,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         rt = Runtime(s)
         if not rt.cases.list():
             rt.pack.seed(rt, history=s.seed_history)
+        if not rt.cases.list():
+            print(f"ERROR: pack '{rt.pack.name}' loaded zero cases; its data directory is missing from this build.", flush=True)
         app.state.rt = rt
         yield
 
@@ -98,7 +100,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # ---------------- meta ----------------
     @app.get("/api/health")
     def health(request: Request) -> dict:
-        return {"ok": True, "llm_mode": rt_of(request).llm.mode}
+        rt = rt_of(request)
+        cases = len(rt.cases.list())
+        return {"ok": cases > 0, "llm_mode": rt.llm.mode, "cases": cases, "replay_entries": len(rt.llm.replay)}
 
     @app.get("/api/meta")
     def meta(request: Request) -> dict:

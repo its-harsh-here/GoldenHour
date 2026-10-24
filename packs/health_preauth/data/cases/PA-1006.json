@@ -1,0 +1,55 @@
+{
+  "case_id": "PA-1006",
+  "hero": null,
+  "title": "Community-acquired pneumonia",
+  "received_offset_min": 141,
+  "hospital": {
+    "name": "Malnad Ridge Hospital",
+    "city": "Shivamogga",
+    "hospital_code": "HSP-MRH-0733",
+    "tpa_email": "cashless@malnadridge.example",
+    "phone": "+91 8182 40 6612"
+  },
+  "form": {
+    "patient_name": "Rohan Kulkarni",
+    "age": 39,
+    "gender": "M",
+    "patient_phone": "+91 97411 58026",
+    "patient_email": "rohan.k@example.com",
+    "aadhaar": "3349 1206 7784",
+    "policy_number": "GH-POL-102310",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-23",
+    "admission_type": "emergency",
+    "treating_doctor": "Dr. Mahesh Shetty",
+    "provisional_diagnosis": "Community-acquired pneumonia, right lower lobe",
+    "icd10": "J18.9",
+    "proposed_procedure": "Medical management of pneumonia",
+    "room_category": "Single room",
+    "room_rent_per_day": 5000,
+    "expected_los_days": 5,
+    "is_accident": false,
+    "estimate": {
+      "room": 25000,
+      "ot": 0,
+      "surgeon": 10000,
+      "consumables": 4000,
+      "medicines": 12000,
+      "investigations": 7000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "chest_xray",
+    "cbc_report",
+    "id_proof"
+  ],
+  "seed_outcome": {
+    "tat_min": 38,
+    "human": "MEDICAL_OFFICER",
+    "action": "deny",
+    "reason": "Illness began within the 30-day initial waiting period (Sec 3.1) and is not accident-related. Pre-authorization not approved; hospital may submit a reimbursement claim for review after discharge."
+  },
+  "admission_note_pdf": "PA-1006_admission_note.pdf"
+}

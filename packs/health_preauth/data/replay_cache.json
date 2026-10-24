@@ -1,0 +1,341 @@
+{
+ "entries": {
+  "010793e6496df3c0a47b2af715f2f62ba388463f964739b2700c686b69b0372e": {
+   "content": "{\"hospital_notice\":\"Dear TPA Desk,\\nWe hereby authorize the pre‑authorization for patient [PATIENT_1] undergoing Laparoscopic appendectomy at Kaveri City Hospital. The approved amount is ₹1,01,000, after deducting the room‑rent cap of ₹9,000 as per Section 4.2. The total amount requested was ₹1,10,000. Please proceed with the treatment and submit the final bill within the policy SLA.\\nRegards,\\nGoldenHour Cashless Desk\",\"patient_sms\":\"Dear [PATIENT_1], your pre‑authorization for Laparoscopic appendectomy at Kaveri City Hospital is approved for ₹1,01,000. The deduction of ₹9,000 for room rent has been applied. Please keep your policy documents handy. GoldenHour\"}",
+   "model": "openai/gpt-oss-20b",
+   "tokens": 574,
+   "tool_calls": []
+  },
+  "06c9b60ad0424ff99e13aa51502cc148782e1dbc51a472f766a35032924b17b0": {
+   "content": null,
+   "model": "openai/gpt-oss-20b",
+   "tokens": 742,
+   "tool_calls": [
+    {
+     "arguments": "{\"policy_ref\":\"[POLICY_1]\"}",
+     "id": "fc_a8fd007f-84ce-4eac-88af-1d53463d5ee3",
+     "name": "get_claim_history"
+    }
+   ]
+  },
+  "07b70c590ec306b0f1a5b58b341ea22180b92d897b2a50dd48ed256a223d2491": {
+   "content": null,
+   "model": "openai/gpt-oss-20b",
+   "tokens": 506,
+   "tool_calls": [
+    {
+     "arguments": "{\"icd10\":\"H25.1\",\"query\":\"phacoemulsification with foldable IOL implantation\"}",
+     "id": "fc_44495a05-0f41-4b03-977b-d4109b67705d",
+     "name": "lookup_procedure"
+    }
+   ]
+  },
+  "08cb83bc13dc9c9237447ba38dfe8778b398124a73414f7ba6398a70734d9e97": {
+   "content": "{\"patient_ref\":\"[PATIENT_1]\",\"policy_ref\":\"[POLICY_1]\",\"admission_date\":\"2026-10-24\",\"provisional_diagnosis\":\"acute appendicitis\",\"icd10_codes\":[\"K35.80\"],\"proposed_procedure\":\"laparoscopic appendectomy\",\"room_rent_per_day\":8000,\"expected_los_days\":3,\"estimate\":{\"room\":24000,\"ot\":20000,\"surgeon\":32000,\"consumables\":14000,\"medicines\":9000,\"investigations\":11000},\"estimate_total_stated\":110000,\"is_accident\":false,\"attached_docs\":[\"admission_note\",\"cost_estimate\",\"ultrasound_abdomen\",\"cbc_report\",\"id_proof\"],\"symptom_duration_months\":null,\"confidence\":0.95,\"notes\":\"\"}",
+   "model": "openai/gpt-oss-20b",
+   "tokens": 1284,
+   "tool_calls": []
+  },
+  "0ed1656658b2bb80fe5630010a8ad652ed00eca8c69bf1a8e2d45e2538a9617e": {
+   "content": null,
+   "model": "openai/gpt-oss-20b",
+   "tokens": 615,
+   "tool_calls": [
+    {
+     "arguments": "{\"procedure_key\":\"tkr\"}",
+     "id": "fc_945dfc7e-d649-40c9-90a4-9ec7fa2d3f5e",
+     "name": "required_docs"
+    }
+   ]
+  },
+  "1293fc01f74982bb7c82450780b39a3f967f27d955dfa1c385d43f171110f88f": {
+   "content": "0.0008129594498313963",
+   "model": "meta-llama/llama-prompt-guard-2-86m",
+   "tokens": 0,
+   "tool_calls": []
+  },
+  "15362eeb881987c6384967bcb049073f4a5f318f5a407b0f754192d59726ff5c": {
+   "content": null,
+   "model": "openai/gpt-oss-20b",
+   "tokens": 545,
+   "tool_calls": [
+    {
+     "arguments": "{\"icd10\":\"H25.1\",\"query\":\"phacoemulsification with foldable IOL implantation right eye\"}",
+     "id": "fc_7aadc7cf-983f-4e15-9b80-ca2aced966cc",
+     "name": "lookup_procedure"
+    }
+   ]
+  },
+  "16dd89f0176fbe13c345a8818e05c7342e42c6ae38cd0b988e3bcbc7fedc4e43": {
+   "content": "{\"rationale\":\"The claim triggers multiple high‑risk signals, including a failed eligibility rule and symptoms that began well before the policy start date, as well as a request that exceeds the desk’s monetary threshold. These factors collectively raise concerns about coverage validity and potential over‑payment.\",\"top_concerns\":[\"Eligibility rule failed\",\"Symptoms predate policy\",\"High-value request\"]}",
+   "model": "openai/gpt-oss-120b",
+   "tokens": 550,
+   "tool_calls": []
+  },
+  "1c69db944342a46c6de84bc9c991fe09c28141ed1d8f3833cdcfbd11584d59e5": {
+   "content": "{\"rationale\":\"The case received a low risk score of 5. The only flagged issue is the room rent exceeding the policy cap, which may require a proportionate deduction.\",\"top_concerns\":[\"Room rent above cap\"]}",
+   "model": "openai/gpt-oss-120b",
+   "tokens": 343,
+   "tool_calls": []
+  },
+  "23445e048f3d8b240bdfa0e2b267fbc8d655bec338b25c12a079ab8a17e61dc5": {
+   "content": null,
+   "model": "openai/gpt-oss-20b",
+   "tokens": 637,
+   "tool_calls": [
+    {
+     "arguments": "{\"procedure_key\":\"cataract_phaco\"}",
+     "id": "fc_121c64b1-1683-4cf9-8f12-4930ef1c957a",
+     "name": "required_docs"
+    }
+   ]
+  },
+  "260d3bd5e1c3c3862bc8a260332aec6c8e5b0fb5f6d84db8d2d5895ca0b77e0f": {
+   "content": "0.0004178903764113784",
+   "model": "meta-llama/llama-prompt-guard-2-86m",
+   "tokens": 0,
+   "tool_calls": []
+  },
+  "2eb38ce661ea8557f7a5f09efad126fe6da4260b6135034867649edca0bbe18a": {
+   "content": "{\"summary\":\"Recommend approval for the claim with a recommended payment of ₹1,01,000 after applying the ₹9,000 deduction for room‑rent exceeding the policy cap. All eligibility rules passed except the room‑rent cap, which caused the reduction. The claim remains within the available sum insured and no other exclusions apply.\",\"cited_rules\":[\"policy_active\",\"initial_waiting\",\"ped_waiting\",\"specific_disease_waiting\",\"exclusions\",\"room_rent_cap\",\"sub_limit\",\"copay\",\"balance_cap\"]}",
+   "model": "openai/gpt-oss-120b",
+   "tokens": 1121,
+   "tool_calls": []
+  },
+  "488e56a8aae811f00fff8207dcef014a5e45ea853616fbc4efe64e1497676db9": {
+   "content": "{\"hospital_notice\":\"Dear Kaveri City Hospital TPA Desk,\\n\\nPlease be advised that the claim for [PATIENT_1] for Total knee replacement, right (cemented) has been denied. The policy is only 8 months old and the joint replacement procedure is subject to a 24‑month waiting period as per Section 3.3 of the policy. The requested amount of ₹3,50,000 cannot be approved. Please update the claim status accordingly.\\n\\nRegards,\\nGoldenHour Desk\",\"patient_sms\":\"Your claim for knee replacement (₹3,50,000) is denied due to the 24‑month waiting period. Please contact us if you have questions.\"}",
+   "model": "openai/gpt-oss-20b",
+   "tokens": 562,
+   "tool_calls": []
+  },
+  "556d06fa7e362378800922d2c45c3d9e03d9884b2da63dc53467deafb7b57ff3": {
+   "content": "{\"rationale\":\"The requested amount is 16% higher than the benchmark package, and key biometric documents required for IOL power calculation are missing. Both issues raise questions about the justification and completeness of the claim.\",\"top_concerns\":[\"Estimate above benchmark\",\"Missing biometric report\",\"Missing A‑scan\"]}",
+   "model": "openai/gpt-oss-120b",
+   "tokens": 393,
+   "tool_calls": []
+  },
+  "5d2f02946e14ef7ff49eb3bbac5e2f0df3df92f048badb220a0549344a435d39": {
+   "content": "{\"policy_found\":true,\"ped_link_suspected\":false,\"ped_link_reason\":\"\",\"claim_history_note\":\"No prior claims on this policy.\",\"coverage_notes\":\"Policy has a 24‑month specific waiting period for joint replacement procedures; the admission occurs 8 months after inception, so the procedure is not covered yet. The policy also caps joint replacement at ₹250,000 and has no co‑pay.\"}",
+   "model": "openai/gpt-oss-20b",
+   "tokens": 1000,
+   "tool_calls": []
+  },
+  "607d58a18c1498d594958eb2b851accc9773994b40810d5939348db65111d728": {
+   "content": null,
+   "model": "openai/gpt-oss-20b",
+   "tokens": 494,
+   "tool_calls": [
+    {
+     "arguments": "{\"policy_ref\":\"[POLICY_1]\"}",
+     "id": "fc_0783165d-1360-4dfe-9bdd-32570895d1b6",
+     "name": "get_policy"
+    }
+   ]
+  },
+  "64a8e53363fc1e53430b119774f5c0c1a4f86ae3f309d77b56c139d35e8de499": {
+   "content": "{\"patient_ref\":\"[PATIENT_1]\",\"policy_ref\":\"[POLICY_1]\",\"admission_date\":\"2026-10-24\",\"provisional_diagnosis\":\"primary osteoarthritis, right knee\",\"icd10_codes\":[\"M17.11\"],\"proposed_procedure\":\"right total knee replacement (cemented)\",\"room_rent_per_day\":6500,\"expected_los_days\":5,\"estimate\":{\"room\":32500,\"ot\":45000,\"surgeon\":85000,\"consumables\":140000,\"medicines\":22000,\"investigations\":25500},\"estimate_total_stated\":350000,\"is_accident\":false,\"attached_docs\":[\"admission_note\",\"cost_estimate\",\"knee_xray\",\"orthopaedic_consult\",\"id_proof\"],\"symptom_duration_months\":36,\"confidence\":0.95,\"notes\":\"\"}",
+   "model": "openai/gpt-oss-20b",
+   "tokens": 1314,
+   "tool_calls": []
+  },
+  "6d79877055f6847bbbfb39611d16b30fc10bbadffe3987fe64bacd4c4a8029b4": {
+   "content": "{\"summary\":\"The policy is active and all waiting periods and exclusions are satisfied. The procedure sub‑limit reduces the claim by ₹12,000 and the 10% co‑payment further reduces it by ₹4,000, resulting in a recommended approval of ₹36,000. The claim is within the room‑rent cap and available sum insured.\",\"cited_rules\":[\"policy_active\",\"initial_waiting\",\"ped_waiting\",\"specific_disease_waiting\",\"exclusions\",\"room_rent_cap\",\"sub_limit\",\"copay\",\"balance_cap\"]}",
+   "model": "openai/gpt-oss-120b",
+   "tokens": 1119,
+   "tool_calls": []
+  },
+  "71328813d8e0d0ff28577eb2fb530bbf1d1ecf97697d6b6afaf58c6798b31af8": {
+   "content": "{\"hospital_notice\":\"Dear TPA Desk, we approve the pre‑authorization for [PATIENT_1] for Phacoemulsification with foldable IOL, right eye (day care) at Nandi Valley Medical Centre. The authorized amount is ₹36,000, deducting Procedure sub‑limit ₹12,000 and Co‑payment ₹4,000. Total authorized out‑of‑pocket is ₹20,000. Please proceed with the claim and keep us informed of any further requirements.\",\"patient_sms\":\"Your pre‑authorization for eye surgery at Nandi Valley Medical Centre is approved for ₹36,000. Deductibles: ₹12,000 procedure sub‑limit, ₹4,000 co‑pay. Thank you. \"}",
+   "model": "openai/gpt-oss-20b",
+   "tokens": 592,
+   "tool_calls": []
+  },
+  "73287fdb88cc32bdbeeb5ada47fa6c6f433e115e5dfa944210e57fb38ac49642": {
+   "content": "0.0007623701822012663",
+   "model": "meta-llama/llama-prompt-guard-2-86m",
+   "tokens": 0,
+   "tool_calls": []
+  },
+  "7499aaf6de2ce8cc706c3a2e8543b81cb0b5b2b4bb73387433a3fa1ec61b7698": {
+   "content": "{\"procedure_key\":\"lap_appendectomy\",\"coding_consistent\":true,\"coding_note\":\"ICD-10 K35.80 matches the procedure\",\"missing_docs\":[],\"documentation_note\":\"\"}",
+   "model": "openai/gpt-oss-20b",
+   "tokens": 760,
+   "tool_calls": []
+  },
+  "79081484d61420489816d8a9afb3a9f8846504d5ef46f3cdd34b84a3633b97ba": {
+   "content": null,
+   "model": "openai/gpt-oss-20b",
+   "tokens": 641,
+   "tool_calls": [
+    {
+     "arguments": "{\"procedure_key\":\"cataract_phaco\"}",
+     "id": "fc_7ceb7447-5483-48de-9ec9-8a14099f17a4",
+     "name": "required_docs"
+    }
+   ]
+  },
+  "7afe3e0b1a03afa05498fd68414119a0cd5af3417772e2f7d86caaa2a113a237": {
+   "content": "{\"summary\":\"The claim must be escalated to the Medical Officer because the specified‑disease waiting period rule failed (rule specific_disease_waiting) and the requested amount exceeds the desk threshold, with additional deductions from room‑rent cap (rule room_rent_cap) and procedure sub‑limit (rule sub_limit). The risk score of 100 also triggers escalation. The Medical Officer should review the eligibility, waiting periods, and high‑value request.\",\"cited_rules\":[\"specific_disease_waiting\",\"room_rent_cap\",\"sub_limit\"]}",
+   "model": "openai/gpt-oss-120b",
+   "tokens": 1222,
+   "tool_calls": []
+  },
+  "80a69e8f579273d37d3b2580b67f97c4fdfb3ffa355cb518512c9acf967f4fef": {
+   "content": null,
+   "model": "openai/gpt-oss-20b",
+   "tokens": 501,
+   "tool_calls": [
+    {
+     "arguments": "{\"policy_ref\":\"[POLICY_1]\"}",
+     "id": "fc_a38d18a2-5709-4e0e-b4a4-d1022897dc06",
+     "name": "get_policy"
+    }
+   ]
+  },
+  "930257d2c00b8f7d0030694b58041af908b31273565a961b1993f3b1c18e1e28": {
+   "content": null,
+   "model": "openai/gpt-oss-20b",
+   "tokens": 497,
+   "tool_calls": [
+    {
+     "arguments": "{\"icd10\":\"M17.11\",\"query\":\"right total knee replacement cemented\"}",
+     "id": "fc_305a2307-4085-4db4-aa00-355a5f06e491",
+     "name": "lookup_procedure"
+    }
+   ]
+  },
+  "94a0e1fac3362ba92912f48435aa7fc00cdefc63606a497e0510c7e89f90febc": {
+   "content": "{\"subject\":\"Missing Documentation for Case PA-1002\",\"body\":\"Dear [PATIENT_1],\\n\\nThe following document is missing for your procedure at Nandi Valley Medical Centre: Biometry / A-scan report (IOL power calculation).\\n\\nCase Reference: PA-1002\\n\\nThe decision clock is paused until we receive the required documentation. Once received, a decision will be made within the remaining window.\\n\\nThank you.\"}",
+   "model": "openai/gpt-oss-20b",
+   "tokens": 499,
+   "tool_calls": []
+  },
+  "a1a7dfc2d4d4f256205d01845e7d506c38604dd41d92db4a2c422e040c51e5e6": {
+   "content": null,
+   "model": "openai/gpt-oss-20b",
+   "tokens": 609,
+   "tool_calls": [
+    {
+     "arguments": "{\"procedure_key\":\"lap_appendectomy\"}",
+     "id": "fc_29136c36-5c03-4429-928f-884974d594b7",
+     "name": "required_docs"
+    }
+   ]
+  },
+  "a3931dc4bd54ddf5408cc778107d5beab96073791f9f72af5f7840618949f960": {
+   "content": "{\"summary\":\"The claim is flagged for hospital query with a recommended payout of ₹36,000 after applying the procedure sub‑limit reduction of ₹12,000 (rule sub_limit) and the 10% co‑payment of ₹4,000 (rule copay). All other eligibility rules passed, and the amount is within the available sum insured. The Medical Officer should review the missing Biometry/A‑scan report as indicated in the missing documents list.\",\"cited_rules\":[\"sub_limit\",\"copay\"]}",
+   "model": "openai/gpt-oss-120b",
+   "tokens": 1113,
+   "tool_calls": []
+  },
+  "a689ba7ded23252ac30f8a09febfab7292654bc0c52e94acbb8ec1f26d707033": {
+   "content": "0.00043391596409492195",
+   "model": "meta-llama/llama-prompt-guard-2-86m",
+   "tokens": 0,
+   "tool_calls": []
+  },
+  "a78516a008fb63851eaf36b43077be61b15b52d19128e350bd8149f9c18c6c3f": {
+   "content": "0.0007213448989205062",
+   "model": "meta-llama/llama-prompt-guard-2-86m",
+   "tokens": 0,
+   "tool_calls": []
+  },
+  "ac840cbe01d29180ae291e81dad0848f14151ebb5f9faac628249167dee7be0d": {
+   "content": "{\"patient_ref\":\"[PATIENT_1]\",\"policy_ref\":\"[POLICY_1]\",\"admission_date\":\"2026-10-24\",\"provisional_diagnosis\":\"age-related nuclear cataract, right eye\",\"icd10_codes\":[\"H25.1\"],\"proposed_procedure\":\"phacoemulsification with foldable IOL implantation, right eye\",\"room_rent_per_day\":3500,\"expected_los_days\":1,\"estimate\":{\"room\":3500,\"ot\":10000,\"surgeon\":15000,\"consumables\":16500,\"medicines\":2500,\"investigations\":4500},\"estimate_total_stated\":52000,\"is_accident\":false,\"attached_docs\":[\"admission_note\",\"cost_estimate\",\"ophthalmologist_consult\",\"id_proof\"],\"symptom_duration_months\":14,\"confidence\":0.95,\"notes\":\"\"}",
+   "model": "openai/gpt-oss-20b",
+   "tokens": 1379,
+   "tool_calls": []
+  },
+  "b57a61385b31f7658a96c1d957edac076543a9738047116d60d012439cd39db7": {
+   "content": null,
+   "model": "openai/gpt-oss-20b",
+   "tokens": 490,
+   "tool_calls": [
+    {
+     "arguments": "{\"icd10\":\"K35.80\",\"query\":\"laparoscopic appendectomy\"}",
+     "id": "fc_633b6c04-6a26-4b1a-8c90-1e56431d8123",
+     "name": "lookup_procedure"
+    }
+   ]
+  },
+  "b9e451a90bafd4a69df10d39ee0f5f5c47a4b549e0003d54b5dfc2816d2e7adf": {
+   "content": "{\"policy_found\": true,\"ped_link_suspected\": false,\"ped_link_reason\": \"\",\"claim_history_note\": \"No prior claims on this policy.\",\"coverage_notes\":\"Waiting period for cataract is 24 days; sub-limit of ₹40,000 applies; 10% co-pay; daily room rent capped at ₹4,000; no relevant exclusions.\"}",
+   "model": "openai/gpt-oss-20b",
+   "tokens": 865,
+   "tool_calls": []
+  },
+  "cc69b1489a7febd33d8900f5b1fe19622326f57c38ceafeedb32a2cbe392a1c1": {
+   "content": null,
+   "model": "openai/gpt-oss-20b",
+   "tokens": 757,
+   "tool_calls": [
+    {
+     "arguments": "{\"policy_ref\":\"[POLICY_1]\"}",
+     "id": "fc_26d8146c-fd27-4d59-a2a6-f65f5124f795",
+     "name": "get_claim_history"
+    }
+   ]
+  },
+  "ce03a9cd9b862423db150383cbbe992ec216415787129be662a32ba60d5265de": {
+   "content": null,
+   "model": "openai/gpt-oss-20b",
+   "tokens": 509,
+   "tool_calls": [
+    {
+     "arguments": "{\"policy_ref\":\"[POLICY_1]\"}",
+     "id": "fc_afb0f7ef-d26d-4e30-a188-3c38cd613b63",
+     "name": "get_policy"
+    }
+   ]
+  },
+  "cf8af460fdd84cd63fc1c7af9da39164c8aa17b82bb7641e51534b744c9996ff": {
+   "content": "{\"procedure_key\":\"cataract_phaco\",\"coding_consistent\":true,\"coding_note\":\"ICD-10 H25.1 matches the proposed cataract procedure\",\"missing_docs\":[],\"documentation_note\":\"\"}",
+   "model": "openai/gpt-oss-20b",
+   "tokens": 816,
+   "tool_calls": []
+  },
+  "d820890e56ac5368efe3ab43fc9dd6a8e24563bc05ca6a5bed75a8c8ac027699": {
+   "content": "{\n  \"policy_found\": true,\n  \"ped_link_suspected\": false,\n  \"ped_link_reason\": \"\",\n  \"claim_history_note\": \"No claims in the last 12 months; one earlier claim for a viral fever.\",\n  \"coverage_notes\": \"Policy has a 30‑day initial waiting period, 36‑month PEDS waiting period, zero copay, room‑rent cap of ₹5,000/day, and no sub‑limits for appendicitis. Appendicitis is not listed as an excluded condition.\"\n}",
+   "model": "openai/gpt-oss-20b",
+   "tokens": 945,
+   "tool_calls": []
+  },
+  "dea1a55ec333053d31d0d354cbea2cb8cfd4708ee1051fdf303c3723567a3aec": {
+   "content": "0.9964714050292969",
+   "model": "meta-llama/llama-prompt-guard-2-86m",
+   "tokens": 0,
+   "tool_calls": []
+  },
+  "e2959e94a0b60a0c2a313d6bf22b130247f18a647bf55ef5dc066742fec16a4c": {
+   "content": "{\"procedure_key\":\"tkr\",\"coding_consistent\":true,\"coding_note\":\"ICD-10 code matches diagnosis and procedure\",\"missing_docs\":[],\"documentation_note\":\"\"}",
+   "model": "openai/gpt-oss-20b",
+   "tokens": 762,
+   "tool_calls": []
+  },
+  "e3234cbdc50578f592329e387caf4c23427ffe73389f50ec93331d9d9547f19e": {
+   "content": "{\"procedure_key\":\"cataract_phaco\",\"coding_consistent\":true,\"coding_note\":\"ICD‑10 code matches the proposed cataract procedure\",\"missing_docs\":[\"biometry_ascan_report\"],\"documentation_note\":\"Biometry / A‑scan report missing\"}",
+   "model": "openai/gpt-oss-20b",
+   "tokens": 844,
+   "tool_calls": []
+  },
+  "ec23d70eeb92993dacac9ae12e942826d4446d5594415be55594ad33602a5b7a": {
+   "content": null,
+   "model": "openai/gpt-oss-20b",
+   "tokens": 746,
+   "tool_calls": [
+    {
+     "arguments": "{\"policy_ref\":\"[POLICY_1]\"}",
+     "id": "fc_0ad3178e-44e9-44a3-aecf-2775f9c38f7f",
+     "name": "get_claim_history"
+    }
+   ]
+  },
+  "ff379cbce9bdc821bb1cd4ab08f7d80b9eae05951bb84c8b623b0161a5e1e5d4": {
+   "content": "{\"rationale\":\"The claim estimate is 16% higher than the benchmark package cost. This variance raises a flag for further review.\", \"top_concerns\":[\"Estimate exceeds benchmark\"]}",
+   "model": "openai/gpt-oss-120b",
+   "tokens": 329,
+   "tool_calls": []
+  }
+ },
+ "version": 1
+}

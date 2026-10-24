@@ -1,0 +1,53 @@
+{
+  "case_id": "PA-1010",
+  "hero": null,
+  "title": "Tonsillectomy (paediatric)",
+  "received_offset_min": 26,
+  "hospital": {
+    "name": "Kaveri City Hospital",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-KCH-0192",
+    "tpa_email": "tpa.desk@kavericity.example",
+    "phone": "+91 80 4110 2290"
+  },
+  "form": {
+    "patient_name": "Zara Sheikh",
+    "age": 11,
+    "gender": "F",
+    "patient_phone": "+91 98860 33419",
+    "patient_email": "",
+    "aadhaar": "",
+    "policy_number": "GH-POL-100874",
+    "relationship_to_holder": "daughter",
+    "admission_date": "2026-10-24",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Lakshmi Pai",
+    "provisional_diagnosis": "Chronic tonsillitis with recurrent episodes",
+    "icd10": "J35.01",
+    "proposed_procedure": "Tonsillectomy (coblation)",
+    "room_category": "Twin sharing",
+    "room_rent_per_day": 4500,
+    "expected_los_days": 2,
+    "is_accident": false,
+    "estimate": {
+      "room": 9000,
+      "ot": 9000,
+      "surgeon": 15000,
+      "consumables": 5000,
+      "medicines": 4000,
+      "investigations": 6000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "ent_consult",
+    "id_proof"
+  ],
+  "seed_outcome": {
+    "tat_min": null,
+    "human": null,
+    "action": null
+  },
+  "admission_note": "KAVERI CITY HOSPITAL - Department of ENT\nPatient: Zara Sheikh, 11 years, female. Parent contact +91 98860 33419. Policy no. GH-POL-100874 (daughter of holder).\nSeven documented episodes of acute tonsillitis in the past 12 months with school absence; grade III tonsils, no peritonsillar abscess.\nProvisional diagnosis: chronic tonsillitis (ICD-10 J35.01).\nProposed: coblation tonsillectomy on 24-Oct-2026, 2 days, twin-sharing room at Rs 4,500 per day.\nEstimate: room Rs 9,000; OT Rs 9,000; surgeon and anaesthetist Rs 15,000; consumables Rs 5,000; medicines Rs 4,000; investigations Rs 6,000. Total Rs 48,000.\nAttached: admission note, cost estimate, ENT consultation note, ID proof. Treating surgeon: Dr. Lakshmi Pai."
+}

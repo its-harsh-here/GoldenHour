@@ -1,0 +1,51 @@
+{
+  "case_id": "PA-1002",
+  "hero": "B",
+  "title": "Cataract surgery, right eye",
+  "received_offset_min": 0,
+  "hospital": {
+    "name": "Nandi Valley Medical Centre",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-NVM-0417",
+    "tpa_email": "preauth@nandivalley.example",
+    "phone": "+91 80 4725 3381"
+  },
+  "form": {
+    "patient_name": "Shanthamma Gowda",
+    "age": 67,
+    "gender": "F",
+    "patient_phone": "+91 94481 66302",
+    "patient_email": "",
+    "aadhaar": "6630 2194 8857",
+    "policy_number": "GH-POL-100587",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-24",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Prakash Hegde",
+    "provisional_diagnosis": "Age-related nuclear cataract, right eye",
+    "icd10": "H25.1",
+    "proposed_procedure": "Phacoemulsification with foldable IOL, right eye (day care)",
+    "room_category": "Day-care ward",
+    "room_rent_per_day": 3500,
+    "expected_los_days": 1,
+    "is_accident": false,
+    "estimate": {
+      "room": 3500,
+      "ot": 10000,
+      "surgeon": 15000,
+      "consumables": 16500,
+      "medicines": 2500,
+      "investigations": 4500
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "ophthalmologist_consult",
+    "id_proof"
+  ],
+  "upload_on_query": [
+    "biometry_ascan_report"
+  ],
+  "admission_note": "NANDI VALLEY MEDICAL CENTRE - Department of Ophthalmology\nCashless pre-authorization request: day-care admission\n\nPatient: Shanthamma Gowda, 67 years, female. Contact +91 94481 66302. Aadhaar 6630 2194 8857.\nPolicy no. GH-POL-100587 (self).\n\nHistory: progressive painless diminution of vision in the right eye over 14 months, difficulty with night driving and reading.\nExamination: visual acuity RE 6/36, LE 6/12. Slit lamp: nuclear sclerosis grade III, right eye. Fundus: no retinopathy.\nKnown type 2 diabetes and hypertension, controlled on current medication.\nProvisional diagnosis: age-related nuclear cataract, right eye (ICD-10 H25.1).\n\nProposed treatment: phacoemulsification with foldable IOL implantation, right eye, as day care on 24-Oct-2026.\nCost estimate: day-care ward Rs 3,500; OT Rs 10,000; surgeon Rs 15,000; IOL and consumables Rs 16,500; medicines Rs 2,500; investigations Rs 4,500. Total Rs 52,000.\nDocuments attached: admission note, itemised cost estimate, ophthalmologist consultation note, ID proof. IOL power to be confirmed on biometry.\n\nTreating surgeon: Dr. Prakash Hegde."
+}

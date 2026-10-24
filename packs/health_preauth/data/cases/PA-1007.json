@@ -1,0 +1,57 @@
+{
+  "case_id": "PA-1007",
+  "hero": null,
+  "title": "Coronary angioplasty, single stent",
+  "received_offset_min": 118,
+  "hospital": {
+    "name": "Malnad Ridge Hospital",
+    "city": "Shivamogga",
+    "hospital_code": "HSP-MRH-0733",
+    "tpa_email": "cashless@malnadridge.example",
+    "phone": "+91 8182 40 6612"
+  },
+  "form": {
+    "patient_name": "Imran Sheikh",
+    "age": 52,
+    "gender": "M",
+    "patient_phone": "+91 98860 33420",
+    "patient_email": "",
+    "aadhaar": "9021 5576 1180",
+    "policy_number": "GH-POL-100874",
+    "relationship_to_holder": "spouse",
+    "admission_date": "2026-10-23",
+    "admission_type": "emergency",
+    "treating_doctor": "Dr. Nandini Kamath",
+    "provisional_diagnosis": "NSTEMI, single-vessel disease (LAD)",
+    "icd10": "I21.4",
+    "proposed_procedure": "PTCA with one drug-eluting stent",
+    "room_category": "Cardiac ICU then private",
+    "room_rent_per_day": 9500,
+    "expected_los_days": 3,
+    "is_accident": false,
+    "estimate": {
+      "room": 28500,
+      "ot": 46000,
+      "surgeon": 52000,
+      "consumables": 88000,
+      "medicines": 15500,
+      "investigations": 10000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "ecg",
+    "troponin_report",
+    "angiography_report",
+    "id_proof"
+  ],
+  "seed_outcome": {
+    "tat_min": 47,
+    "human": "MEDICAL_OFFICER",
+    "action": "partial_approve",
+    "amount": 220000,
+    "reason": "Stent and consumables billed above package; approved at the PTCA package rate of Rs 2,20,000. Balance may be claimed at final bill with invoices."
+  },
+  "admission_note": "MALNAD RIDGE HOSPITAL - Department of Cardiology\nPatient: Imran Sheikh, 52 years, male. Contact +91 98860 33420. Policy no. GH-POL-100874 (spouse of holder).\nRetrosternal chest pain for 3 hours, diaphoresis. ECG: ST depression V3-V5. Troponin I 2.8 ng/mL (elevated). Angiography: 90% proximal LAD stenosis, other vessels normal.\nProvisional diagnosis: NSTEMI with single-vessel disease (ICD-10 I21.4).\nProposed: PTCA with one drug-eluting stent to LAD on 23-Oct-2026; 3 days (1 day CCU, 2 days private) at an average of Rs 9,500 per day.\nEstimate: room Rs 28,500; cath lab Rs 46,000; cardiologist fees Rs 52,000; stent and consumables Rs 88,000; medicines Rs 15,500; investigations Rs 10,000. Total Rs 2,40,000.\nAttached: admission note, cost estimate, ECG, troponin report, angiography report, ID proof. Treating cardiologist: Dr. Nandini Kamath."
+}

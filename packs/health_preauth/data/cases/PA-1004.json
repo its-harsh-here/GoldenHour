@@ -1,0 +1,54 @@
+{
+  "case_id": "PA-1004",
+  "hero": null,
+  "title": "Laparoscopic cholecystectomy",
+  "received_offset_min": 212,
+  "hospital": {
+    "name": "Nandi Valley Medical Centre",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-NVM-0417",
+    "tpa_email": "preauth@nandivalley.example",
+    "phone": "+91 80 4725 3381"
+  },
+  "form": {
+    "patient_name": "Fatima Sheikh",
+    "age": 45,
+    "gender": "F",
+    "patient_phone": "+91 98860 33419",
+    "patient_email": "fatima.sheikh@example.com",
+    "aadhaar": "5502 8811 3047",
+    "policy_number": "GH-POL-100874",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-23",
+    "admission_type": "planned",
+    "treating_doctor": "Dr. Anil D'Souza",
+    "provisional_diagnosis": "Symptomatic cholelithiasis",
+    "icd10": "K80.20",
+    "proposed_procedure": "Laparoscopic cholecystectomy",
+    "room_category": "Single private",
+    "room_rent_per_day": 9000,
+    "expected_los_days": 3,
+    "is_accident": false,
+    "estimate": {
+      "room": 27000,
+      "ot": 22000,
+      "surgeon": 35000,
+      "consumables": 16000,
+      "medicines": 8000,
+      "investigations": 10000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "ultrasound_abdomen",
+    "lft_report",
+    "id_proof"
+  ],
+  "seed_outcome": {
+    "tat_min": 14,
+    "human": "PROCESSOR",
+    "action": "approve"
+  },
+  "admission_note": "NANDI VALLEY MEDICAL CENTRE - General and Laparoscopic Surgery\nPatient: Fatima Sheikh, 45 years, female. Contact +91 98860 33419. Policy no. GH-POL-100874 (self).\nRecurrent right upper quadrant pain after fatty meals for 5 months. Ultrasound abdomen: multiple gallstones, largest 14 mm, gallbladder wall 3 mm, CBD normal. LFT within normal limits.\nProvisional diagnosis: symptomatic cholelithiasis (ICD-10 K80.20). Known hypertension on treatment.\nProposed: laparoscopic cholecystectomy on 23-Oct-2026, 3 days, single private room at Rs 9,000 per day.\nEstimate: room Rs 27,000; OT Rs 22,000; surgeon and anaesthetist Rs 35,000; consumables Rs 16,000; medicines Rs 8,000; investigations Rs 10,000. Total Rs 1,18,000.\nAttached: admission note, cost estimate, USG abdomen, LFT report, ID proof. Treating surgeon: Dr. Anil D'Souza."
+}

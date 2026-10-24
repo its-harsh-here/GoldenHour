@@ -1,0 +1,49 @@
+{
+  "case_id": "PA-1001",
+  "hero": "A",
+  "title": "Laparoscopic appendectomy",
+  "received_offset_min": 0,
+  "hospital": {
+    "name": "Kaveri City Hospital",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-KCH-0192",
+    "tpa_email": "tpa.desk@kavericity.example",
+    "phone": "+91 80 4110 2290"
+  },
+  "form": {
+    "patient_name": "Aarav Menon",
+    "age": 34,
+    "gender": "M",
+    "patient_phone": "+91 98450 21734",
+    "patient_email": "aarav.menon@example.com",
+    "aadhaar": "4821 7730 5196",
+    "policy_number": "GH-POL-100231",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-24",
+    "admission_type": "emergency",
+    "treating_doctor": "Dr. Kavya Raman",
+    "provisional_diagnosis": "Acute appendicitis",
+    "icd10": "K35.80",
+    "proposed_procedure": "Laparoscopic appendectomy",
+    "room_category": "Single private AC",
+    "room_rent_per_day": 8000,
+    "expected_los_days": 3,
+    "is_accident": false,
+    "estimate": {
+      "room": 24000,
+      "ot": 20000,
+      "surgeon": 32000,
+      "consumables": 14000,
+      "medicines": 9000,
+      "investigations": 11000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "ultrasound_abdomen",
+    "cbc_report",
+    "id_proof"
+  ],
+  "admission_note": "KAVERI CITY HOSPITAL - Department of General Surgery\nCashless pre-authorization request: admission note\n\nPatient: Aarav Menon, 34 years, male. Contact +91 98450 21734, aarav.menon@example.com. Aadhaar 4821 7730 5196.\nPolicy no. GH-POL-100231 (self).\n\nPresenting complaint: two days of periumbilical pain shifting to the right iliac fossa, with nausea and low-grade fever (38.2 C).\nFindings: tenderness and guarding at McBurney's point. TLC 14,800/uL. Ultrasound abdomen: non-compressible appendix, 9 mm, with periappendiceal fat stranding.\nProvisional diagnosis: acute appendicitis (ICD-10 K35.80).\n\nProposed treatment: laparoscopic appendectomy under general anaesthesia on 24-Oct-2026. Expected stay 3 days in a single private AC room at Rs 8,000 per day.\nCost estimate: room Rs 24,000; OT Rs 20,000; surgeon and anaesthetist Rs 32,000; consumables Rs 14,000; medicines Rs 9,000; investigations Rs 11,000. Total Rs 1,10,000.\nDocuments attached: admission note, itemised cost estimate, USG abdomen report, CBC report, ID proof.\n\nTreating surgeon: Dr. Kavya Raman."
+}

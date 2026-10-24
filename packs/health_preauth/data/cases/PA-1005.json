@@ -1,0 +1,54 @@
+{
+  "case_id": "PA-1005",
+  "hero": null,
+  "title": "Dengue fever, medical management",
+  "received_offset_min": 176,
+  "hospital": {
+    "name": "Kaveri City Hospital",
+    "city": "Bengaluru",
+    "hospital_code": "HSP-KCH-0192",
+    "tpa_email": "tpa.desk@kavericity.example",
+    "phone": "+91 80 4110 2290"
+  },
+  "form": {
+    "patient_name": "Meera Iyer",
+    "age": 58,
+    "gender": "F",
+    "patient_phone": "+91 99452 70188",
+    "patient_email": "",
+    "aadhaar": "8120 4467 9931",
+    "policy_number": "GH-POL-100455",
+    "relationship_to_holder": "self",
+    "admission_date": "2026-10-23",
+    "admission_type": "emergency",
+    "treating_doctor": "Dr. Ritu Bhandari",
+    "provisional_diagnosis": "Dengue fever with thrombocytopenia",
+    "icd10": "A90",
+    "proposed_procedure": "Medical management of dengue fever",
+    "room_category": "Twin sharing",
+    "room_rent_per_day": 4000,
+    "expected_los_days": 4,
+    "is_accident": false,
+    "estimate": {
+      "room": 16000,
+      "ot": 0,
+      "surgeon": 8000,
+      "consumables": 3000,
+      "medicines": 9000,
+      "investigations": 6000
+    }
+  },
+  "attached_docs": [
+    "admission_note",
+    "cost_estimate",
+    "ns1_antigen_report",
+    "platelet_count",
+    "id_proof"
+  ],
+  "seed_outcome": {
+    "tat_min": 9,
+    "human": "PROCESSOR",
+    "action": "approve"
+  },
+  "admission_note": "KAVERI CITY HOSPITAL - Department of Internal Medicine\nPatient: Meera Iyer, 58 years, female. Contact +91 99452 70188. Policy no. GH-POL-100455 (self).\nFever for 4 days with myalgia and retro-orbital pain. NS1 antigen positive. Platelets 38,000/uL falling from 96,000/uL over 48 hours. Haematocrit 44%.\nProvisional diagnosis: dengue fever with thrombocytopenia (ICD-10 A90). Known hypothyroidism on thyroxine.\nPlan: admission for monitoring and supportive management for 4 days in a twin-sharing room at Rs 4,000 per day.\nEstimate: room Rs 16,000; physician fees Rs 8,000; consumables Rs 3,000; medicines Rs 9,000; investigations Rs 6,000. Total Rs 42,000.\nAttached: admission note, cost estimate, NS1 report, platelet trend, ID proof. Treating physician: Dr. Ritu Bhandari."
+}
