@@ -53,6 +53,10 @@ class Store:
             self._conn.executescript(SCHEMA)
             self._conn.commit()
 
+    @property
+    def lock(self) -> threading.RLock:
+        return self._lock
+
     def execute(self, sql: str, params: Iterable[Any] = ()) -> int:
         with self._lock:
             cur = self._conn.execute(sql, tuple(params))

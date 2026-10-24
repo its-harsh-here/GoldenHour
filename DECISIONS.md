@@ -13,3 +13,11 @@ One line per judgement call made during the unattended build.
 - Case C's admission note is a generated PDF with the injection printed in white 1pt text: invisible on paper, present in the extracted text (the realistic attack).
 - Estimates use six heads (room, OT, surgeon, consumables, medicines, investigations); the structured form is the money source of truth and the LLM's note extraction is only a cross-check that can lower confidence.
 - Pre-existing-disease relevance is decided deterministically by ICD-10 prefix (policies.json `ped_icd10_prefixes`); the LLM can only add an advisory "possible PED link" risk signal.
+- Pipeline order follows CLAUDE.md (Intake -> Policy -> Docs & Coding -> Risk). The Policy agent maps the procedure package deterministically from the form's ICD-10 code; the Docs agent's LLM mapping is a cross-check that raises a coding-inconsistency signal if it disagrees.
+- The rule engine reads money and ICD-10 from the structured form only; LLM extraction can lower confidence (and escalate) but never changes an amount.
+- Escalation wins over a missing-documents query when both apply; the Medical Officer can still query the hospital.
+- Policy deductions (room rent, sub-limit, co-pay, balance) are not "partial denials": a Processor may sign the computed eligible amount. Any amount different from it needs a Medical Officer and a written reason.
+- Added `packs/health_preauth/actions.py` for the Action Agent handlers, Reporter (dashboard), case views and demo seeding, to keep `agents.py` readable.
+- Non-hero cases are pre-processed at startup with the deterministic mock LLM (labelled "seeded") and backdated human sign-offs, so the dashboard shows a realistic recent history without spending Groq quota.
+- The synthetic insurer is "Kestrel Mutual Health"; letters are clearly marked as synthetic.
+- The audit chain records case receipt, each agent step (digest + key fields), every gateway action (allowed or blocked), human decisions and admin changes; individual tool calls stay in the trace log.
