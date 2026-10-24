@@ -1,1 +1,188 @@
-<!doctype html><title>GoldenHour</title><p>GoldenHour</p>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GoldenHour · Discharge in minutes, not hours</title>
+  <meta name="description" content="A governed multi-agent desk that clears cashless pre-authorizations inside IRDAI's 60-minute window, with a human in charge of every denial.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%23F5B942' stroke-width='3' opacity='.4'/%3E%3Cpath d='M16 4a12 12 0 0 1 12 12' fill='none' stroke='%23F5B942' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="stylesheet" href="/static/css/landing.css">
+</head>
+<body class="landing">
+  <header class="l-nav">
+    <a class="brand" href="/"><svg class="logo" aria-hidden="true"><use href="/static/vendor/icons.svg#logo"/></svg><span class="name">GoldenHour</span></a>
+    <nav class="links" aria-label="Sections"><a href="#problem">Problem</a><a href="#how">How it works</a><a href="#guardrails">Guardrails</a><a href="#reuse">Built to reuse</a></nav>
+    <div class="cta"><a class="btn sm ghost" href="/console?demo=1">Run the 3-case demo</a><a class="btn sm primary" href="/console">Open the console</a></div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero" aria-label="Introduction">
+      <div>
+        <span class="eyebrow">Cashless pre-authorization · health insurance</span>
+        <h1>Discharge in <em>minutes</em>, not hours.</h1>
+        <p class="sub">GoldenHour is a <b>governed multi-agent desk</b> that clears cashless pre-authorizations inside IRDAI's <b>60-minute window</b>, with a human in charge of every denial.</p>
+        <div class="ctas">
+          <a class="btn primary lg" href="/console"><svg class="icon"><use href="/static/vendor/icons.svg#i-inbox"/></svg>Open the console</a>
+          <a class="btn lg" href="/console?demo=1"><svg class="icon"><use href="/static/vendor/icons.svg#i-play"/></svg>Run the 3-case demo</a>
+        </div>
+        <div class="trust">
+          <span><svg class="icon sm"><use href="/static/vendor/icons.svg#i-redact"/></svg>PHI redacted before any model call</span>
+          <span><svg class="icon sm"><use href="/static/vendor/icons.svg#i-human"/></svg>The AI may never deny</span>
+          <span><svg class="icon sm"><use href="/static/vendor/icons.svg#i-chain"/></svg>Hash-chained audit</span>
+        </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg class="sun" viewBox="0 0 400 400">
+          <defs>
+            <linearGradient id="g-sweep" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE3A3"/><stop offset=".6" stop-color="#F5B942"/><stop offset="1" stop-color="#D97706"/></linearGradient>
+            <radialGradient id="g-core" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="rgba(245,185,66,.22)"/><stop offset="1" stop-color="rgba(245,185,66,0)"/></radialGradient>
+          </defs>
+          <circle cx="200" cy="200" r="196" fill="url(#g-core)"/>
+          <g class="ticks" id="ticks"></g>
+          <circle cx="200" cy="200" r="180" fill="none" stroke="var(--line)" stroke-width="14"/>
+          <circle class="sweep" cx="200" cy="200" r="180" fill="none" stroke="url(#g-sweep)" stroke-width="14" stroke-linecap="round" transform="rotate(-90 200 200)"/>
+          <text class="center-num" x="200" y="214" text-anchor="middle" font-size="120">60</text>
+          <text class="center-lab" x="200" y="252" text-anchor="middle" font-size="13">MINUTE WINDOW</text>
+        </svg>
+        <div class="float-card fc-1"><div class="fc-top"><span class="fc-id">PA-1001 · appendectomy</span><span class="chip teal">Approved</span></div>
+          <div class="fc-amt">₹1,01,000</div><div class="fc-sub">room-rent deduction cited, Sec 4.2</div></div>
+        <div class="float-card fc-2"><div class="fc-top"><span class="fc-id">PA-1002 · cataract</span><span class="chip violet">Query sent</span></div>
+          <div class="fc-sub" style="margin-top:6px">Biometry report requested · SLA paused</div></div>
+        <div class="float-card fc-3"><div class="fc-top"><span class="fc-id">PA-1003 · knee replacement</span><span class="chip coral">Quarantined</span></div>
+          <div class="fc-sub" style="margin-top:6px">Hidden "ignore all rules" text caught</div></div>
+      </div>
+    </section>
+
+    <section class="l" id="problem" aria-labelledby="problem-title">
+      <span class="eyebrow">The problem</span>
+      <h2 class="l-title" id="problem-title">The rule says one hour. Patients wait a day.</h2>
+      <p class="l-lede">Hospitals send a pre-authorization request; a TPA desk reads notes, checks the policy, computes deductions and drafts letters by hand. Discharges stall while the clock runs.</p>
+      <div class="stats">
+        <div class="card stat gold"><div class="num">1<small>hour</small></div><p>Insurers must decide on a cashless authorization request within one hour.</p><div class="src">IRDAI Master Circular on Health Insurance, May 2024</div></div>
+        <div class="card stat gold"><div class="num">3<small>hours</small></div><p>Final discharge authorization must follow within three hours of the hospital's request.</p><div class="src">IRDAI Master Circular on Health Insurance, May 2024</div></div>
+        <div class="card stat warn"><div class="num">6–48<small>hours</small></div><p>About six in ten claimants reported waiting 6 to 48 hours for claim approval and discharge.</p><div class="src">LocalCircles survey, January 2025</div></div>
+      </div>
+    </section>
+
+    <section class="l" id="how" aria-labelledby="how-title">
+      <span class="eyebrow">How it works</span>
+      <h2 class="l-title" id="how-title">Six agents, one fixed policy, a human at the gate.</h2>
+      <p class="l-lede">Each agent has its own prompt and an allow-list of tools. The rule engine does every rupee of math. The orchestrator can recommend, query or escalate, never deny.</p>
+      <div class="card pipeline">
+        <svg viewBox="0 0 1160 262" role="img" aria-label="Agent pipeline from hospital request to reporter">
+          <g id="pipe"></g>
+        </svg>
+      </div>
+      <div class="agents-grid">
+        <div class="card"><h4><svg class="icon"><use href="/static/vendor/icons.svg#i-scan"/></svg>Intake</h4><p>Redacts PHI, screens every document for prompt injection, extracts a structured case with a confidence score.</p></div>
+        <div class="card"><h4><svg class="icon"><use href="/static/vendor/icons.svg#i-shield"/></svg>Policy</h4><p>Calls get_policy and get_claim_history; nine pure rules return the eligible amount with clause-cited deductions.</p></div>
+        <div class="card"><h4><svg class="icon"><use href="/static/vendor/icons.svg#i-clipboard"/></svg>Docs &amp; Coding</h4><p>Maps ICD-10 to the package table, lists missing documents, measures cost deviation from benchmark.</p></div>
+        <div class="card"><h4><svg class="icon"><use href="/static/vendor/icons.svg#i-radar"/></svg>Risk</h4><p>Weighted rule signals give a 0–100 score; the model only writes the rationale from those signals.</p></div>
+        <div class="card"><h4><svg class="icon"><use href="/static/vendor/icons.svg#i-flow"/></svg>Orchestrator</h4><p>Applies pack.yaml: approve with sign-off, query the hospital, or escalate to a Medical Officer.</p></div>
+        <div class="card"><h4><svg class="icon"><use href="/static/vendor/icons.svg#i-human"/></svg>Human approval</h4><p>Role-gated: one-click sign-off for clean cases, a Medical Officer with a written reason for anything else.</p></div>
+        <div class="card"><h4><svg class="icon"><use href="/static/vendor/icons.svg#i-send"/></svg>Action</h4><p>Letters, hospital queries, patient SMS and status updates, all through the RBAC-checked Action Gateway.</p></div>
+        <div class="card"><h4><svg class="icon"><use href="/static/vendor/icons.svg#i-chart"/></svg>Reporter</h4><p>SLA and ROI dashboard, per-case decision card and a tamper-evident audit trail.</p></div>
+      </div>
+    </section>
+
+    <section class="l" id="guardrails" aria-labelledby="guard-title">
+      <span class="eyebrow">Guardrails</span>
+      <h2 class="l-title" id="guard-title">Eight controls, each one visible in the console.</h2>
+      <p class="l-lede">Responsible AI is not a slide. Every control below can be seen working in the demo.</p>
+      <div class="guards">
+        <div class="card guard"><div class="g-ic"><svg class="icon lg"><use href="/static/vendor/icons.svg#i-redact"/></svg></div><h4>PHI redaction</h4><p>Names, phones, Aadhaar-like numbers, emails and policy numbers become tokens before any model call; rehydrated locally only in final letters.</p><div class="where">core/redaction.py · "What the model saw"</div></div>
+        <div class="card guard"><div class="g-ic"><svg class="icon lg"><use href="/static/vendor/icons.svg#i-alert"/></svg></div><h4>Injection screening</h4><p>Prompt Guard 2 plus a regex fallback on every document; offending text is quarantined, highlighted and the case escalates.</p><div class="where">core/guard.py · quarantine banner</div></div>
+        <div class="card guard"><div class="g-ic"><svg class="icon lg"><use href="/static/vendor/icons.svg#i-file"/></svg></div><h4>Explainability</h4><p>A rule ledger with pass/fail, rupee impact and clause references; summaries citing unsupported figures are rejected.</p><div class="where">rules.py · decision card</div></div>
+        <div class="card guard"><div class="g-ic"><svg class="icon lg"><use href="/static/vendor/icons.svg#i-lock"/></svg></div><h4>Role-based access</h4><p>Processor, Medical Officer, Auditor, Admin. The gateway answers 403 to anything else and logs the attempt.</p><div class="where">core/rbac.py · action_gateway.py</div></div>
+        <div class="card guard"><div class="g-ic"><svg class="icon lg"><use href="/static/vendor/icons.svg#i-chain"/></svg></div><h4>Tamper-evident audit</h4><p>hash = sha256(prev_hash + payload). Verify the chain, or run the Admin tamper test and watch it break at one block.</p><div class="where">core/audit.py · Audit tab</div></div>
+        <div class="card guard"><div class="g-ic"><svg class="icon lg"><use href="/static/vendor/icons.svg#i-human"/></svg></div><h4>Human override</h4><p>People can change the amount or the decision. Overrides are logged and reported as an override-rate metric.</p><div class="where">Dashboard · override rate</div></div>
+        <div class="card guard"><div class="g-ic"><svg class="icon lg"><use href="/static/vendor/icons.svg#i-refresh"/></svg></div><h4>Graceful degradation</h4><p>An LLM error, timeout or 429 routes the case to the human queue with the reason. Nothing fails silently.</p><div class="where">core/orchestrator.py</div></div>
+        <div class="card guard"><div class="g-ic"><svg class="icon lg"><use href="/static/vendor/icons.svg#i-power"/></svg></div><h4>Kill switch</h4><p>An Admin can force autonomy level 1 instantly; a banner shows it across the console.</p><div class="where">pack.yaml autonomy_level · header</div></div>
+      </div>
+    </section>
+
+    <section class="l" id="reuse" aria-labelledby="reuse-title">
+      <span class="eyebrow">Built to reuse</span>
+      <h2 class="l-title" id="reuse-title">A new business process is a new folder.</h2>
+      <div class="reuse">
+        <div class="card tree" aria-label="Repository layout">
+          <div><span class="dir">core/</span> <span class="c"># knows nothing about health insurance</span></div>
+          <div>&nbsp;&nbsp;llm.py · orchestrator.py · action_gateway.py</div>
+          <div>&nbsp;&nbsp;audit.py · rbac.py · redaction.py · guard.py · events.py</div>
+          <div><span class="dir">packs/</span></div>
+          <div>&nbsp;&nbsp;<span class="live">health_preauth/</span> <span class="c"># this demo</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;pack.yaml · rules.py · tools.py · agents.py · prompts/</div>
+          <div>&nbsp;&nbsp;<span class="next">motor_claim/</span> <span class="c"># next: same core, new pack</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;pack.yaml · rules.py · tools.py · agents.py · prompts/</div>
+        </div>
+        <div class="planes">
+          <div class="plane core"><h4>Governed runtime · core/</h4><div class="mods"><span>LLM gateway: groq / mock / replay</span><span>state machine</span><span>Action Gateway</span><span>RBAC</span><span>hash-chained audit</span><span>PHI redaction</span><span>injection guard</span><span>SSE trace</span></div></div>
+          <div class="plug"><svg class="icon sm"><use href="/static/vendor/icons.svg#i-plug"/></svg>a pack plugs in: pipeline · rules · tools · prompts · roles · autonomy policy</div>
+          <div class="packs">
+            <div class="plane"><h4>health_preauth</h4><div class="mods"><span>9 coverage rules</span><span>ICD-10 packages</span><span>IRDAI 60-min SLA</span></div></div>
+            <div class="plane pack-next"><h4>motor_claim (next)</h4><div class="mods"><span>IDV and depreciation rules</span><span>garage estimates</span><span>surveyor routing</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="cta-band">
+        <h2>Watch three cases clear the clock.</h2>
+        <p>A clean approval, a missing document resolved by an autonomous hospital query, and an injection attack caught and escalated to a Medical Officer.</p>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><a class="btn primary lg" href="/console?demo=1"><svg class="icon"><use href="/static/vendor/icons.svg#i-play"/></svg>Run the 3-case demo</a><a class="btn lg" href="/console">Open the console</a></div>
+      </div>
+    </section>
+
+    <footer class="l-foot">
+      <span><b>Synthetic data only. Not a clinical decision tool.</b> GoldenHour checks coverage, documentation, coding and cost reasonableness, then routes to humans. It never diagnoses or recommends treatment.</span>
+      <span>Built for AgentOps'26 · invented hospitals, patients and insurer.</span>
+    </footer>
+  </main>
+
+  <script>
+  (() => {
+    // Sun-dial ticks (12 x 5-minute marks).
+    const ticks = document.getElementById('ticks');
+    for (let i = 0; i < 60; i++) {
+      const a = (i / 60) * Math.PI * 2, r1 = i % 5 ? 192 : 188, r2 = 198;
+      const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      l.setAttribute('x1', 200 + r1 * Math.sin(a)); l.setAttribute('y1', 200 - r1 * Math.cos(a));
+      l.setAttribute('x2', 200 + r2 * Math.sin(a)); l.setAttribute('y2', 200 - r2 * Math.cos(a));
+      l.setAttribute('stroke-width', i % 5 ? 1 : 2);
+      ticks.appendChild(l);
+    }
+    // Agent pipeline with flowing gold dots along the connectors.
+    const nodes = [
+      ['Hospital', 'PDF + form', 'i-file'], ['Intake', 'redact · screen', 'i-scan'],
+      ['Policy', 'tools → rules', 'i-shield'], ['Docs & Coding', 'ICD · docs · cost', 'i-clipboard'],
+      ['Risk', 'signals → score', 'i-radar'], ['Orchestrator', 'pack.yaml', 'i-flow'],
+      ['Human', 'Processor / MO', 'i-human'], ['Action', 'via gateway', 'i-send'], ['Reporter', 'SLA · ROI', 'i-chart'],
+    ];
+    const g = document.getElementById('pipe'), ns = 'http://www.w3.org/2000/svg';
+    const W = 102, H = 96, gap = (1160 - nodes.length * W) / (nodes.length - 1), y = 50;
+    const el = (tag, attrs, parent) => { const e = document.createElementNS(ns, tag); Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v)); (parent || g).appendChild(e); return e; };
+    nodes.forEach((n, i) => {
+      const x = i * (W + gap);
+      if (i < nodes.length - 1) {
+        const d = `M${x + W} ${y + H / 2} L${x + W + gap} ${y + H / 2}`;
+        el('path', { d, class: 'wire' });
+        el('path', { d, class: 'flow', style: `animation-delay:${-i * 0.2}s` });
+      }
+      const grp = el('g', { class: 'node' + (n[0] === 'Human' ? ' human' : ''), transform: `translate(${x},${y})` });
+      el('rect', { width: W, height: H, rx: 14 }, grp);
+      const u = el('svg', { x: W / 2 - 12, y: 14, width: 24, height: 24, class: 'ic' }, grp);
+      el('use', { href: `/static/vendor/icons.svg#${n[2]}` }, u);
+      const t = el('text', { x: W / 2, y: 60, 'text-anchor': 'middle', class: 'nm' }, grp); t.textContent = n[0];
+      const s = el('text', { x: W / 2, y: 78, 'text-anchor': 'middle', class: 'ds' }, grp); s.textContent = n[1];
+    });
+    // Branch: missing documents -> autonomous hospital query -> resume (SLA paused).
+    const ox = 5 * (W + gap) + W / 2, ix = 3 * (W + gap) + W / 2;
+    const d2 = `M${ox} ${y + H} C ${ox} ${y + H + 70}, ${ix} ${y + H + 70}, ${ix} ${y + H}`;
+    el('path', { d: d2, class: 'wire' });
+    el('path', { d: d2, class: 'flow branch' });
+    const lb = el('text', { x: (ox + ix) / 2, y: y + H + 74, 'text-anchor': 'middle', class: 'lbl' }); lb.textContent = 'missing docs → agent queries hospital · SLA paused · resume from saved state';
+    const ex = 6 * (W + gap) + W / 2;
+    const lb2 = el('text', { x: ex, y: y - 14, 'text-anchor': 'middle', class: 'lbl' }); lb2.textContent = 'every denial: Medical Officer + reason';
+  })();
+  </script>
+</body>
+</html>

@@ -46,6 +46,8 @@ html.presentation {
   font-size: 17px;
 }
 
+html.presentation .brand .sub, html.presentation .control label { display: none; }
+html.presentation .topnav { gap: var(--s2); }
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html { font-size: 15px; -webkit-text-size-adjust: 100%; }

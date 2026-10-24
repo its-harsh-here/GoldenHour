@@ -677,7 +677,7 @@
       data: {
         labels,
         datasets: [
-          { type: 'bar', label: 'Turnaround (min)', data: d.tat.map((t) => t.minutes), borderRadius: 6, maxBarThickness: 46,
+          { type: 'bar', label: 'Turnaround (min)', data: d.tat.map((t) => t.minutes), borderRadius: 6, maxBarThickness: 46, minBarLength: 5,
             backgroundColor: d.tat.map((t) => (t.breached ? coral : teal) + (t.seeded ? '99' : '')), order: 2 },
           { type: 'line', label: 'IRDAI 60-minute limit', data: labels.map(() => d.sla_minutes), borderColor: gold, borderDash: [6, 6], borderWidth: 2, pointRadius: 0, order: 1 },
         ],
@@ -758,7 +758,7 @@
       const id = Number(el.dataset.id);
       if (broken) { el.classList.add('unverified'); continue; }
       if (ok[id]) { el.classList.add('ok'); el.querySelector('.b-state').innerHTML = icon('i-check', 'sm'); }
-      else if (id === r.broken_at) { broken = true; el.classList.add('broken'); el.querySelector('.b-state').innerHTML = icon('i-x', 'sm'); el.scrollIntoView({ block: 'center', behavior: GH.reduced ? 'auto' : 'smooth' }); }
+      else if (id === r.broken_at) { broken = true; el.classList.add('broken'); el.querySelector('.b-state').innerHTML = icon('i-x', 'sm'); const r = el.getBoundingClientRect(); if (r.top < 70 || r.bottom > innerHeight) el.scrollIntoView({ block: 'center', behavior: GH.reduced ? 'auto' : 'smooth' }); }
       if (step) await sleep(step);
     }
   }

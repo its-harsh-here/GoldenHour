@@ -8,8 +8,8 @@
 | M2 Docs/coding + risk agents, orchestrator, trace + SSE | done |
 | M3 REST API, action gateway, RBAC, audit chain, e2e | done |
 | M4 Console UI | done |
-| M5 Dashboard, audit tab, autonomy, guided demo, landing | next |
-| M6 Groq live verification + replay cache | todo |
+| M5 Dashboard, audit tab, autonomy, guided demo, landing | done |
+| M6 Groq live verification + replay cache | next |
 | M7 Visual QA, README, DEMO_SCRIPT | todo |
 
 ## Done
@@ -22,6 +22,8 @@
 - M3: pack-agnostic REST API (`app/main.py`) over core + pack hooks; RBAC via `X-Role` enforced in the Action Gateway (403 + audit block on every rejected attempt); audit verify / Admin tamper test / restore; SSE trace stream; HTTP e2e tests for A/B/C; `scripts/smoke_http.py` drives the same flows against a live server.
 
 - M4: console (`/console`): inbox with live SLA sun-dials, case view with live SSE agent trace, decision card (outcome, grounded summary, waterfall, clause-cited rule ledger), redaction view with "What the model saw" toggle, injection quarantine banner, role-gated approvals (one-click at level 2, manual at level 1, Medical Officer amount/deny with mandatory reason, Processor 403 shown as a toast), outbox (paper letter, email card, phone SMS). Vendored fonts, Chart.js and a hand-drawn icon sprite; no CDN.
+
+- M5: dashboard (count-up serif KPIs, turnaround chart against the 60-minute line, decision split donut, autonomous-query / injection / 403 / deduction tiles, ROI projection with pack.yaml assumptions, baseline comparison); Audit tab (linked hash blocks, animated Verify chain, Admin-only tamper test that breaks at one block, Restore); autonomy selector + kill switch banner (Admin only); presentation mode (paper theme, larger type); guided demo A -> B -> C with caption toasts and automatic role switches (`/console?demo=1`); landing page with hero sun-dial, problem stats with sources, animated agent pipeline, 8 guardrails, core/packs reuse diagram.
 
 ## How to run
 ```
