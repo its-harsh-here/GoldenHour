@@ -94,6 +94,17 @@ python run.py                   # http://127.0.0.1:8000  (or: uvicorn app.main:a
   against a running server and prints each result.
 * `node scripts/screenshots.mjs http://127.0.0.1:8000` regenerates `docs/screenshots/` (Playwright + Chromium).
 
+### Deploy on Render
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/its-harsh-here/GoldenHour)
+
+`render.yaml` defines one free Docker web service built from `main` (auto-deploys on push, health check
+`/api/health`). It runs `LLM_MODE=groq`; Render prompts for `GROQ_API_KEY` when you apply the blueprint, and the key
+is stored only in Render. Anyone who can open a public URL spends that key's quota (about 30 requests/minute per
+model on the free tier; rate-limited cases degrade to the human queue). Switch `LLM_MODE` to `replay` in the Render
+dashboard to serve the recorded runs without a key. Free instances sleep when idle, so the first request after a pause
+takes 30–60 s, and the SQLite state in `/tmp` resets on every restart or deploy.
+
 ### Container
 
 ```bash

@@ -25,6 +25,9 @@ Stretch: a `Dockerfile` (replay mode by default, `$PORT`, non-root) was added af
   - Call-shape fix found live: gpt-oss sometimes emits a malformed parallel tool call (`get_claim_history<|channel|>commentary`) and Groq returns 400. The gateway retries 400s twice; failing that, it runs the agent's allow-listed tools locally and asks once more without tools (trace step `tool_fallback`). The rejection is recorded so replay follows the same path.
 - M7: headless screenshots at 1440x900 (landing, inbox, case A, case C, dashboard, audit, plus tamper test, case B query, full-page and presentation variants) taken in replay mode. I reviewed each one and fixed what was visibly wrong: kill-switch banner ignoring `hidden`, trace column overflowing its grid track, cramped card headings and document toggle, re-render restarting animations, pipeline node text overflow, zero-height live bars, audit auto-scroll hiding the result banner, and top-nav overflow at 1440 px. All were re-shot after the fixes. README.md and DEMO_SCRIPT.md are complete.
 
+## Deployment
+- `render.yaml` blueprint (Render, Docker, free plan, auto-deploy from `main`, `LLM_MODE=groq`). The owner applies it with the Deploy to Render link in README.md and enters `GROQ_API_KEY` in Render's prompt. The build session had no Render credentials, so the service itself was not created from here.
+
 ## How to run
 ```
 pip install -r requirements.txt

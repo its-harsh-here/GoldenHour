@@ -1,0 +1,23 @@
+# Render Blueprint: one Docker web service built from main.
+# Deploy: https://render.com/deploy?repo=https://github.com/its-harsh-here/GoldenHour
+# Render asks for GROQ_API_KEY when the blueprint is applied; it is never stored in this repo.
+services:
+  - type: web
+    name: goldenhour
+    runtime: docker
+    plan: free
+    branch: main
+    autoDeploy: true
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: LLM_MODE
+        value: groq
+      - key: GROQ_API_KEY
+        sync: false
+      - key: SEED_HISTORY
+        value: "true"
+      - key: DB_PATH
+        value: /tmp/goldenhour.db
+      - key: REPLAY_RECORD
+        value: "false"

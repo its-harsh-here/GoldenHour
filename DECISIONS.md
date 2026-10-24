@@ -26,3 +26,4 @@ One line per judgement call made during the unattended build.
 - Screenshots in docs/screenshots are taken from `LLM_MODE=replay`, so explanations and drafts are the recorded Groq outputs, not mock templates.
 - Screenshots use the preinstalled Node Playwright + Chromium (`scripts/screenshots.mjs`) instead of `pip install playwright`, as the build environment instructs not to install a second browser.
 - Alpine.js was not needed; the console is vanilla JS, so it is not vendored.
+- Deployment target chosen by the owner: Render (Docker, free plan) via `render.yaml`, running `LLM_MODE=groq` with `GROQ_API_KEY` entered in Render's dashboard (`sync: false`), never committed. The Dockerfile default stays `replay` so other hosts are safe by default.
