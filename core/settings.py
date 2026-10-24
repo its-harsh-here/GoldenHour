@@ -65,7 +65,8 @@ def get_settings() -> Settings:
     if requested not in VALID_MODES:
         mode, note = "replay", f"unknown LLM_MODE '{requested}': serving recorded runs (replay)"
     elif requested == "live" and not (base_url and all(models.values())):
-        mode, note = "replay", "LLM_MODE=live needs LLM_BASE_URL, MODEL_FAST, MODEL_REASON and MODEL_GUARD: serving recorded runs (replay) until they are set"
+        missing = [k for k, v in {"LLM_BASE_URL": base_url, **models}.items() if not v]
+        mode, note = "replay", f"LLM_MODE=live is missing {', '.join(missing)}: serving recorded runs (replay) until set"
     db = Path(os.getenv("DB_PATH", str(ROOT / "data" / "goldenhour.db")))
     return Settings(
         llm_mode=mode,

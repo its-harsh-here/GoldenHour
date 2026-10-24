@@ -124,6 +124,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         cfg = rt.pack.config
         return {
             "llm_mode": rt.llm.mode, "llm_mode_note": rt.settings.llm_mode_note,
+            "llm_key_set": bool(rt.settings.llm_api_key),  # whether a key is configured, never the key itself
             "model_roles": ["fast", "reason", "guard"],
             "replay_entries": len(rt.llm.replay),
             "autonomy_level": rt.autonomy_level, "kill_switch": rt.kill_switch,

@@ -135,8 +135,9 @@ def test_live_mode_needs_an_endpoint_and_models(monkeypatch):
         monkeypatch.delenv(key, raising=False)
     monkeypatch.setenv("LLM_MODE", "live")
     s = get_settings()
-    assert s.llm_mode == "replay" and "LLM_BASE_URL" in s.llm_mode_note
+    assert s.llm_mode == "replay" and "LLM_BASE_URL, MODEL_FAST, MODEL_REASON, MODEL_GUARD" in s.llm_mode_note
     monkeypatch.setenv("LLM_BASE_URL", "https://llm.example.test/v1")
+    assert "missing MODEL_FAST, MODEL_REASON, MODEL_GUARD:" in get_settings().llm_mode_note  # names only what is missing
     monkeypatch.setenv("MODEL_FAST", "fast-model")
     monkeypatch.setenv("MODEL_REASON", "reason-model")
     monkeypatch.setenv("MODEL_GUARD", "guard-model")
