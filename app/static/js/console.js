@@ -4,7 +4,9 @@
   const { api, inr, esc, icon, dial, toast, caption, countUp, sleep } = GH;
   const $ = (sel, root = document) => root.querySelector(sel);
   const S = { meta: null, cases: [], tab: 'inbox', caseId: null, view: null, events: [], es: null, docMode: 'original', charts: {}, draft: {}, demo: false,
-    filter: 'ALL', known: new Set(), fresh: new Set(), ticker: [], desk: null, feedOffset: 0, auditNew: 0, timers: {} };
+    filter: 'ALL', known: new Set(), fresh: new Set(), ticker: [], desk: null, feedOffset: 0, auditNew: 0, timers: {},
+    limit: 80, tickerShown: 0, traceShown: 0, lastSig: null, dash: null, dashSeen: false };
+  const PAGE = 80;
 
   const AGENTS = [
     { id: 'intake', name: 'Intake Agent', role: 'Redact PHI · screen injection · extract', icon: 'i-scan' },
@@ -31,12 +33,27 @@
   const chip = (status) => { const [c, l] = STATUS[status] || ['plain', status]; return `<span class="chip ${c}"><span class="dot"></span>${l}</span>`; };
   const riskClass = (s) => (s == null ? '' : s >= 60 ? 'high' : s >= 30 ? 'medium' : 'low');
   const roleLabel = (r) => ({ PROCESSOR: 'Processor', MEDICAL_OFFICER: 'Medical Officer', AUDITOR: 'Auditor', ADMIN: 'Admin', SYSTEM: 'GoldenHour agent' }[r] || r);
+  const ROLE = { fast: 'fast model', reason: 'reasoning model', guard: 'guard model', regex: 'regex' };
   const modelChip = (m) => {
     if (!m) return '';
     if (m.startsWith('replay_miss')) return '<span class="k" style="color:var(--coral)">replay miss</span>';
     const [src, name] = m.includes(':') ? m.split(':') : ['', m];
-    return `<span class="k">${esc((src ? src + ' · ' : '') + name.split('/').pop())}</span>`;
+    return `<span class="k">${esc((src ? src + ' · ' : '') + (ROLE[name] || name))}</span>`;
   };
+
+  // ------------------------------------------------------------------ smooth updates
+  // Your own changes (tab, role, filter, document view, theme) cross-fade with the View Transitions API where
+  // the browser has it. Live updates patch the DOM in place, so nothing on screen jumps or re-animates.
+  function smooth(fn) {
+    if (GH.reduced || !document.startViewTransition) { fn(); return Promise.resolve(); }
+    try {
+      const vt = document.startViewTransition(fn);
+      vt.ready.catch(() => {});  // a newer transition skips this one; its DOM update still runs
+      return vt.updateCallbackDone.then(() => vt.finished).catch(() => {});
+    } catch (e) { fn(); return Promise.resolve(); }
+  }
+  function htmlToEl(html) { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; }
+  const refreshSoon = () => later('refresh', 40, () => refresh(true));
 
   // ------------------------------------------------------------------ boot + header
   async function loadMeta() {
@@ -44,7 +61,7 @@
     const badge = $('#mode-badge');
     badge.className = `mode-badge ${S.meta.llm_mode}`;
     badge.textContent = S.meta.llm_mode;
-    badge.title = `LLM mode: ${S.meta.llm_mode} (${S.meta.models.fast}, ${S.meta.models.reason}, ${S.meta.models.guard})`;
+    badge.title = `LLM mode: ${S.meta.llm_mode}${S.meta.llm_mode_note ? ' (' + S.meta.llm_mode_note + ')' : ''}`;
     const sel = $('#role');
     if (!sel.options.length) {
       sel.innerHTML = S.meta.roles.map((r) => `<option value="${r.id}">${esc(r.label)}${r.phi_access ? '' : ' (no PHI)'}</option>`).join('');
@@ -69,11 +86,12 @@
     toast('Autonomy and the kill switch are Admin controls, so the demo role is now <b>Admin</b>.');
   }
   function setRole(role) {
+    if (GH.state.role === role) return;
     GH.state.role = role;
     GH.store.set('gh.role', role);
     $('#role').value = role;
     paintAutonomy();
-    refresh();
+    refreshSoon();
   }
   function bindHeader() {
     document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => {
@@ -87,7 +105,7 @@
         await api('POST', '/api/admin/autonomy', { level: Number(b.dataset.level) });
         await loadMeta();
         toast(`Autonomy level set to ${b.dataset.level}${S.meta.kill_switch ? ' (kill switch still forces level 1)' : ''}.`);
-        refresh();
+        refreshSoon();
       } catch (e) { toast(esc(e.message), 'err'); }
     }));
     const kill = async (engaged) => {
@@ -96,41 +114,44 @@
         await api('POST', '/api/admin/kill-switch', { engaged });
         await loadMeta();
         toast(engaged ? 'Kill switch engaged: autonomy forced to level 1.' : 'Kill switch released.', engaged ? 'err' : 'ok');
-        refresh();
+        refreshSoon();
       } catch (e) { toast(`${e.status || ''} ${esc(e.message)}`, 'err'); }
     };
     $('#kill').addEventListener('click', () => kill(!S.meta.kill_switch));
     $('#kill-release').addEventListener('click', () => kill(false));
     const present = $('#present');
     present.setAttribute('aria-pressed', String(document.documentElement.classList.contains('presentation')));
-    present.addEventListener('click', () => {
+    present.addEventListener('click', () => smooth(() => {
       const on = document.documentElement.classList.toggle('presentation');
       present.setAttribute('aria-pressed', String(on));
       GH.store.set('gh.present', on ? '1' : '0');
-      if (S.tab === 'dashboard') renderDashboard();
-    });
+      if (S.dash && $('#dash-kpis')) { Object.values(S.charts).forEach((c) => c.destroy()); S.charts = {}; drawCharts(S.dash, false); }
+    }));
     $('#demo').addEventListener('click', () => guidedDemo());
   }
 
   function route() {
     const [tab, id] = (location.hash.replace(/^#\/?/, '') || 'inbox').split('/');
-    S.tab = ['inbox', 'case', 'dashboard', 'audit'].includes(tab) ? tab : 'inbox';
-    document.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === S.tab)));
-    document.querySelectorAll('.view').forEach((v) => { v.hidden = v.id !== `view-${S.tab}`; });
+    const next = ['inbox', 'case', 'dashboard', 'audit'].includes(tab) ? tab : 'inbox';
+    const moved = next !== S.tab;
+    S.tab = next;
+    smooth(() => {
+      document.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === S.tab)));
+      document.querySelectorAll('.view').forEach((v) => { v.hidden = v.id !== `view-${S.tab}`; });
+      if (moved) window.scrollTo({ top: 0 });
+    });
     if (S.tab !== 'case' && S.es) { S.es.close(); S.es = null; }
     if (S.tab === 'inbox') renderInbox();
     if (S.tab === 'case') openCase(id || S.caseId);
     if (S.tab === 'dashboard') renderDashboard();
     if (S.tab === 'audit') renderAudit();
-    window.scrollTo({ top: 0 });
   }
-  function refresh() {
-    if (S.tab === 'inbox') renderInbox();
-    if (S.tab === 'case' && S.caseId) reloadCase();
-    if (S.tab === 'dashboard') renderDashboard();
-    if (S.tab === 'audit') renderAudit();
+  async function refresh(user = false) {
+    if (S.tab === 'inbox') await renderInbox(user);
+    if (S.tab === 'case' && S.caseId) await reloadCase(user);
+    if (S.tab === 'dashboard') await renderDashboard(true, user);
+    if (S.tab === 'audit') await renderAudit(null, user);
   }
-
   // ------------------------------------------------------------------ inbox
   async function loadCases() {
     S.cases = await api('GET', '/api/cases');
@@ -140,75 +161,131 @@
     badge.textContent = waiting;
     return S.cases;
   }
-  async function renderInbox() {
+  async function renderInbox(user = false) {
     const root = $('#view-inbox');
-    if (!S.cases.length) root.innerHTML = `<div class="view-head"><div><h1>Inbox</h1></div></div>${[1, 2, 3, 4, 5].map(() => '<div class="skeleton" style="height:74px;margin-bottom:10px"></div>').join('')}`;
-    try { await loadCases(); } catch (e) { root.innerHTML = errorCard(e, 'renderInbox'); return; }
+    if (!root.querySelector('#case-list')) {
+      root.innerHTML = inboxShell();
+      if (!root.dataset.bound) { bindInbox(root); root.dataset.bound = '1'; }
+    }
+    try { await loadCases(); } catch (e) { root.innerHTML = errorCard(e, null); return; }
+    if (user) await smooth(() => paintInbox(root, false)); else paintInbox(root, true);
+  }
+  function inboxShell() {
+    return `<div class="view-head"><div><h1>Inbox</h1><p class="lede" id="inbox-lede">&nbsp;</p></div>
+        <div class="actions"><button class="btn" id="process-all">${icon('i-play', 'sm')}Process all new</button>
+          <button class="btn ghost" id="reset">${icon('i-refresh', 'sm')}Reset demo</button></div></div>
+      <div class="card live-panel" aria-live="polite"><div class="lp-head" id="lp-head"></div><div id="lp-progress"></div><ul class="ticker" id="ticker"></ul></div>
+      <div class="queue-strip" role="group" aria-label="Filter the inbox" id="filters"></div>
+      <div class="list-head"><span>SLA</span><span>Request</span><span>Patient</span><span class="r">Amount</span><span>Status</span><span>Risk</span><span></span></div>
+      <div class="case-list" id="case-list">${[1, 2, 3, 4, 5].map(() => '<div class="skeleton" style="height:74px"></div>').join('')}</div>
+      <div class="list-more" id="list-more"></div>`;
+  }
+  function bindInbox(root) {
+    root.addEventListener('click', async (e) => {
+      const t = e.target;
+      const proc = t.closest('[data-process]');
+      if (proc) { e.stopPropagation(); await processCase(proc.dataset.process); location.hash = `#/case/${proc.dataset.process}`; return; }
+      const f = t.closest('.filter');
+      if (f) { S.filter = f.dataset.filter; S.limit = PAGE; smooth(() => paintInbox(root, false)); return; }
+      if (t.closest('#process-all')) {
+        const fresh = S.cases.filter((c) => c.status === 'NEW');
+        for (const c of fresh) await processCase(c.case_id, true);
+        toast(fresh.length ? `Started agents on ${fresh.length} case(s).` : 'No new cases to process.');
+        return;
+      }
+      if (t.closest('#reset')) { resetDemo(); return; }
+      if (t.closest('#feed-toggle')) { toggleFeed(); return; }
+      if (t.closest('#day-replay')) { replayDay(); return; }
+      if (t.closest('#show-more')) { S.limit = Infinity; smooth(() => paintInbox(root, false)); return; }
+      if (t.closest('#show-less')) { S.limit = PAGE; smooth(() => paintInbox(root, false)); return; }
+      const row = t.closest('.case-row');
+      if (row) location.hash = `#/case/${row.dataset.id}`;
+    });
+    root.addEventListener('keydown', (e) => {
+      const row = e.key === 'Enter' && e.target.closest('.case-row');
+      if (row) location.hash = `#/case/${row.dataset.id}`;
+    });
+  }
+  function paintInbox(root, flash) {
+    if (!$('#case-list', root)) return;
     const count = (s) => S.cases.filter((c) => c.status === s).length;
     const need = count('AWAITING_APPROVAL') + count('ESCALATED');
-    const decided = S.cases.filter((c) => c.decided_at);
+    const decided = S.cases.filter((c) => c.decided_at).length;
     const order = { NEW: 0, PROCESSING: 1, ESCALATED: 2, AWAITING_APPROVAL: 3, QUERY_RAISED: 4 };
     const firstPaint = !S.known.size;
     S.fresh = new Set(firstPaint ? [] : S.cases.filter((c) => !S.known.has(c.case_id)).map((c) => c.case_id));
     S.cases.forEach((c) => S.known.add(c.case_id));
-    const match = (c) => S.filter === 'ALL' || (S.filter === 'FEED' ? c.source === 'feed' : c.status === S.filter);
+    const generated = (c) => c.source === 'feed' || c.source === 'day';
+    const match = (c) => S.filter === 'ALL' || (S.filter === 'FEED' ? generated(c) : c.status === S.filter);
     const rows = S.cases.filter(match).sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9) || (a.hero || 'Z').localeCompare(b.hero || 'Z') || b.received_at - a.received_at);
+    const shown = rows.slice(0, S.limit);
+    $('#inbox-lede').innerHTML = `${S.cases.length} cashless requests · <b>${need}</b> need a human now · ${decided} decided · IRDAI window ${S.meta.sla_minutes} min`;
     const filters = [['ALL', 'plain', 'All', S.cases.length],
       ...['NEW', 'AWAITING_APPROVAL', 'ESCALATED', 'QUERY_RAISED', 'APPROVED', 'PARTIALLY_APPROVED', 'DENIED'].map((s) => [s, STATUS[s][0], STATUS[s][1], count(s)]),
-      ['FEED', 'sky', 'Live feed', S.cases.filter((c) => c.source === 'feed').length]];
-    const y = window.scrollY;
-    root.innerHTML = `
-      <div class="view-head">
-        <div><h1>Inbox</h1><p class="lede">${S.cases.length} cashless requests · <b>${need}</b> need a human now · ${decided.length} decided today · IRDAI window ${S.meta.sla_minutes} min</p></div>
-        <div class="actions">
-          <button class="btn" id="process-all">${icon('i-play', 'sm')}Process all new</button>
-          <button class="btn ghost" id="reset">${icon('i-refresh', 'sm')}Reset demo</button>
-        </div>
-      </div>
-      ${livePanel()}
-      <div class="queue-strip" role="group" aria-label="Filter the inbox">
-        ${filters.map(([key, cls, label, n]) => `<button class="chip ${cls} filter" data-filter="${key}" aria-pressed="${S.filter === key}">${label} <b class="num">${n}</b></button>`).join('')}
-      </div>
-      ${rows.length ? `<div class="list-head"><span>SLA</span><span>Request</span><span>Patient</span><span class="r">Amount</span><span>Status</span><span>Risk</span><span></span></div>
-      <div class="case-list">${rows.map(caseRow).join('')}</div>`
-        : `<div class="card">${empty('i-inbox', S.filter === 'ALL' ? 'No requests in the queue' : 'Nothing matches this filter', S.filter === 'ALL' ? 'New hospital requests will appear here as they arrive.' : 'Choose another filter, or All.')}</div>`}`;
-    window.scrollTo({ top: y });  // live refreshes must not move the page
-    root.querySelectorAll('.case-row').forEach((row) => row.addEventListener('click', (e) => {
-      if (e.target.closest('[data-process]')) return;
-      location.hash = `#/case/${row.dataset.id}`;
-    }));
-    root.querySelectorAll('[data-process]').forEach((b) => b.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      await processCase(b.dataset.process);
-      location.hash = `#/case/${b.dataset.process}`;
-    }));
-    root.querySelectorAll('.filter').forEach((b) => b.addEventListener('click', () => { S.filter = b.dataset.filter; renderInbox(); }));
-    $('#process-all').addEventListener('click', async () => {
-      const fresh = S.cases.filter((c) => c.status === 'NEW');
-      for (const c of fresh) await processCase(c.case_id, true);
-      toast(fresh.length ? `Started agents on ${fresh.length} case(s).` : 'No new cases to process.');
-      setTimeout(renderInbox, 600);
-    });
-    $('#reset').addEventListener('click', resetDemo);
-    $('#feed-toggle').addEventListener('click', toggleFeed);
+      ['FEED', 'sky', 'Live and replayed', S.cases.filter(generated).length]];
+    $('#filters').innerHTML = filters.map(([key, cls, label, n]) => `<button class="chip ${cls} filter" data-filter="${key}" aria-pressed="${S.filter === key}">${label} <b class="num">${n}</b></button>`).join('');
+    const list = $('#case-list');
+    if (shown.length) patchRows(list, shown, flash && !firstPaint);
+    else list.innerHTML = `<div class="card">${empty('i-inbox', S.filter === 'ALL' ? 'No requests in the queue' : 'Nothing matches this filter', S.filter === 'ALL' ? 'New hospital requests will appear here as they arrive.' : 'Choose another filter, or All.')}</div>`;
+    $('#list-more').innerHTML = rows.length > shown.length ? `<button class="btn ghost" id="show-more">Show all ${rows.length} requests</button>`
+      : rows.length > PAGE ? '<button class="btn ghost" id="show-less">Show fewer</button>' : '';
+    paintLivePanel();
+    paintTicker();
+  }
+  const rowSig = (c) => JSON.stringify([c.status, c.running, c.patient, c.recommendation, c.recommended_amount, c.final_amount,
+    c.risk_score, c.injection, c.override, c.decided_at, c.sla.paused, c.source, c.hero]);
+  function patchRows(list, rows, flash) {
+    [...list.children].forEach((el) => { if (!el.dataset.id) el.remove(); });
+    const existing = new Map([...list.children].map((el) => [el.dataset.id, el]));
+    let prev = null;
+    for (const c of rows) {
+      const sig = rowSig(c);
+      let el = existing.get(c.case_id);
+      existing.delete(c.case_id);
+      if (el && el.dataset.sig === sig) {
+        GH.syncDial(el.querySelector('.dial'), c.sla);
+      } else {
+        const next = htmlToEl(caseRow(c));
+        next.dataset.sig = sig;
+        if (el) { if (flash) next.classList.add('changed'); el.replaceWith(next); }
+        el = next;
+      }
+      const want = prev ? prev.nextElementSibling : list.firstElementChild;
+      if (el !== want) list.insertBefore(el, want);
+      prev = el;
+    }
+    existing.forEach((el) => el.remove());
+  }
+  // ------------------------------------------------------------------ live desk feed
+  const clockMin = (ts) => new Date(ts * 1000).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+  function paintLivePanel() {
+    const head = $('#lp-head');
+    if (!head) return;
+    const f = (S.meta && S.meta.feed) || {};
+    const day = f.day && f.day.active ? f.day : null;
+    const on = !!f.enabled;
+    const pill = day ? '<span class="live-pill on"><i></i>Day replay</span>'
+      : `<span class="live-pill ${on ? 'on' : 'off'}"><i></i>${on ? 'Live feed' : 'Feed paused'}</span>`;
+    const text = day
+      ? `Replaying the last 24 hours on a simulated clock: <b class="mono">${clockMin(day.sim_now)}</b> · ${day.arrivals_done} of ${day.arrivals_total} requests${day.mode === 'paced' ? ` · about ${day.minutes} min end to end` : ' · catching up as fast as the server allows'}`
+      : on ? `New hospital requests arrive at random, about one every ${Math.round(f.interval_s || 40)} s, and the agents process each on arrival${f.simulate_desk ? '; a simulated desk signs off generated cases within minutes' : ''}. <span class="mono" id="feed-next"></span>`
+        : 'No new requests are arriving.';
+    head.innerHTML = `${pill}<span class="lp-meta">${text}</span><span class="lp-actions">
+      ${day ? '' : `<button class="btn sm ghost" id="day-replay" title="Play the last 24 hours on a simulated clock">${icon('i-clock', 'sm')}Replay the day</button>`}
+      <button class="btn sm ghost" id="feed-toggle">${icon(on ? 'i-pause' : 'i-play', 'sm')}${on ? 'Pause feed' : 'Resume feed'}</button></span>`;
+    $('#lp-progress').innerHTML = day ? `<div class="day-progress" role="progressbar" aria-valuenow="${Math.round(day.progress * 100)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${(day.progress * 100).toFixed(1)}%"></i></div>` : '';
     paintFeedNext();
   }
-
-  // ------------------------------------------------------------------ live desk feed
-  function livePanel() {
-    const f = (S.meta && S.meta.feed) || {};
-    const on = !!f.enabled;
-    return `<div class="card live-panel" aria-live="polite"><div class="lp-head">
-      <span class="live-pill ${on ? 'on' : 'off'}"><i></i>${on ? 'Live feed' : 'Feed paused'}</span>
-      <span class="lp-meta">${on ? `New hospital requests arrive about every ${Math.round(f.interval_s || 40)} s and the agents process each one on arrival${f.simulate_desk ? '; a simulated desk signs off live-feed cases within minutes' : ''}.` : 'No new requests are arriving.'}
-        <span class="mono" id="feed-next"></span></span>
-      <button class="btn sm ghost" id="feed-toggle">${icon(on ? 'i-pause' : 'i-play', 'sm')}${on ? 'Pause feed' : 'Resume feed'}</button></div>
-      <ul class="ticker" id="ticker">${tickerItems(5)}</ul></div>`;
-  }
   const clockSec = (ts) => new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  function tickerTime(ts) {
+    return Date.now() / 1000 - ts > 3600 ? clockMin(ts) : clockSec(ts);
+  }
   function tickerItems(n) {
     if (!S.ticker.length) return '<li class="t-line"><i class="t-dot"></i><span class="t-text muted">Waiting for the next hospital request…</span></li>';
-    return S.ticker.slice(0, n).map((t) => `<li class="t-line ${t.cls}"><span class="t-time mono">${clockSec(t.ts)}</span><i class="t-dot"></i><span class="t-text">${t.text}</span></li>`).join('');
+    const items = S.ticker.slice(0, n);
+    const html = items.map((t) => `<li class="t-line ${t.cls} ${(t.id || 0) > S.tickerShown ? 'enter' : ''}"><span class="t-time mono">${tickerTime(t.ts)}</span><i class="t-dot"></i><span class="t-text">${t.text}</span></li>`).join('');
+    S.tickerShown = Math.max(S.tickerShown, ...items.map((t) => t.id || 0));
+    return html;
   }
   function paintTicker() { const el = $('#ticker'); if (el) el.innerHTML = tickerItems(5); }
   function paintFeedNext() {
@@ -261,6 +338,8 @@
       case 'set_autonomy': return { cls: 'gold', text: `Autonomy set to level ${esc(s.autonomy_level)}${who}` };
       case 'kill_switch': return { cls: s.kill_switch ? 'coral' : 'teal', text: `${s.kill_switch ? 'Kill switch engaged' : 'Kill switch released'}${who}` };
       case 'set_feed': return { cls: s.enabled ? 'teal' : 'plain', text: `Live feed ${s.enabled ? 'resumed' : 'paused'}${who}` };
+      case 'day_started': return { cls: 'gold', text: `Day replay started: ${esc(s.arrivals_total)} requests across the last 24 hours` };
+      case 'day_done': return { cls: s.error ? 'coral' : 'teal', text: s.error ? `Day replay stopped: ${esc(s.error)}` : `Day replay complete: ${esc(s.arrivals_done)} requests processed` };
       case 'reset': return { cls: 'plain', text: 'Desk reset: synthetic requests reloaded' };
       default: return null;
     }
@@ -271,24 +350,51 @@
     S.ticker.unshift({ ...line, ts: n.ts, id: n.id });
     S.ticker.length = Math.min(S.ticker.length, 40);
   }
-  function later(key, ms, fn) { clearTimeout(S.timers[key]); S.timers[key] = setTimeout(fn, ms); }
+  function later(key, ms, fn) { clearTimeout(S.timers[key]); S.timers[key] = setTimeout(fn, ms); }  // debounce: settles once things go quiet
+  function every(key, ms, fn) {  // throttle: at most one run per window, even while events keep streaming (a day replay)
+    if (S.timers[key]) return;
+    S.timers[key] = setTimeout(() => { S.timers[key] = null; fn(); }, ms);
+  }
   function setLive(on) { const p = $('#live-pill'); if (p) { p.classList.toggle('on', on && !!(S.meta && S.meta.feed && S.meta.feed.enabled)); p.classList.toggle('off', !on); } }
   function onDeskEvent(n) {
-    if (n.kind === 'reset') { S.ticker = []; S.known = new Set(); }
+    if (n.kind === 'reset') { S.ticker = []; S.known = new Set(); S.tickerShown = 0; }
     addTicker(n);
-    paintTicker();
-    if (['set_autonomy', 'kill_switch', 'set_feed', 'reset'].includes(n.kind)) later('meta', 300, async () => { await loadMeta(); setLive(!!S.desk); refresh(); });
-    if (n.kind === 'arrived') refreshFeedStatus().then(paintFeedNext);
-    if (S.tab === 'inbox') later('inbox', 400, renderInbox);
-    else later('badge', 1500, loadCases);
-    if (S.tab === 'dashboard') later('dash', 1500, () => renderDashboard(true));
-    if (S.tab === 'audit') { S.auditNew += 1; paintAuditNew(); }
+    every('ticker', 150, paintTicker);
+    const day = S.meta.feed && S.meta.feed.day;
+    if (day && day.active && !n.kind.startsWith('day_') && n.ts > day.sim_now && n.ts <= day.end) {
+      // between progress reports, the replay clock follows the events streaming in
+      day.sim_now = n.ts;
+      day.progress = (n.ts - day.start) / (day.end - day.start);
+      if (n.kind === 'arrived') day.arrivals_done = Math.min(day.arrivals_total, day.arrivals_done + 1);
+      every('day', 250, () => { paintLivePanel(); paintDayStatus(); });
+    }
+    if (n.kind.startsWith('day_') && S.meta.feed) {
+      S.meta.feed.day = n.summary;
+      every('day', 250, () => { paintLivePanel(); paintDayStatus(); });
+      if (n.kind === 'day_done') later('meta', 300, async () => { await refreshFeedStatus(); paintLivePanel(); paintDayStatus(); });
+    }
+    if (['set_autonomy', 'kill_switch', 'set_feed', 'reset'].includes(n.kind)) later('meta', 300, async () => { await loadMeta(); setLive(!!S.desk); refreshSoon(); });
+    if (n.kind === 'arrived' && !(S.meta.feed && S.meta.feed.day && S.meta.feed.day.active)) refreshFeedStatus().then(paintFeedNext);
+    if (S.tab === 'inbox') every('inbox', 700, renderInbox);
+    else every('badge', 2500, loadCases);
+    if (S.tab === 'dashboard') every('dash', 1500, () => renderDashboard(true));
+    if (S.tab === 'audit') { S.auditNew += 1; later('auditpill', 300, paintAuditNew); }
     if (S.tab === 'case' && n.case_id === S.caseId && !S.es) later('case', 400, () => { reloadCase(); stream(); });
+  }
+  async function replayDay() {
+    try {
+      const st = await api('POST', '/api/day/replay', {});
+      if (S.meta.feed) S.meta.feed.day = st;
+      toast(`Replaying the last 24 hours: ${st.arrivals_total} requests over about ${st.minutes} minutes.`);
+      paintLivePanel();
+      paintDayStatus();
+    } catch (e) { toast(`${e.status || ''} ${esc(e.message)}`, 'err'); }
   }
   async function connectDesk() {
     try {
       const recent = await api('GET', '/api/notifications?limit=40');
       recent.forEach(addTicker);
+      S.tickerShown = Math.max(0, ...recent.map((n) => n.id));  // backlog appears without animating
       paintTicker();
     } catch (e) { /* first load without history is fine */ }
     const es = new EventSource('/api/stream');
@@ -316,7 +422,7 @@
       ${GH.dial(c.sla, 'sm')}
       <div><div class="title">${c.hero ? `<span class="hero-tag">${c.hero}</span>` : ''}<span class="mono muted">${c.case_id}</span> · ${esc(c.title)}</div>
         <div class="sub">${esc(c.hospital)}, ${esc(c.city)}</div></div>
-      <div><div>${esc(c.patient)}</div><div class="sub">${c.age} ${c.gender} · received ${GH.ago(c.received_at)}</div></div>
+      <div><div>${esc(c.patient)}</div><div class="sub">${c.age} ${c.gender} · received ${GH.agoHtml(c.received_at + (c.clock_shift_s || 0))}</div></div>
       <div class="amt">${amount}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${chip(c.running ? 'PROCESSING' : c.status)}${c.injection ? `<span class="chip coral" title="Prompt injection quarantined">${icon('i-alert', 'sm')}Injection</span>` : ''}${c.override ? '<span class="chip plain">Override</span>' : ''}${c.source === 'feed' ? '<span class="chip sky" title="Arrived through the live feed">Live</span>' : ''}</div>
       <div><span class="risk-pill ${riskClass(c.risk_score)}">${c.risk_score ?? '—'}</span></div>
@@ -331,8 +437,8 @@
       await api('POST', '/api/demo/reset', { history: true });
       S.cases = []; S.view = null; S.events = []; S.known = new Set();
       await loadMeta();
-      toast('Demo reset: 10 synthetic requests in the inbox.');
-      refresh();
+      toast('Demo reset: the hero cases and history are back, and the last 24 hours replay in the background.');
+      refreshSoon();
     } catch (e) { toast(esc(e.message), 'err'); }
   }
 
@@ -356,10 +462,10 @@
     stream();
   }
   const signature = (v) => JSON.stringify({ ...v, sla: null, running: v.running && !v.decision, autonomy_level: v.autonomy_level, role: GH.state.role });
-  async function reloadCase() {
+  async function reloadCase(user = false) {
     if (!S.caseId) return;
     try { S.view = await api('GET', `/api/cases/${S.caseId}`); } catch (e) { toast(esc(e.message), 'err'); return; }
-    renderCaseParts();
+    renderCaseParts(false, user);
   }
   function stream() {
     if (S.es) S.es.close();
@@ -379,24 +485,34 @@
 
   function renderCaseShell() {
     S.lastSig = null;
-    $('#view-case').innerHTML = `<div id="c-head"></div><div id="c-quarantine"></div>
+    S.lastStatus = null;
+    S.traceShown = 0;
+    const view = $('#view-case');
+    view.classList.remove('no-enter');
+    view.innerHTML = `<div id="c-head"></div><div id="c-quarantine"></div>
       <div class="case-grid"><div class="col trace-col"><div class="card trace" id="c-trace"></div></div>
       <div class="col" id="c-main"></div><div class="col" id="c-side"></div></div>`;
     renderCaseParts();
   }
-  function renderCaseParts(force = false) {
+  function renderCaseParts(force = false, user = false) {
     const v = S.view;
     if (!v || !$('#c-head')) return;
-    renderHead(v);
-    renderTrace();
-    const sig = signature(v);
-    if (!force && sig === S.lastSig) return;  // unchanged: keep inputs, scroll and animations as they are
-    S.lastSig = sig;
-    $('#c-quarantine').innerHTML = v.guard && v.guard.detected ? quarantineBanner(v) : '';
-    renderMain(v);
-    renderSide(v);
+    const paint = () => {
+      renderHead(v);
+      renderTrace();
+      const sig = signature(v);
+      if (!force && sig === S.lastSig) return;  // unchanged: keep inputs, scroll and animations as they are
+      const first = S.lastSig === null;
+      const moved = v.status !== S.lastStatus;
+      S.lastSig = sig;
+      S.lastStatus = v.status;
+      $('#view-case').classList.toggle('no-enter', !first && !moved);  // same case, same status: never replay entrance animations
+      $('#c-quarantine').innerHTML = v.guard && v.guard.detected ? quarantineBanner(v) : '';
+      renderMain(v);
+      renderSide(v);
+    };
+    if (user) smooth(paint); else paint();
   }
-
   function renderHead(v) {
     const replayMiss = S.events.some((e) => (e.model || '').startsWith('replay_miss'));
     const dialCaption = v.sla.done ? `Decided in ${Math.max(1, Math.round(v.sla.elapsed_s / 60))} min against the ${S.meta.sla_minutes}-minute IRDAI window`
@@ -446,34 +562,52 @@
       default: return typeof o === 'object' && o ? Object.entries(o).slice(0, 2).map(([k, x]) => `${k}: ${typeof x === 'object' ? JSON.stringify(x) : x}`).join(' · ') : '';
     }
   }
+  const agentKey = (e) => (e.agent === 'action_gateway' ? 'action' : e.agent);
+  function traceLine(e) {
+    return `<li class="line enter ${e.status}"><span class="step">${esc(e.step === 'tool_call' ? e.tool : STEP[e.step] || e.step)}</span>
+      ${e.tool && e.step !== 'tool_call' ? `<span class="tool">${esc(e.tool)}</span>` : e.step === 'tool_call' ? '<span class="tool">tool</span>' : ''}
+      ${e.latency_ms ? `<span class="k">${e.latency_ms} ms</span>` : ''}${e.tokens ? `<span class="k">${e.tokens} tok</span>` : ''}${modelChip(e.model)}
+      <span class="detail" title="${esc(lineDetail(e))}">${esc(lineDetail(e))}</span></li>`;
+  }
   function renderTrace() {
+    // Patched in place: new events append lines, so the active agent's pulse and earlier lines never restart.
     const box = $('#c-trace');
     if (!box) return;
+    if (!box.querySelector('.agent')) {
+      box.innerHTML = `<div class="card-head"><h2>Live agent trace</h2><div class="right" id="trace-meta"></div></div>
+        <div class="card-body">${AGENTS.map((a) => `<div class="agent" data-agent="${a.id}"><div class="a-head"><span class="a-icon">${icon(a.icon)}</span>
+          <div><div class="a-name">${a.name}</div><div class="a-role">${a.role}</div></div><span class="a-state"></span></div><ul class="lines"></ul></div>`).join('')}
+          <div class="empty trace-empty" style="padding:16px"></div></div>`;
+      S.traceShown = 0;
+    }
     const v = S.view || {};
     const running = v.running || v.status === 'PROCESSING';
-    const byAgent = Object.fromEntries(AGENTS.map((a) => [a.id, []]));
-    S.events.forEach((e) => { const key = e.agent === 'action_gateway' ? 'action' : e.agent; if (byAgent[key]) byAgent[key].push(e); });
-    const lastAgent = [...S.events].reverse().find((e) => byAgent[e.agent === 'action_gateway' ? 'action' : e.agent]);
-    const activeId = running && lastAgent ? (lastAgent.agent === 'action_gateway' ? 'action' : lastAgent.agent) : null;
+    const known = new Set(AGENTS.map((a) => a.id));
+    const fresh = S.events.filter((e) => e.id > S.traceShown && known.has(agentKey(e)));
+    fresh.forEach((e) => box.querySelector(`[data-agent="${agentKey(e)}"] .lines`).insertAdjacentHTML('beforeend', traceLine(e)));
+    if (fresh.length) S.traceShown = Math.max(S.traceShown, ...fresh.map((e) => e.id));
+    const last = [...S.events].reverse().find((e) => known.has(agentKey(e)));
+    const activeId = running && last ? agentKey(last) : null;
+    AGENTS.forEach((a) => {
+      const card = box.querySelector(`[data-agent="${a.id}"]`);
+      const evs = S.events.filter((e) => agentKey(e) === a.id);
+      const seen = evs.length > 0;
+      const alert = evs.some((e) => ['alert', 'error', 'blocked'].includes(e.status));
+      if (seen && !card.classList.contains('seen')) card.classList.add('seen', 'enter');
+      card.classList.toggle('active', a.id === activeId);
+      card.classList.toggle('done', seen && a.id !== activeId);
+      card.classList.toggle('alert', alert);
+      const state = card.querySelector('.a-state');
+      const want = seen && a.id !== activeId ? (alert ? 'i-alert' : 'i-check') : '';
+      if (state.dataset.icon !== want) { state.dataset.icon = want; state.innerHTML = want ? icon(want, 'sm') : ''; }
+    });
     const tokens = S.events.reduce((n, e) => n + (e.tokens || 0), 0);
-    box.innerHTML = `<div class="card-head"><h2>Live agent trace</h2><div class="right"><span class="chip mono plain">${S.events.length} events</span>${tokens ? `<span class="chip mono plain">${tokens.toLocaleString('en-IN')} tok</span>` : ''}</div></div>
-      <div class="card-body">${AGENTS.map((a) => {
-        const evs = byAgent[a.id];
-        const alert = evs.some((e) => ['alert', 'error', 'blocked'].includes(e.status));
-        const cls = [evs.length ? 'seen' : '', a.id === activeId ? 'active' : evs.length ? 'done' : '', alert ? 'alert' : ''].join(' ');
-        return `<div class="agent ${cls}"><div class="a-head"><span class="a-icon">${icon(a.icon)}</span>
-          <div><div class="a-name">${a.name}</div><div class="a-role">${a.role}</div></div>
-          <span class="a-state">${evs.length && a.id !== activeId ? icon(alert ? 'i-alert' : 'i-check', 'sm') : ''}</span></div>
-          ${evs.length ? `<ul class="lines">${evs.map((e) => `<li class="line ${e.status}"><span class="step">${esc(e.step === 'tool_call' ? e.tool : STEP[e.step] || e.step)}</span>
-            ${e.tool && e.step !== 'tool_call' ? `<span class="tool">${esc(e.tool)}</span>` : e.step === 'tool_call' ? '<span class="tool">tool</span>' : ''}
-            ${e.latency_ms ? `<span class="k">${e.latency_ms} ms</span>` : ''}${e.tokens ? `<span class="k">${e.tokens} tok</span>` : ''}${modelChip(e.model)}
-            <span class="detail" title="${esc(lineDetail(e))}">${esc(lineDetail(e))}</span></li>`).join('')}</ul>` : ''}</div>`;
-      }).join('')}
-      ${!S.events.length ? `<div class="empty" style="padding:16px">${v.status === 'NEW' ? 'Agents have not run on this case yet.' : 'Waiting for events…'}</div>` : ''}</div>`;
+    $('#trace-meta', box).innerHTML = `<span class="chip mono plain">${S.events.length} events</span>${tokens ? `<span class="chip mono plain">${tokens.toLocaleString('en-IN')} tok</span>` : ''}`;
+    $('.trace-empty', box).textContent = S.events.length ? '' : (v.status === 'NEW' ? 'Agents have not run on this case yet.' : 'Waiting for events…');
+    $('.trace-empty', box).hidden = !!S.events.length;
     const body = box.querySelector('.card-body');
-    if (running) body.scrollTop = body.scrollHeight;
+    if (running && fresh.length) body.scrollTop = body.scrollHeight;
   }
-
   // ---- main column: decision card, approval, outbox ----
   function renderMain(v) {
     const main = $('#c-main');
@@ -522,12 +656,12 @@
           <td class="clause">${esc(r.clause_ref)}</td><td>${result}</td><td class="r impact ${r.impact_inr < 0 ? 'neg' : ''}">${r.impact_inr ? inr(r.impact_inr) : '—'}</td></tr>`;
       }).join('')}</tbody></table></div>`;
   }
-  function sourceLabel(src) {
+  function sourceLabel(src, role = 'reason') {
     if (!src) return 'model';
     if (src === 'mock') return 'mock fixture';
-    if (src === 'replay') return 'recorded Groq run (replay)';
+    if (src === 'replay') return `recorded ${ROLE[role]} run (replay)`;
     if (src === 'replay_miss') return 'mock fallback (replay miss)';
-    return `Groq · ${S.meta.models.reason.split('/').pop()}`;
+    return `live ${ROLE[role]}`;
   }
   function waterfall(ev) {
     if (!ev.claimed_amount) return '';
@@ -693,7 +827,7 @@
     side.innerHTML = `${documentCard(v)}${riskCard(v)}${docsCard(v)}${intakeCard(v)}`;
     const hit = side.querySelector('.paper .inj, .paper .qtok');
     if (hit) { const paper = hit.closest('.paper'); paper.scrollTop = Math.max(0, hit.offsetTop - paper.clientHeight / 2); }
-    side.querySelectorAll('.doc-toggle button').forEach((b) => b.addEventListener('click', () => { S.docMode = b.dataset.mode; renderSide(S.view); }));
+    side.querySelectorAll('.doc-toggle button').forEach((b) => b.addEventListener('click', () => smooth(() => { S.docMode = b.dataset.mode; renderSide(S.view); })));
   }
   function documentCard(v) {
     const doc = v.document;
@@ -745,99 +879,179 @@
     const i = v.intake;
     if (!i) return '';
     return `<div class="card"><div class="card-head"><h3>${icon('i-scan', 'sm')} Intake extraction</h3><div class="right"><span class="chip ${i.confidence >= 0.8 ? 'teal' : 'coral'}">confidence ${i.confidence}</span></div></div>
-      <div class="card-body"><dl class="kv"><dt>Extracted by</dt><dd>${esc(sourceLabel(i.llm_source).replace(S.meta.models.reason.split('/').pop(), S.meta.models.fast.split('/').pop()))}</dd>
+      <div class="card-body"><dl class="kv"><dt>Extracted by</dt><dd>${esc(sourceLabel(i.llm_source, 'fast'))}</dd>
         <dt>Diagnosis</dt><dd>${esc(i.extraction.provisional_diagnosis)}</dd><dt>ICD-10</dt><dd class="mono">${esc(i.extraction.icd10_codes.join(', '))}</dd>
         <dt>Stay</dt><dd>${i.extraction.expected_los_days} days · ${inr(i.extraction.room_rent_per_day)}/day</dd>
         <dt>Form cross-check</dt><dd>${i.cross_check_issues.length ? `<span style="color:var(--coral)">${i.cross_check_issues.map(esc).join('; ')}</span>` : 'matches the hospital form'}</dd></dl></div></div>`;
   }
 
   // ------------------------------------------------------------------ dashboard
-  async function renderDashboard(live = false) {
+  async function renderDashboard(live = false, user = false) {
     const root = $('#view-dashboard');
-    if (!root.innerHTML) root.innerHTML = `<div class="kpis">${[1, 2, 3, 4, 5].map(() => '<div class="skeleton" style="height:150px"></div>').join('')}</div><div class="skeleton" style="height:360px"></div>`;
+    if (!root.querySelector('#dash-kpis')) {
+      root.innerHTML = dashShell();
+      if (!root.dataset.bound) { root.addEventListener('click', (e) => { if (e.target.closest('#dash-replay')) replayDay(); }); root.dataset.bound = '1'; }
+      S.charts = {};
+    }
     let d;
     try { d = await api('GET', '/api/dashboard'); } catch (e) { root.innerHTML = errorCard(e, null); return; }
-    const k = d.kpis;
-    root.innerHTML = `<div class="view-head"><div><h1>Dashboard</h1><p class="lede">Turnaround, decisions and value, computed live from the case store. Synthetic data.</p></div>
-      <div class="actions"><span class="live-pill ${S.meta.feed && S.meta.feed.enabled ? 'on' : 'off'}"><i></i>${S.meta.feed && S.meta.feed.enabled ? 'Live' : 'Feed paused'}</span><span class="chip plain">IRDAI cashless window ${d.sla_minutes} min</span><span class="chip ${d.kill_switch ? 'coral' : 'gold'}">Autonomy level ${d.autonomy_level}${d.kill_switch ? ' · kill switch' : ''}</span></div></div>
-      <div class="kpis">
-        ${kpi('Median turnaround', 'k-tat', 'min', `decision time vs the ${d.sla_minutes}-minute rule`, 'accent', 'i-clock')}
-        ${kpi('Within 60-minute SLA', 'k-sla', '%', `${k.decided} decided cases`, '', 'i-check')}
-        ${kpi('Cases processed', 'k-proc', '', 'by the agent pipeline', '', 'i-flow')}
-        ${kpi('Human override rate', 'k-ovr', '%', `${k.overrides} of ${k.human_reviews} human reviews`, '', 'i-human')}
-        ${kpi('Processor hours saved', 'k-hrs', 'h', `${d.roi.saved_minutes_per_case} min saved per case`, '', 'i-sparkle')}
-      </div>
+    S.dash = d;
+    if (d.feed && S.meta.feed) S.meta.feed.day = d.feed.day;
+    const animate = !S.dashSeen && !live;
+    S.dashSeen = true;
+    if (user) smooth(() => paintDashboard(d, false)); else paintDashboard(d, animate);
+  }
+  function dashShell() {
+    return `<div class="view-head"><div><h1>Dashboard</h1><p class="lede">Turnaround, decisions and value, computed live from the case store. Synthetic data.</p></div>
+        <div class="actions" id="dash-actions"></div></div>
+      <div class="kpis" id="dash-kpis">${[1, 2, 3, 4, 5].map(() => '<div class="skeleton" style="height:150px"></div>').join('')}</div>
+      <div class="card day-card"><div class="card-head"><h2>Last 24 hours, hour by hour <span class="faint">IST</span></h2><div class="right" id="day-head"></div></div>
+        <div class="card-body"><div id="day-progress-slot"></div><div class="chart-box day"><canvas id="day-chart" aria-label="Requests by hour of the day"></canvas></div>
+          <div class="legend row" id="day-legend"></div></div></div>
       <div class="dash-grid">
-        <div class="card"><div class="card-head"><h2>Turnaround per decided case</h2><div class="right"><span class="chip plain">last 30 decisions · blue = live feed</span><span class="chip gold">— 60-minute line</span></div></div><div class="card-body"><div class="chart-box"><canvas id="tat-chart" aria-label="Turnaround chart"></canvas></div></div></div>
+        <div class="card"><div class="card-head"><h2>Turnaround per decided case</h2><div class="right"><span class="chip plain">last 30 decisions · blue = live or replayed</span><span class="chip gold">— 60-minute line</span></div></div>
+          <div class="card-body"><div class="chart-box"><canvas id="tat-chart" aria-label="Turnaround chart"></canvas></div></div></div>
         <div class="card"><div class="card-head"><h2>Decision split</h2></div><div class="card-body"><div class="chart-box donut"><canvas id="split-chart" aria-label="Decision split"></canvas></div><div class="legend" id="split-legend"></div></div></div>
       </div>
-      <div class="tiles">
-        ${tile(k.queries_sent, 'Hospital queries sent autonomously', 'i-mail')}
-        ${tile(k.injections_blocked, 'Prompt injections quarantined', 'i-alert')}
-        ${tile(k.unauthorized_blocked, 'Unauthorized actions blocked (403)', 'i-lock')}
-        ${tile(inr(k.deductions_inr), 'Policy deductions identified and cited', 'i-shield')}
-      </div>
-      <div class="card" style="margin-top:24px"><div class="card-head"><h2>AI-to-ROI</h2></div><div class="card-body roi">
-        <div><div class="muted" style="font-size:.84rem">Projected processor hours saved per year at ${d.roi.daily_volume} cases/day</div>
-          <div class="big" id="k-annual">0</div>
-          <div class="muted" style="font-size:.84rem;margin-top:6px">≈ <b style="color:var(--text)">${inr(d.roi.annual_inr)}</b> a year at ${inr(d.roi.processor_cost_per_hour_inr)}/hour · assumptions: ${d.roi.manual_minutes_per_case} min manual vs ${d.roi.assisted_minutes_per_case} min assisted per case, ${d.roi.working_days_per_year} working days (pack.yaml)</div></div>
-        <div class="compare"><div class="muted" style="font-size:.8rem">Time to a cashless decision</div>
-          <div class="bar-row"><span>Typical today</span><div class="t"><i style="width:100%;background:var(--coral)"></i></div><span class="num">6–48 h</span></div>
-          <div class="bar-row"><span>IRDAI mandate</span><div class="t"><i style="width:${(60 / (48 * 60)) * 100 * 8}%;background:var(--accent)"></i></div><span class="num">60 min</span></div>
-          <div class="bar-row"><span>GoldenHour median</span><div class="t"><i style="width:${Math.max(1.5, ((k.median_tat_min || 0) / (48 * 60)) * 100 * 8)}%;background:var(--teal)"></i></div><span class="num">${k.median_tat_min ?? '—'} min</span></div>
-          <div class="faint" style="font-size:.74rem">${esc(d.baseline.label)}. Bars after the first are drawn 8x for legibility.</div></div></div></div>`;
-    const cu = live ? (el, v, o = {}) => countUp(el, v, { ...o, instant: true }) : countUp;
+      <div class="tiles" id="dash-tiles"></div>
+      <div class="card" style="margin-top:24px"><div class="card-head"><h2>AI-to-ROI</h2></div><div class="card-body roi" id="dash-roi"></div></div>`;
+  }
+  function paintDashboard(d, animate) {
+    const k = d.kpis;
+    const fed = S.meta.feed || {};
+    const replaying = fed.day && fed.day.active;
+    $('#dash-actions').innerHTML = `<span class="live-pill ${replaying || fed.enabled ? 'on' : 'off'}"><i></i>${replaying ? 'Day replay' : fed.enabled ? 'Live' : 'Feed paused'}</span><span class="chip plain">IRDAI cashless window ${d.sla_minutes} min</span><span class="chip ${d.kill_switch ? 'coral' : 'gold'}">Autonomy level ${d.autonomy_level}${d.kill_switch ? ' · kill switch' : ''}</span>`;
+    $('#dash-kpis').innerHTML = `${kpi('Median turnaround', 'k-tat', 'min', `decision time vs the ${d.sla_minutes}-minute rule`, 'accent', 'i-clock')}
+      ${kpi('Within 60-minute SLA', 'k-sla', '%', `${k.decided} decided cases`, '', 'i-check')}
+      ${kpi('Cases processed', 'k-proc', '', 'by the agent pipeline', '', 'i-flow')}
+      ${kpi('Human override rate', 'k-ovr', '%', `${k.overrides} of ${k.human_reviews} human reviews`, '', 'i-human')}
+      ${kpi('Processor hours saved', 'k-hrs', 'h', `${d.roi.saved_minutes_per_case} min saved per case`, '', 'i-sparkle')}`;
+    $('#dash-tiles').innerHTML = `${tile(k.queries_sent, 'Hospital queries sent autonomously', 'i-mail')}
+      ${tile(k.injections_blocked, 'Prompt injections quarantined', 'i-alert')}
+      ${tile(k.unauthorized_blocked, 'Unauthorized actions blocked (403)', 'i-lock')}
+      ${tile(inr(k.deductions_inr), 'Policy deductions identified and cited', 'i-shield')}`;
+    $('#dash-roi').innerHTML = `<div><div class="muted" style="font-size:.84rem">Projected processor hours saved per year at ${d.roi.daily_volume} cases/day</div>
+        <div class="big" id="k-annual">0</div>
+        <div class="muted" style="font-size:.84rem;margin-top:6px">≈ <b style="color:var(--text)">${inr(d.roi.annual_inr)}</b> a year at ${inr(d.roi.processor_cost_per_hour_inr)}/hour · assumptions: ${d.roi.manual_minutes_per_case} min manual vs ${d.roi.assisted_minutes_per_case} min assisted per case, ${d.roi.working_days_per_year} working days (pack.yaml)</div></div>
+      <div class="compare"><div class="muted" style="font-size:.8rem">Time to a cashless decision</div>
+        <div class="bar-row"><span>Typical today</span><div class="t"><i style="width:100%;background:var(--coral)"></i></div><span class="num">6–48 h</span></div>
+        <div class="bar-row"><span>IRDAI mandate</span><div class="t"><i style="width:${(60 / (48 * 60)) * 100 * 8}%;background:var(--accent)"></i></div><span class="num">60 min</span></div>
+        <div class="bar-row"><span>GoldenHour median</span><div class="t"><i style="width:${Math.max(1.5, ((k.median_tat_min || 0) / (48 * 60)) * 100 * 8)}%;background:var(--teal)"></i></div><span class="num">${k.median_tat_min ?? '—'} min</span></div>
+        <div class="faint" style="font-size:.74rem">${esc(d.baseline.label)}. Bars after the first are drawn 8x for legibility.</div></div>`;
+    const cu = animate ? countUp : (el, v, o = {}) => countUp(el, v, { ...o, instant: true });
     cu($('#k-tat'), k.median_tat_min, { decimals: 1 });
     cu($('#k-sla'), k.within_sla_pct);
     cu($('#k-proc'), k.processed);
     cu($('#k-ovr'), k.override_rate_pct);
     cu($('#k-hrs'), k.hours_saved, { decimals: 1 });
     cu($('#k-annual'), d.roi.annual_hours, { format: (v) => Math.round(v).toLocaleString('en-IN') + '<small style="font-size:1.2rem;color:var(--muted)"> h</small>' });
-    drawCharts(d, live);
+    paintDayStatus();
+    drawCharts(d, animate);
+  }
+  function paintDayStatus() {
+    const head = $('#day-head');
+    if (!head) return;
+    const day = S.meta.feed && S.meta.feed.day;
+    const today = (S.dash && S.dash.today) || { arrivals: 0 };
+    const pill = $('#dash-actions .live-pill');
+    if (pill) {
+      const fed = S.meta.feed || {};
+      pill.className = `live-pill ${(day && day.active) || fed.enabled ? 'on' : 'off'}`;
+      pill.innerHTML = `<i></i>${day && day.active ? 'Day replay' : fed.enabled ? 'Live' : 'Feed paused'}`;
+    }
+    if (day && day.active) {
+      head.innerHTML = `<span class="live-pill on"><i></i>Replaying · <span class="mono">${clockMin(day.sim_now)}</span></span><span class="chip plain">${day.arrivals_done} of ${day.arrivals_total} requests</span>`;
+      $('#day-progress-slot').innerHTML = `<div class="day-progress"><i style="width:${(day.progress * 100).toFixed(1)}%"></i></div>`;
+    } else {
+      head.innerHTML = `<span class="chip plain">${today.arrivals} requests in 24 h</span><button class="btn sm" id="dash-replay">${icon('i-play', 'sm')}Replay the day in ${S.meta.day_minutes || 3} min</button>`;
+      $('#day-progress-slot').innerHTML = '';
+    }
   }
   const kpi = (label, id, unit, note, cls, ic) => `<div class="card kpi ${cls}"><div class="k-label">${icon(ic, 'sm')}${label}</div>
     <div class="k-value"><span id="${id}">0</span>${unit ? `<small>${unit}</small>` : ''}</div><div class="k-note">${note}</div></div>`;
   const tile = (value, label, ic) => `<div class="card tile"><div class="t-val">${value}</div><div class="t-label">${icon(ic, 'sm')} ${label}</div></div>`;
   function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
-  function drawCharts(d, live = false) {
-    if (!window.Chart) return;
-    Object.values(S.charts).forEach((c) => c.destroy());
-    const text = cssVar('--muted'), line = cssVar('--line'), teal = cssVar('--teal'), coral = cssVar('--coral'), gold = cssVar('--accent');
+  function upsertChart(key, canvas, config, animate) {
+    const existing = S.charts[key];
+    if (existing && existing.canvas === canvas) {
+      existing.data.labels = config.data.labels;
+      config.data.datasets.forEach((ds, i) => { if (existing.data.datasets[i]) Object.assign(existing.data.datasets[i], ds); else existing.data.datasets.push(ds); });
+      existing.data.datasets.length = config.data.datasets.length;
+      if (config.options.scales) Object.entries(config.options.scales).forEach(([axis, sc]) => { if (existing.options.scales[axis] && sc.max !== undefined) existing.options.scales[axis].max = sc.max; });
+      existing.update('none');
+      return existing;
+    }
+    if (existing) existing.destroy();
+    config.options.animation = { duration: animate && !GH.reduced ? 700 : 0 };
+    S.charts[key] = new Chart(canvas, config);
+    return S.charts[key];
+  }
+  function drawCharts(d, animate = false) {
+    if (!window.Chart || !$('#tat-chart')) return;
+    const text = cssVar('--muted'), line = cssVar('--line'), teal = cssVar('--teal'), coral = cssVar('--coral'), gold = cssVar('--accent'), sky = cssVar('--sky');
     Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
     Chart.defaults.color = text;
     const labels = d.tat.map((t) => t.case_id);
     const max = Math.ceil(Math.max(70, ...d.tat.map((t) => t.minutes + 8)) / 10) * 10;
-    S.charts.tat = new Chart($('#tat-chart'), {
+    upsertChart('tat', $('#tat-chart'), {
       data: {
         labels,
         datasets: [
           { type: 'bar', label: 'Turnaround (min)', data: d.tat.map((t) => t.minutes), borderRadius: 6, maxBarThickness: 46, minBarLength: 5,
-            backgroundColor: d.tat.map((t) => (t.breached ? coral : t.source === 'feed' ? cssVar('--sky') : teal) + (t.seeded ? '99' : '')), order: 2 },
+            backgroundColor: d.tat.map((t) => (t.breached ? coral : (t.source === 'feed' || t.source === 'day') ? sky : teal) + (t.seeded ? '99' : '')), order: 2 },
           { type: 'line', label: 'IRDAI 60-minute limit', data: labels.map(() => d.sla_minutes), borderColor: gold, borderDash: [6, 6], borderWidth: 2, pointRadius: 0, order: 1 },
         ],
       },
       options: {
-        responsive: true, maintainAspectRatio: false, animation: { duration: GH.reduced || live ? 0 : 700 },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: (c) => (c.datasetIndex === 0 ? d.tat[c.dataIndex].title + (d.tat[c.dataIndex].seeded ? ' (seeded history)' : ' (live)') : '') } } },
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: (c) => (c.datasetIndex === 0 && S.dash ? S.dash.tat[c.dataIndex].title : '') } } },
         scales: { y: { beginAtZero: true, max, grid: { color: line }, title: { display: true, text: 'minutes' } }, x: { grid: { display: false }, ticks: { autoSkip: true, maxRotation: 0, font: { family: 'JetBrains Mono', size: 11 } } } },
       },
-    });
-    const colors = { Approved: teal, 'Partially approved': cssVar('--sky'), 'Denied by MO': coral, 'With Medical Officer': '#F59E9E', 'Query to hospital': cssVar('--violet'), 'Awaiting sign-off': gold };
+    }, animate);
+    const colors = { Approved: teal, 'Partially approved': sky, 'Denied by MO': coral, 'With Medical Officer': '#F59E9E', 'Query to hospital': cssVar('--violet'), 'Awaiting sign-off': gold };
     const entries = Object.entries(d.split).filter(([, n]) => n > 0);
-    S.charts.split = new Chart($('#split-chart'), {
+    upsertChart('split', $('#split-chart'), {
       type: 'doughnut',
       data: { labels: entries.map(([l]) => l), datasets: [{ data: entries.map(([, n]) => n), backgroundColor: entries.map(([l]) => colors[l]), borderColor: cssVar('--surface'), borderWidth: 3 }] },
-      options: { responsive: true, maintainAspectRatio: false, cutout: '68%', animation: { duration: GH.reduced || live ? 0 : 700 }, plugins: { legend: { display: false } } },
-    });
+      options: { responsive: true, maintainAspectRatio: false, cutout: '68%', plugins: { legend: { display: false } } },
+    }, animate);
     $('#split-legend').innerHTML = entries.map(([l, n]) => `<div><i style="background:${colors[l]}"></i>${l}<b>${n}</b></div>`).join('');
+    const t = d.today;
+    const tatMax = Math.ceil(Math.max(70, ...t.median_tat.filter((x) => x != null).map((x) => x + 10)) / 10) * 10;
+    upsertChart('day', $('#day-chart'), {
+      data: {
+        labels: t.labels,
+        datasets: [
+          { type: 'bar', label: 'Solved within 60 min', data: t.solved, backgroundColor: teal, stack: 'r', borderRadius: 3, maxBarThickness: 34, order: 3 },
+          { type: 'bar', label: 'Solved after 60 min', data: t.breached, backgroundColor: coral, stack: 'r', borderRadius: 3, maxBarThickness: 34, order: 3 },
+          { type: 'bar', label: 'Still open', data: t.open, backgroundColor: gold, stack: 'r', borderRadius: 3, maxBarThickness: 34, order: 3 },
+          { type: 'line', label: 'Median turnaround (min)', data: t.median_tat, yAxisID: 'y1', borderColor: sky, backgroundColor: sky, borderWidth: 2, pointRadius: 2.5, tension: 0.35, spanGaps: true, order: 1 },
+          { type: 'line', label: '60-minute limit', data: t.labels.map(() => d.sla_minutes), yAxisID: 'y1', borderColor: gold, borderDash: [5, 5], borderWidth: 1.5, pointRadius: 0, order: 2 },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { stacked: true, grid: { display: false }, ticks: { autoSkip: true, maxRotation: 0, font: { family: 'JetBrains Mono', size: 11 } } },
+          y: { stacked: true, beginAtZero: true, grid: { color: line }, title: { display: true, text: 'requests' }, ticks: { precision: 0 } },
+          y1: { position: 'right', beginAtZero: true, max: tatMax, grid: { display: false }, title: { display: true, text: 'median minutes' } },
+        },
+      },
+    }, animate);
+    $('#day-legend').innerHTML = [['Solved within 60 min', teal], ['Solved after 60 min', coral], ['Still open', gold], ['Median turnaround', sky], ['60-minute limit', gold]]
+      .map(([l, c], i) => `<div><i style="background:${c}${i === 4 ? ';height:2px' : ''}"></i>${l}</div>`).join('');
   }
-
   // ------------------------------------------------------------------ audit chain
-  async function renderAudit(result = null) {
+  async function renderAudit(result = null, user = false) {
     const root = $('#view-audit');
     S.auditNew = 0;
     let blocks;
     try { blocks = await api('GET', '/api/audit'); } catch (e) { root.innerHTML = errorCard(e, null); return; }
+    const done = user ? smooth(() => paintAudit(root, blocks, result)) : (paintAudit(root, blocks, result), Promise.resolve());
+    return done;
+  }
+  function paintAudit(root, blocks, result) {
     const admin = GH.state.role === 'ADMIN';
     const banner = result ? (result.valid
       ? `<div class="verify-banner ok">${icon('i-shield')}<div><b>Chain verified.</b> ${result.checked} blocks recomputed: every hash = sha256(prev_hash + payload) matches.</div></div>`
@@ -1013,6 +1227,7 @@
     }
     connectDesk();
     setInterval(() => { GH.tickDials(); paintFeedNext(); }, 1000);
+    setInterval(GH.tickAgo, 20000);
     setInterval(() => { if (S.tab === 'inbox' && !document.hidden) renderInbox(); }, 30000);  // fallback; the desk stream drives updates
     window.GoldenHour = { guidedDemo, setRole, state: S };
   }

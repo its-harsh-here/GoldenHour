@@ -17,6 +17,7 @@ from typing import Any, Callable
 
 import yaml
 
+from core import clock
 from core.action_gateway import ActionGateway
 from core.audit import AuditLog
 from core.events import EventLog
@@ -42,7 +43,7 @@ class StepContext:
     runtime: Any = None
 
     def model_label(self, model: str, source: str) -> str:
-        return model if source in ("groq", "cache", "replay") else f"{source}:{model.split('/')[-1]}"
+        return model if source in ("live", "cache", "replay") else f"{source}:{model}"
 
 
 @dataclass
@@ -56,16 +57,22 @@ class Step:
 class CaseStore:
     FIELDS = ("pack", "status", "title", "hero", "received_at", "updated_at", "decided_at", "sla_paused_at",
               "sla_paused_seconds", "assigned_role", "recommendation", "recommended_amount", "final_amount",
-              "risk_score", "override", "seeded", "request_json", "state_json")
+              "risk_score", "override", "seeded", "request_json", "state_json", "source", "injection",
+              "deductions_inr", "auto")
+    LIGHT = ("case_id, pack, status, title, hero, received_at, updated_at, decided_at, sla_paused_at, sla_paused_seconds, "
+             "assigned_role, recommendation, recommended_amount, final_amount, risk_score, override, seeded, source, "
+             "injection, deductions_inr, auto, request_json")
 
     def __init__(self, store: Store):
         self.store = store
 
-    def create(self, case_id: str, pack: str, request: dict, title: str, hero: str | None, received_at: float) -> None:
+    def create(self, case_id: str, pack: str, request: dict, title: str, hero: str | None, received_at: float,
+               source: str | None = None) -> None:
+        source = source or ("hero" if hero else request.get("source", "history"))
         self.store.execute(
-            "INSERT OR REPLACE INTO cases(case_id, pack, status, title, hero, received_at, updated_at, request_json, state_json)"
-            " VALUES(?,?,?,?,?,?,?,?,?)",
-            (case_id, pack, "NEW", title, hero, received_at, time.time(), json.dumps(request, ensure_ascii=False), "{}"),
+            "INSERT OR REPLACE INTO cases(case_id, pack, status, title, hero, received_at, updated_at, request_json, state_json,"
+            " source, injection, deductions_inr, auto) VALUES(?,?,?,?,?,?,?,?,?,?,0,0,0)",
+            (case_id, pack, "NEW", title, hero, received_at, clock.now(), json.dumps(request, ensure_ascii=False), "{}", source),
         )
 
     @staticmethod
@@ -81,6 +88,14 @@ class CaseStore:
     def list(self) -> list[dict]:
         return [self._parse(r) for r in self.store.query("SELECT * FROM cases ORDER BY received_at DESC, case_id")]
 
+    def list_light(self) -> list[dict]:
+        """Every case without its (large) agent state: for inbox lists and dashboards."""
+        rows = self.store.query(f"SELECT {self.LIGHT} FROM cases ORDER BY received_at DESC, case_id")
+        for row in rows:
+            row["request"] = json.loads(row.pop("request_json") or "{}")
+            row["state"] = {}
+        return rows
+
     def status(self, case_id: str) -> str | None:
         row = self.store.one("SELECT status FROM cases WHERE case_id=?", (case_id,))
         return row["status"] if row else None
@@ -89,7 +104,7 @@ class CaseStore:
         bad = set(fields) - set(self.FIELDS)
         if bad:
             raise ValueError(f"unknown case fields: {bad}")
-        fields["updated_at"] = time.time()
+        fields["updated_at"] = clock.now()
         cols = ", ".join(f"{k}=?" for k in fields)
         self.store.execute(f"UPDATE cases SET {cols} WHERE case_id=?", (*fields.values(), case_id))
 
@@ -102,7 +117,7 @@ class CaseStore:
 
 def sla_info(case: dict, sla_minutes: int, now: float | None = None) -> dict:
     """Minutes left on the decision clock; paused while waiting on the hospital."""
-    now = now or time.time()
+    now = now or clock.now()
     end = case.get("decided_at") or now
     paused = case.get("sla_paused_seconds") or 0
     if case.get("sla_paused_at") and not case.get("decided_at"):
@@ -218,7 +233,14 @@ class Runtime:
         self.gateway.register("tamper_test", lambda _cid, params, _role, _actor: self.audit.tamper(params.get("block_id")))
         self.gateway.register("audit_restore", lambda _cid, _params, _role, _actor: self.audit.restore())
         self.gateway.register("set_feed", self._set_feed)
+        self.gateway.register("replay_day", self._replay_day)
         self.feed = Feed(self)
+
+    def _replay_day(self, _cid: str, params: dict, _role: str, _actor: str) -> dict:
+        minutes = float(params.get("minutes") or self.settings.day_replay_minutes)
+        if not 0.5 <= minutes <= 60:
+            raise ValueError("replay length must be between 0.5 and 60 minutes")
+        return self.feed.start_day(minutes=minutes)
 
     def _set_feed(self, _cid: str, params: dict, _role: str, _actor: str) -> dict:
         self.feed.set_enabled(bool(params.get("enabled", True)))

@@ -9,54 +9,58 @@
 | M3 REST API, action gateway, RBAC, audit chain, e2e | done |
 | M4 Console UI | done |
 | M5 Dashboard, audit tab, autonomy, guided demo, landing | done |
-| M6 Groq live verification + replay cache | done |
+| M6 Live LLM verification + replay cache | done |
 | M7 Visual QA, README, DEMO_SCRIPT | done |
 
-Stretch: a `Dockerfile` (replay mode by default, `$PORT`, non-root) was added after M7; its runtime settings were verified by running the app with the same environment, but the image was not built in the build session (no Docker daemon). The second `motor_claim` pack was not started.
+Stretch: a `Dockerfile` (replay mode by default, `$PORT`, non-root) and a Render blueprint (`render.yaml`). The second `motor_claim` pack was not started.
 
 ## Done
-- M0: `run.py`, `core/settings.py` (.env via python-dotenv), `core/store.py` (SQLite), `core/llm.py` (groq/mock/replay, per-model token bucket, SQLite response cache keyed by sha256(model + messages), retry-after on 429, pydantic validation with one retry, OpenAI-style tool loop with allow-list), seed data (6 policies, 16 procedures, 10 cases including 2 generated PDFs), vendored fonts and Chart.js.
-- M1: `core/redaction.py` (names, phones, Aadhaar-like numbers, emails, policy numbers -> tokens; local rehydration), `core/guard.py` (Prompt Guard 2 score + regex fallback, sentence highlight spans, quarantine), Intake agent with pydantic-validated extraction and a deterministic form cross-check, `rules.py` (9 pure rules) with tests for all hero numbers.
+- M0: `run.py`, `core/settings.py` (.env via python-dotenv), `core/store.py` (SQLite), `core/llm.py` (live/mock/replay, per-role token bucket, SQLite response cache keyed by sha256(role + messages), retry-after on 429, pydantic validation with one retry, OpenAI-style tool loop with allow-list), seed data, vendored fonts and Chart.js.
+- M1: `core/redaction.py` (names, phones, Aadhaar-like numbers, emails, policy numbers -> tokens; local rehydration), `core/guard.py` (guard-model score + regex fallback, sentence highlight spans, quarantine), Intake agent with pydantic-validated extraction and a deterministic form cross-check, `rules.py` (9 pure rules) with tests for all hero numbers.
 - M2: Policy agent (tool calls get_policy/get_claim_history, then rules.py), Docs & Coding agent (lookup_procedure/required_docs/benchmark_rate), Risk agent (weighted signals from pack.yaml + LLM rationale), decision policy, grounded explainer (rejects unsupported rupee figures), action routing; `core/orchestrator.py` state machine with persisted state, pause/resume and failure-to-human; `core/events.py` trace log + SSE.
-- M3: pack-agnostic REST API (`app/main.py`); RBAC via `X-Role` enforced in the Action Gateway (403 + audit block on every rejected attempt); audit verify / Admin tamper test / restore; HTTP e2e tests for A/B/C; `scripts/smoke_http.py` drives the same flows against a live server.
+- M3: pack-agnostic REST API (`app/main.py`); RBAC via `X-Role` enforced in the Action Gateway (403 + audit block on every rejected attempt); audit verify / Admin tamper test / restore; HTTP e2e tests for A/B/C; `scripts/smoke_http.py` drives the same flows against a running server.
 - M4: console with inbox (SLA sun-dials), live SSE agent trace, decision card (waterfall + clause-cited ledger), redaction view with "What the model saw", injection quarantine banner, role-gated approvals, outbox (paper letter, email card, phone SMS).
 - M5: dashboard (count-up KPIs, turnaround vs the 60-minute line, decision split, guardrail tiles, ROI projection), Audit tab (animated verify, tamper test, restore), Admin-only autonomy selector and kill switch, presentation mode, guided demo A -> B -> C (`/console?demo=1`), landing page.
-- M6: Groq reached from the cloud build session (proxy-injected key). Each hero case ran once in `groq` mode end to end with `REPLAY_RECORD=true`: gpt-oss-20b for extraction, tool calling and drafting; gpt-oss-120b (reasoning_effort low) for the risk rationale and decision explanation; Prompt Guard 2 (86M) for screening. Case C's hidden text scored 0.9965, and case A ran end to end in 7.7 s live. `replay_cache.json` (42 entries, redacted and synthetic only; checked for names, phones, policy numbers and keys) replays A, B and C with zero misses. An unrecorded case falls back to mock with `replay_miss` labels and a badge.
-  - Call-shape fix found live: gpt-oss sometimes emits a malformed parallel tool call (`get_claim_history<|channel|>commentary`) and Groq returns 400. The gateway retries 400s twice; failing that, it runs the agent's allow-listed tools locally and asks once more without tools (trace step `tool_fallback`). The rejection is recorded so replay follows the same path.
-- M7: headless screenshots at 1440x900 (landing, inbox, case A, case C, dashboard, audit, plus tamper test, case B query, full-page and presentation variants) taken in replay mode. I reviewed each one and fixed what was visibly wrong: kill-switch banner ignoring `hidden`, trace column overflowing its grid track, cramped card headings and document toggle, re-render restarting animations, pipeline node text overflow, zero-height live bars, audit auto-scroll hiding the result banner, and top-nav overflow at 1440 px. All were re-shot after the fixes. README.md and DEMO_SCRIPT.md are complete.
+- M6: each hero case ran end to end in `live` mode with `REPLAY_RECORD=true`: the fast model for extraction, tool calling and drafting; the reasoning model (reasoning_effort low) for the risk rationale and decision explanation; the guard model for injection screening. Case C's hidden text scored 0.9965. `replay_cache.json` (42 entries, keyed by model role, redacted and synthetic only) replays A, B and C with zero misses, including the full guided demo. An unrecorded case falls back to mock with `replay_miss` labels and a badge.
+  - Call-shape fix found live: the fast model sometimes emits a malformed parallel tool call and the provider returns 400. The gateway retries 400s twice; failing that, it runs the agent's allow-listed tools locally and asks once more without tools. The rejection is recorded so replay follows the same path.
+- M7: headless screenshots at 1440x900 in replay mode, reviewed one by one and re-shot after fixes. README.md and DEMO_SCRIPT.md are complete.
 
 ## Deployment
-- Live on Render: https://goldenhour-7xuc.onrender.com (`LLM_MODE=groq`, key set in Render). Verified after deploy: 10 cases, 42 replay entries, all console views render, SSE trace streams through Render's proxy, case A ran on live Groq in 10 s and was approved from the console with letter, email and SMS in the outbox.
-- First deploy served an empty console: `.gitignore`'s `data/` also matched `packs/health_preauth/data/`, so the pack's data was never committed. Fixed by ignoring `/data/` only, committing the 15 data files, a packaging test that fails if pack data is untracked, and a case count in `/api/health`.
-- `render.yaml` blueprint (Render, Docker, free plan, auto-deploy from `main`, `LLM_MODE=groq`). The owner applies it with the Deploy to Render link in README.md and enters `GROQ_API_KEY` in Render's prompt. The build session had no Render credentials, so the service itself was not created from here.
+- Live on Render: https://goldenhour-7xuc.onrender.com, from `render.yaml` (Docker, free plan, auto-deploy from `main`, health check `/api/health`).
+- The service runs `LLM_MODE=live` once `LLM_BASE_URL`, `LLM_API_KEY`, `MODEL_FAST`, `MODEL_REASON` and `MODEL_GUARD` are set in Render's dashboard (never in the repo). Until then, or with any unknown mode, it serves the recorded runs (`replay`) and the header badge says so.
+- An early deploy served an empty console because `.gitignore`'s `data/` also matched the pack's data folder. Fixed by ignoring `/data/` only, plus a packaging test and a case count in `/api/health`.
 
 ## Post-launch changes
-- Dataset: 16 policies, 24 procedures, 6 hospitals, 40 cases. PA-1011 to PA-1040 come from the deterministic generator; their outcomes are decided at startup by the same desk logic the live feed uses.
-- Live feed: `core/feed.py` thread adds a synthetic request about every 40 s, processed on arrival (mock pipeline by default); a simulated desk signs live-feed cases off within 1-7 minutes; `/api/stream` pushes desk events to the console (ticker, inbox, badges, dashboard, audit pill); retention keeps the newest 40 feed cases.
-- Console: the demo button is a 20 px icon-only ▶; L1/L2/L3 and the power button are always clickable and switch the demo role to Admin, since they are Admin controls; inbox filter chips; live chips on feed cases.
-- Replay cache re-recorded on live Groq (42 entries; A, B, C replay with zero misses). The first re-record hit a transient Groq 500 from Prompt Guard on case B: the guard degraded to regex as designed, and a second pass recorded it.
-- Tests: 71 (generator, feed, simulated desk, retention, desk stream, feed RBAC).
+- Dataset: 16 policies, 24 procedures, 6 hospitals, 40 inbox cases; PA-1011 to PA-1040 come from the deterministic generator.
+- Live feed (`core/feed.py`): requests arrive at random (a Poisson process, mean `FEED_INTERVAL_S`, default 40 s) and are processed on arrival. A simulated desk (`sim:*` actors) signs generated cases off within minutes. `/api/stream` pushes desk events to the console.
+- A day of case solving: at startup (and after a demo reset) the server plays the last 24 hours on a simulated business clock (`core/clock.py`): about 200 requests shaped by an IST intraday profile (`DAY_VOLUME`), each processed by the agent pipeline and worked by the simulated desk, so the dashboard opens on a full day. It takes about 5 s. "Replay the day" (inbox live panel or dashboard) plays the same day paced over `DAY_REPLAY_MINUTES` (default 3), with a moving clock, progress bar, ticker and an hour-by-hour chart that fills in. Every timestamp (case, trace, audit, notification) is on the simulated timeline; open replay cases show SLA on the replay's clock.
+- Smooth UI: tab, role, filter, document-view and theme changes cross-fade with the View Transitions API (skipped under reduced motion). Live updates patch the DOM in place (keyed rows, appended trace lines, in-place chart updates), so nothing re-renders or replays its entrance animation. Refreshes during a replay are throttled rather than debounced, so screens keep moving while events stream.
+- De-branding: the provider and model names are gone from code, config and docs. Agents ask for a role (`fast`, `reason`, `guard`) and env maps roles to model ids. the provider-named mode became `live`, and `LLM_REASONING_EFFORT` makes the reasoning hint optional. The landing page and console footer credit the builder (github.com/its-harsh-here).
+- Tests: 82 (adds the business clock, day replay, replay-clock SLA, light case list, hour-by-hour dashboard, day API, live-mode settings, the reasoning-effort switch, and leftover replay cases keeping their planned timing).
 
 ## How to run
 ```
 pip install -r requirements.txt
 cp .env.example .env              # LLM_MODE=mock by default
-LLM_MODE=mock pytest -q           # 71 tests, no network
+LLM_MODE=mock pytest -q           # 82 tests, no network
 python run.py                     # http://127.0.0.1:8000  -> / and /console
 python scripts/smoke_http.py      # HTTP checks for hero cases A/B/C + audit (server must be running)
-LLM_MODE=replay python run.py     # recorded Groq runs, for the demo video
-LLM_MODE=groq python run.py       # live; needs GROQ_API_KEY in .env (REPLAY_RECORD=true to re-record)
+LLM_MODE=replay python run.py     # recorded live runs, for the demo video
+LLM_MODE=live python run.py       # needs LLM_BASE_URL, LLM_API_KEY, MODEL_FAST/REASON/GUARD in .env
 node scripts/screenshots.mjs      # regenerate docs/screenshots (needs Playwright + Chromium)
 ```
 
 ## Verified in the build session
-- `LLM_MODE=mock pytest -q`: 61 passed.
-- Live server, mock, replay and groq modes: A approved after Processor sign-off with letter, hospital notice and SMS in the outbox; B raised a hospital query (SLA paused), then was approved at ₹36,000 after the simulated upload; C escalated with the injection flagged, and a Processor approve returned 403; the Medical Officer's denial with a reason was accepted.
+- `LLM_MODE=mock pytest -q`: 82 passed.
+- Replay mode with the feed and the day backfill running: hero cases A, B, C reached their end states over HTTP (`scripts/smoke_http.py`) with zero replay misses. The guided demo ran headless in 69 s, also with zero misses; the only console error is case C's intended 403.
+- Day replay in the browser: backfill of 192 requests (398 simulated events) in about 5 s; a paced replay filled the hour-by-hour chart in place (bar totals 56 -> 163 over 24 s) without rebuilding the inbox or the dashboard; the audit chain verifies afterwards.
 - Audit verify returned valid; the Admin tamper test was detected at the edited block; restore made the chain valid again.
 
 ## Known issues
-- Groq free-tier limits (about 30 RPM / 8K TPM per model) mean a live groq run of one case takes 5-60 s depending on throttling; use `LLM_MODE=replay` for the recorded demo.
+- Free-tier provider limits (often about 30 RPM / 8K TPM per model) mean a live run of one case takes 5-60 s under throttling, and back-to-back hero cases can hit a 429 (the case then goes to a human with the reason). Use `LLM_MODE=replay` for the recorded demo.
+- Live-feed and day-replay cases always run the mock pipeline by default (`FEED_LLM=mock`): a day is about 200 cases, far beyond a free tier.
 - If `pytest` on your PATH is an isolated tool install (e.g. `uv tool install pytest`), it cannot see the project's packages; install `requirements.txt` into that environment or run `LLM_MODE=mock python -m pytest -q`.
 - Demo RBAC trusts the `X-Role` header (no real authentication).
-- Changing any prompt in `packs/health_preauth/prompts/` changes the replay keys; re-record with `LLM_MODE=groq REPLAY_RECORD=true` and `scripts/smoke_http.py`.
+- Changing any prompt in `packs/health_preauth/prompts/` changes the replay keys; re-record with `LLM_MODE=live REPLAY_RECORD=true` and `scripts/smoke_http.py`.
+- Free Render instances sleep when idle and keep SQLite in `/tmp`, so the first request after a pause takes 30-60 s and the desk (with its fresh 24-hour backfill) restarts on every deploy.
 - On narrow phone screens the console stacks into one column and stays usable, but it is designed for 1280-1920 px desks.

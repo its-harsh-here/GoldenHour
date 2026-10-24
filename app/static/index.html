@@ -92,7 +92,7 @@
       <p class="l-lede">Responsible AI is not a slide. Every control below can be seen working in the demo.</p>
       <div class="guards">
         <div class="card guard"><div class="g-ic"><svg class="icon lg"><use href="/static/vendor/icons.svg#i-redact"/></svg></div><h4>PHI redaction</h4><p>Names, phones, Aadhaar-like numbers, emails and policy numbers become tokens before any model call; rehydrated locally only in final letters.</p><div class="where">core/redaction.py · "What the model saw"</div></div>
-        <div class="card guard"><div class="g-ic"><svg class="icon lg"><use href="/static/vendor/icons.svg#i-alert"/></svg></div><h4>Injection screening</h4><p>Prompt Guard 2 plus a regex fallback on every document; offending text is quarantined, highlighted and the case escalates.</p><div class="where">core/guard.py · quarantine banner</div></div>
+        <div class="card guard"><div class="g-ic"><svg class="icon lg"><use href="/static/vendor/icons.svg#i-alert"/></svg></div><h4>Injection screening</h4><p>A guard model plus a regex fallback on every document; offending text is quarantined, highlighted and the case escalates.</p><div class="where">core/guard.py · quarantine banner</div></div>
         <div class="card guard"><div class="g-ic"><svg class="icon lg"><use href="/static/vendor/icons.svg#i-file"/></svg></div><h4>Explainability</h4><p>A rule ledger with pass/fail, rupee impact and clause references; summaries citing unsupported figures are rejected.</p><div class="where">rules.py · decision card</div></div>
         <div class="card guard"><div class="g-ic"><svg class="icon lg"><use href="/static/vendor/icons.svg#i-lock"/></svg></div><h4>Role-based access</h4><p>Processor, Medical Officer, Auditor, Admin. The gateway answers 403 to anything else and logs the attempt.</p><div class="where">core/rbac.py · action_gateway.py</div></div>
         <div class="card guard"><div class="g-ic"><svg class="icon lg"><use href="/static/vendor/icons.svg#i-chain"/></svg></div><h4>Tamper-evident audit</h4><p>hash = sha256(prev_hash + payload). Verify the chain, or run the Admin tamper test and watch it break at one block.</p><div class="where">core/audit.py · Audit tab</div></div>
@@ -117,7 +117,7 @@
           <div>&nbsp;&nbsp;&nbsp;&nbsp;pack.yaml · rules.py · tools.py · agents.py · prompts/</div>
         </div>
         <div class="planes">
-          <div class="plane core"><h4>Governed runtime · core/</h4><div class="mods"><span>LLM gateway: groq / mock / replay</span><span>state machine</span><span>Action Gateway</span><span>RBAC</span><span>hash-chained audit</span><span>PHI redaction</span><span>injection guard</span><span>SSE trace</span></div></div>
+          <div class="plane core"><h4>Governed runtime · core/</h4><div class="mods"><span>LLM gateway: live / mock / replay</span><span>state machine</span><span>Action Gateway</span><span>RBAC</span><span>hash-chained audit</span><span>PHI redaction</span><span>injection guard</span><span>SSE trace</span></div></div>
           <div class="plug"><svg class="icon sm"><use href="/static/vendor/icons.svg#i-plug"/></svg>a pack plugs in: pipeline · rules · tools · prompts · roles · autonomy policy</div>
           <div class="packs">
             <div class="plane"><h4>health_preauth</h4><div class="mods"><span>9 coverage rules</span><span>ICD-10 packages</span><span>IRDAI 60-min SLA</span></div></div>
@@ -134,7 +134,8 @@
 
     <footer class="l-foot">
       <span><b>Synthetic data only. Not a clinical decision tool.</b> GoldenHour checks coverage, documentation, coding and cost reasonableness, then routes to humans. It never diagnoses or recommends treatment.</span>
-      <span>Built for AgentOps'26 · invented hospitals, patients and insurer.</span>
+      <span>Invented hospitals, patients and insurer.</span>
+      <a class="built-by" href="https://github.com/its-harsh-here" target="_blank" rel="noopener"><svg class="icon sm" aria-hidden="true"><use href="/static/vendor/icons.svg#i-github"/></svg>Built by <b>its-harsh-here</b></a>
     </footer>
   </main>
 

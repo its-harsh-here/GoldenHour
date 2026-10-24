@@ -1,4 +1,4 @@
-"""Prompt-injection screening for every ingested document: Prompt Guard 2 plus a regex fallback.
+"""Prompt-injection screening for every ingested document: a guard model (classifier) plus a regex fallback.
 
 The model returns a malicious probability as a bare number. The regex layer supplies highlight
 spans for the UI and keeps screening working in mock mode or when the guard model is unavailable.
@@ -120,5 +120,5 @@ def screen(text: str, llm: LLMClient | None = None, model: str | None = None, fo
         return GuardResult(bool(sentences), regex_score, "regex (guard model unavailable)", model, sentences, str(err)[:200])
     detected = score >= THRESHOLD or bool(sentences)
     if "replay_miss" in sources:
-        return GuardResult(detected, round(score, 4), "regex (replay miss)", "replay_miss:" + model.split("/")[-1], sentences)
-    return GuardResult(detected, round(score, 4), "prompt_guard+regex", model, sentences)
+        return GuardResult(detected, round(score, 4), "regex (replay miss)", "replay_miss:" + model, sentences)
+    return GuardResult(detected, round(score, 4), "guard_model+regex", model, sentences)

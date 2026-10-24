@@ -97,10 +97,10 @@ def test_rejected_tool_call_falls_back_to_local_tools(client, monkeypatch):
     def fake_complete(**kwargs):
         calls["n"] += 1
         if kwargs.get("tools"):
-            raise LLMError("Groq rejected the call (400): tool call validation failed")
+            raise LLMError("LLM provider rejected the call (400): tool call validation failed")
         assert "TOOL RESULTS" in kwargs["messages"][1]["content"] and '"product": "X"' in kwargs["messages"][1]["content"]
         from core.llm import Completion
-        return Completion('{"ok": true, "n": 2}', [], "m", 1, 1, "groq")
+        return Completion('{"ok": true, "n": 2}', [], "m", 1, 1, "live")
 
     monkeypatch.setattr(client, "complete", fake_complete)
     res = client.run_agent(agent="t", model="m", system="s", user="u", schema=Answer, mock=lambda m: {}, tools=tools,
@@ -111,7 +111,29 @@ def test_rejected_tool_call_falls_back_to_local_tools(client, monkeypatch):
 def test_recorded_rejection_replays_as_error(tmp_path):
     settings = replace(get_settings(), llm_mode="replay", db_path=tmp_path / "t.db")
     msgs = [{"role": "system", "content": "s"}, {"role": "user", "content": "u"}]
-    ReplayCache(tmp_path / "replay.json").put(cache_key("m", msgs), {"model": "m", "error": "Groq rejected the call (400): x"})
+    ReplayCache(tmp_path / "replay.json").put(cache_key("m", msgs), {"model": "m", "error": "LLM provider rejected the call (400): x"})
     client = LLMClient(settings, Store(settings.db_path), tmp_path / "replay.json")
     with pytest.raises(LLMError):
         client.complete(model="m", messages=msgs, mock=lambda m: {"content": "{}"})
+
+
+def test_reasoning_effort_is_configurable(tmp_path):
+    sent = []
+
+    class Fake:
+        class chat:
+            class completions:
+                @staticmethod
+                def create(**kwargs):
+                    sent.append(kwargs)
+                    msg = type("M", (), {"content": '{"ok": true}', "tool_calls": None})()
+                    return type("R", (), {"choices": [type("C", (), {"message": msg})()], "usage": None})()
+
+    for effort, expected in (("low", "low"), ("", None)):
+        settings = replace(get_settings(), llm_mode="live", db_path=tmp_path / f"r{effort}.db", llm_base_url="https://llm.example.test/v1",
+                           model_fast="f", model_reason="r", model_guard="g", reasoning_effort=effort)
+        llm = LLMClient(settings, Store(settings.db_path), tmp_path / "replay.json")
+        llm._sdk = lambda: Fake
+        llm.complete(model="reason", messages=[{"role": "user", "content": effort or "none"}], mock=lambda m: {"ok": True},
+                     json_mode=True, reasoning_effort="low")
+        assert sent[-1]["model"] == "r" and sent[-1].get("reasoning_effort") == expected

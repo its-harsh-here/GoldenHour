@@ -54,7 +54,20 @@ class Store:
         with self._lock:
             self._conn.execute("PRAGMA journal_mode=WAL")
             self._conn.executescript(SCHEMA)
+            self._migrate()
             self._conn.commit()
+
+    MIGRATIONS = {"cases": {"source": "TEXT", "injection": "INTEGER DEFAULT 0", "deductions_inr": "INTEGER DEFAULT 0",
+                            "auto": "INTEGER DEFAULT 0"}}
+
+    def _migrate(self) -> None:
+        """Add columns introduced after a database was created (SQLite has no ADD COLUMN IF NOT EXISTS)."""
+        for table, columns in self.MIGRATIONS.items():
+            have = {row[1] for row in self._conn.execute(f"PRAGMA table_info({table})")}
+            for name, decl in columns.items():
+                if name not in have:
+                    self._conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {decl}")
+        self._conn.execute("CREATE INDEX IF NOT EXISTS idx_cases_source ON cases(source, status)")
 
     @property
     def lock(self) -> threading.RLock:

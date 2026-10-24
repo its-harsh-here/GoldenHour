@@ -154,15 +154,17 @@ def intake_agent(ctx: StepContext) -> dict:
              output={"redacted": kinds, "tokens": sorted(redactor.mapping)}, latency_ms=_ms(t0))
 
     t0 = time.perf_counter()
-    guard = screen(note.text, ctx.llm, ctx.settings.model_guard, force_mock=ctx.force_mock)
-    ctx.emit("intake", "injection_screen", tool="prompt_guard", input_summary="redacted note",
+    guard = screen(note.text, ctx.llm, "guard", force_mock=ctx.force_mock)
+    ctx.emit("intake", "injection_screen", tool="guard_model", input_summary="redacted note",
              output={"detected": guard.detected, "score": guard.score, "method": guard.method,
                      "flagged": [s["text"] for s in guard.sentences], "error": guard.error},
              latency_ms=_ms(t0), model=guard.model or "regex", status="alert" if guard.detected else "ok")
 
+    if ctx.runtime:
+        ctx.runtime.cases.update(ctx.case_id, injection=int(guard.detected))
     model_text = guard.quarantine(note.text)
     result = ctx.llm.run_agent(
-        agent="intake", model=ctx.settings.model_fast,
+        agent="intake", model="fast",
         system=prompt("intake", doc_codes=", ".join(tools.doc_codes())),
         user=f"ADMISSION NOTE:\n{model_text}",
         schema=IntakeExtraction, mock=lambda _m: mock_intake(req, redactor, text), force_mock=ctx.force_mock,
@@ -170,7 +172,7 @@ def intake_agent(ctx: StepContext) -> dict:
     ex: IntakeExtraction = result.data
     issues = crosscheck(ex, req)
     confidence = round(max(0.0, min(ex.confidence, 1 - 0.1 * len(issues))), 2)
-    ctx.emit("intake", "extract_case", input_summary="quarantined, redacted note", model=ctx.model_label(ctx.settings.model_fast, result.source),
+    ctx.emit("intake", "extract_case", input_summary="quarantined, redacted note", model=ctx.model_label("fast", result.source),
              tokens=result.tokens, latency_ms=result.latency_ms,
              output={"procedure": ex.proposed_procedure, "icd10": ex.icd10_codes, "llm_confidence": ex.confidence,
                      "confidence": confidence, "cross_check_issues": issues})
@@ -291,14 +293,14 @@ def policy_agent(ctx: StepContext) -> dict:
     ]
     user = (f"Policy token: {ref}. Admission date: {ex['admission_date']}. Diagnosis: {ex['provisional_diagnosis']} "
             f"(ICD-10 {', '.join(ex['icd10_codes']) or 'not stated'}). Proposed procedure: {ex['proposed_procedure']}.")
-    result = ctx.llm.run_agent(agent="policy", model=ctx.settings.model_fast, system=prompt("policy"), user=user,
+    result = ctx.llm.run_agent(agent="policy", model="fast", system=prompt("policy"), user=user,
                                schema=PolicyFindings, mock=mock_policy(ref), tools=allow, on_tool=_tool_hook(ctx, "policy"),
                                force_mock=ctx.force_mock,
                                fallback_calls=[("get_policy", {"policy_ref": ref}), ("get_claim_history", {"policy_ref": ref})])
     _note_degraded(ctx, "policy", result)
     findings: PolicyFindings = result.data
     ctx.emit("policy", "coverage_review", input_summary="policy terms + claim history", output=findings.model_dump(),
-             model=ctx.model_label(ctx.settings.model_fast, result.source), tokens=result.tokens, latency_ms=result.latency_ms)
+             model=ctx.model_label("fast", result.source), tokens=result.tokens, latency_ms=result.latency_ms)
 
     t0 = time.perf_counter()
     policy, procedure = tools.policy_by_id(form["policy_number"]), resolve_procedure(form)
@@ -307,6 +309,8 @@ def policy_agent(ctx: StepContext) -> dict:
     pdoc = tools.policies_doc()
     ev = rules.evaluate(policy, procedure, claim_input(form), pdoc["ped_icd10_prefixes"], pdoc["clause_refs_default"])
     history = tools.get_claim_history(ref, resolve, adm)
+    if ctx.runtime:
+        ctx.runtime.cases.update(ctx.case_id, deductions_inr=sum(d["amount"] for d in ev.deductions))
     ctx.emit("policy", "rules_engine", tool="rules.py", latency_ms=_ms(t0), status="alert" if ev.failed_rules else "ok",
              input_summary=f"{len(ev.rules)} rules on {inr(ev.claimed_amount)} requested",
              output={"eligible_amount": inr(ev.eligible_amount), "failed_rules": ev.failed_rules,
@@ -377,7 +381,7 @@ def docs_agent(ctx: StepContext) -> dict:
             f"ICD-10 codes: {', '.join(ex['icd10_codes']) or 'none'}. Attached document codes: {', '.join(attached)}.")
     guess = resolve_procedure(form)
     key = guess["key"] if guess else ""
-    result = ctx.llm.run_agent(agent="docs", model=ctx.settings.model_fast, system=prompt("docs"), user=user,
+    result = ctx.llm.run_agent(agent="docs", model="fast", system=prompt("docs"), user=user,
                                schema=DocsFindings, mock=mock_docs(ex, attached), tools=allow, on_tool=_tool_hook(ctx, "docs"),
                                force_mock=ctx.force_mock,
                                fallback_calls=[("lookup_procedure", {"query": f"{ex['proposed_procedure']} {ex['provisional_diagnosis']}",
@@ -386,7 +390,7 @@ def docs_agent(ctx: StepContext) -> dict:
     _note_degraded(ctx, "docs", result)
     f: DocsFindings = result.data
     ctx.emit("docs", "coding_review", input_summary="package table lookups", output=f.model_dump(),
-             model=ctx.model_label(ctx.settings.model_fast, result.source), tokens=result.tokens, latency_ms=result.latency_ms)
+             model=ctx.model_label("fast", result.source), tokens=result.tokens, latency_ms=result.latency_ms)
 
     t0 = time.perf_counter()
     rules_key = ctx.state.get("policy", {}).get("procedure_key")
@@ -482,12 +486,12 @@ def risk_agent(ctx: StepContext) -> dict:
     mock_text = (f"Risk score {score}/100 ({level}). Main drivers: " + "; ".join(s["label"] for s in top) + "."
                  if signals else f"Risk score {score}/100 (low). No risk signals fired.")
     result = ctx.llm.run_agent(
-        agent="risk", model=ctx.settings.model_reason, system=prompt("risk"),
+        agent="risk", model="reason", system=prompt("risk"),
         user=json.dumps({"score": score, "level": level, "signals": [{"label": s["label"], "detail": s["detail"]} for s in signals]}, ensure_ascii=False),
         schema=RiskRationale, mock=lambda _m: {"content": {"rationale": mock_text, "top_concerns": [s["label"] for s in top]}},
         force_mock=ctx.force_mock,
     )
-    ctx.emit("risk", "rationale", model=ctx.model_label(ctx.settings.model_reason, result.source), tokens=result.tokens,
+    ctx.emit("risk", "rationale", model=ctx.model_label("reason", result.source), tokens=result.tokens,
              latency_ms=result.latency_ms, output=result.data.model_dump())
     return {"risk": {"score": score, "level": level, "signals": signals, "rationale": result.data.rationale,
                      "top_concerns": result.data.top_concerns, "llm_source": result.source}}
@@ -573,7 +577,7 @@ def explain_step(ctx: StepContext) -> dict:
     }
     text = json.dumps(payload, ensure_ascii=False)
     fallback, fallback_cited = template_summary(decision, ev, docs)
-    result = ctx.llm.run_agent(agent="explain", model=ctx.settings.model_reason, system=prompt("decision"), user=text,
+    result = ctx.llm.run_agent(agent="explain", model="reason", system=prompt("decision"), user=text,
                                schema=DecisionSummary, mock=lambda _m: {"content": {"summary": fallback, "cited_rules": fallback_cited}},
                                force_mock=ctx.force_mock)
     allowed_rules = {r["rule_id"] for r in ev.get("rules", [])}
@@ -581,7 +585,7 @@ def explain_step(ctx: StepContext) -> dict:
     grounded = not unsupported
     summary = result.data.summary if grounded else fallback
     cited = [r for r in result.data.cited_rules if r in allowed_rules] if grounded else fallback_cited
-    ctx.emit("orchestrator", "explain_decision", model=ctx.model_label(ctx.settings.model_reason, result.source),
+    ctx.emit("orchestrator", "explain_decision", model=ctx.model_label("reason", result.source),
              tokens=result.tokens, latency_ms=result.latency_ms, status="ok" if grounded else "alert",
              output={"summary": summary, "cited_rules": cited, "grounded": grounded, "rejected_figures": unsupported})
     return {"explanation": {"summary": summary, "cited_rules": cited, "grounded": grounded,

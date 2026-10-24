@@ -111,6 +111,7 @@ html.presentation .float-card { background: rgba(255, 251, 246, .94); }
   .wrap { padding: 0 var(--s2); }
   .l-nav { padding: 0 var(--s2); }
   .l-nav .links { display: none; }
+  .l-nav .cta .ghost { display: none; }
   .hero h1 { font-size: 3.1rem; }
   h2.l-title { font-size: 2.3rem; }
   .stats, .guards, .agents-grid, .packs { grid-template-columns: 1fr; }

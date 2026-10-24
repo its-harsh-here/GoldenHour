@@ -149,7 +149,7 @@ def generate_request(seq: int, *, admission: date, received_offset_min: float = 
         if optional:
             dropped = rng.choice(optional)
             docs.remove(dropped)
-    injection = force_injection if force_injection is not None else rng.random() < 0.08
+    injection = force_injection if force_injection is not None else rng.random() < 0.03
     accident = proc["key"] == "orif_tibia"
     doctor = rng.choice(DOCTORS)
     gender_word = {"M": "male", "F": "female"}.get(member.get("gender"), "patient")

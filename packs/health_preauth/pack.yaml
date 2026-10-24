@@ -63,6 +63,7 @@ permissions:
   view_phi: [PROCESSOR, MEDICAL_OFFICER]
   reset_demo: [PROCESSOR, MEDICAL_OFFICER, AUDITOR, ADMIN]
   set_feed: [PROCESSOR, MEDICAL_OFFICER, ADMIN]
+  replay_day: [PROCESSOR, MEDICAL_OFFICER, ADMIN]
 
 # Assumptions behind the ROI tile (shown on the dashboard next to the number).
 roi:

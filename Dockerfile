@@ -1,6 +1,7 @@
 # GoldenHour container: python run.py on $PORT (Cloud Run, Render, Fly and most hosts set PORT).
-# Defaults to replay mode so a public deployment never spends a Groq key; set LLM_MODE=groq and
-# GROQ_API_KEY as host secrets to go live. Secrets are never baked into the image (.dockerignore).
+# Defaults to replay mode so a public deployment never spends an LLM key; set LLM_MODE=live with
+# LLM_BASE_URL, LLM_API_KEY and MODEL_FAST / MODEL_REASON / MODEL_GUARD as host secrets to go live.
+# Secrets are never baked into the image (.dockerignore).
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

@@ -9,12 +9,14 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import random
 import time
-from datetime import date
+from datetime import datetime, timedelta, timezone
 from statistics import median
 
 from pydantic import BaseModel
 
+from core import clock
 from core.guard import QUARANTINE_TOKEN, find_injection_spans
 from core.llm import LLMError
 from core.orchestrator import sla_info
@@ -70,21 +72,21 @@ def _ref(case: dict, kind: str) -> str:
 
 
 def _model_label(model: str, source: str) -> str:
-    return model if source in ("groq", "cache", "replay") else f"{source.split(' ')[0]}:{model.split('/')[-1]}"
+    return model if source in ("live", "cache", "replay") else f"{source.split(' ')[0]}:{model}"
 
 
 def _draft(rt, facts: dict, schema, fallback: dict, force_mock: bool) -> tuple[dict, dict]:
     """Ask the Action Agent for a draft; reject it if it invents figures or tokens."""
     text = json.dumps(facts, ensure_ascii=False)
-    meta = {"model": _model_label(rt.settings.model_fast, "template"), "tokens": 0, "latency_ms": 0, "source": "template"}
+    meta = {"model": _model_label("fast", "template"), "tokens": 0, "latency_ms": 0, "source": "template"}
     try:
-        res = rt.llm.run_agent(agent="action", model=rt.settings.model_fast, system=prompt("action"), user=text,
+        res = rt.llm.run_agent(agent="action", model="fast", system=prompt("action"), user=text,
                                schema=schema, mock=lambda _m: {"content": fallback}, force_mock=force_mock)
     except LLMError as err:
         meta["source"] = f"template (LLM unavailable: {str(err)[:80]})"
         return fallback, meta
     data = res.data.model_dump()
-    meta.update(model=_model_label(rt.settings.model_fast, res.source), tokens=res.tokens, latency_ms=res.latency_ms, source=res.source)
+    meta.update(model=_model_label("fast", res.source), tokens=res.tokens, latency_ms=res.latency_ms, source=res.source)
     blob = " ".join(str(v) for v in data.values())
     if rupee_figures(blob) - rupee_figures(text) or set(TOKEN_RE.findall(blob)) - set(TOKEN_RE.findall(text)):
         meta["source"] = "template (draft rejected: unsupported figure or token)"
@@ -186,10 +188,11 @@ def _finalize(rt, case_id: str, params: dict, role: str, actor: str, kind: str, 
     reason = params.get("reason", "")
     ids = send_decision_documents(rt, case, kind, amount, role, actor, reason, params.get("force_mock", False))
     override = bool(params.get("override"))
-    rt.cases.update(case_id, status=kind, final_amount=amount, decided_at=time.time(), assigned_role=None, override=int(override))
+    rt.cases.update(case_id, status=kind, final_amount=amount, decided_at=clock.now(), assigned_role=None,
+                    override=int(override), auto=int(auto))
     state = case["state"]
     state["human_decision"] = {"kind": kind, "amount": amount, "reason": reason, "role": role, "actor": actor,
-                               "override": override, "auto": auto, "ts": time.time()}
+                               "override": override, "auto": auto, "ts": clock.now()}
     if auto:
         pct = rt.pack.config["decision_policy"]["post_audit_sample_pct"]
         state["post_audit_sampled"] = int(hashlib.sha256(case_id.encode()).hexdigest(), 16) % 100 < pct
@@ -220,7 +223,7 @@ def handle_query(rt, case_id: str, params: dict, role: str, actor: str) -> dict:
     body = {"from": DESK_EMAIL, "to": hosp["tpa_email"], "subject": subject, "text": text, "reference": _ref(case, "QRY"),
             "missing": [{"code": c, "label": tools.doc_label(c)} for c in missing]}
     rt.gateway.outbox_add(case_id, "hospital_query", "email", hosp["tpa_email"], subject, body, actor)
-    rt.cases.update(case_id, status="QUERY_RAISED", assigned_role="HOSPITAL", sla_paused_at=time.time())
+    rt.cases.update(case_id, status="QUERY_RAISED", assigned_role="HOSPITAL", sla_paused_at=clock.now())
     rt.events.emit(case_id, "action", "send_hospital_query", tool="action_gateway", model=meta["model"], tokens=meta["tokens"],
                    latency_ms=meta["latency_ms"], status="paused",
                    output={"to": hosp["name"], "missing": labels, "sla": "paused", "draft": meta["source"]})
@@ -248,7 +251,7 @@ def handle_simulate_upload(rt, case_id: str, params: dict, role: str, actor: str
     docs = req.get("upload_on_query") or case["state"].get("decision", {}).get("missing_docs", [])
     req["attached_docs"] = list(dict.fromkeys(req.get("attached_docs", []) + list(docs)))
     rt.cases.save_request(case_id, req)
-    now = time.time()
+    now = clock.now()
     paused_for = now - (case.get("sla_paused_at") or now)
     rt.cases.update(case_id, status="PROCESSING", sla_paused_at=None,
                     sla_paused_seconds=(case.get("sla_paused_seconds") or 0) + paused_for, assigned_role=None)
@@ -363,16 +366,19 @@ def _token_spans(text: str) -> list[dict]:
 def case_summary(rt, c: dict, role: str) -> dict:
     form, st = c["request"]["form"], c["state"]
     phi = rt.rbac.has_phi_access(role)
+    source = c.get("source") or ("hero" if c["hero"] else c["request"].get("source", "history"))
+    sim_now = rt.feed.case_clock(source)
     return {
         "case_id": c["case_id"], "title": c["title"], "hero": c["hero"], "status": c["status"], "assigned_role": c["assigned_role"],
         "hospital": c["request"]["hospital"]["name"], "city": c["request"]["hospital"]["city"],
         "patient": form["patient_name"] if phi else "Patient ••••", "age": form["age"], "gender": form["gender"],
         "requested_amount": sum(form["estimate"].values()), "recommended_amount": c["recommended_amount"],
         "final_amount": c["final_amount"], "risk_score": c["risk_score"], "recommendation": c["recommendation"],
-        "received_at": c["received_at"], "decided_at": c["decided_at"], "sla": sla_info(c, rt.sla_minutes),
-        "injection": bool(st.get("intake", {}).get("guard", {}).get("detected")), "seeded": bool(c["seeded"]),
+        "received_at": c["received_at"], "decided_at": c["decided_at"], "sla": sla_info(c, rt.sla_minutes, sim_now),
+        "clock_shift_s": round(time.time() - sim_now, 1) if sim_now else 0,
+        "injection": bool(c.get("injection")), "seeded": bool(c["seeded"]),
         "running": rt.orchestrator.is_running(c["case_id"]), "override": bool(c["override"]),
-        "source": "hero" if c["hero"] else c["request"].get("source", "history"),
+        "source": source,
     }
 
 
@@ -426,26 +432,52 @@ def case_view(rt, c: dict, role: str) -> dict:
 
 # ---------------------------------------------------------------- reporter
 
+IST = timezone(timedelta(hours=5, minutes=30))
+IST_OFFSET_S = 19800
+
+
+def _hourly(cases: list[dict], now: float, sla_m: int) -> dict:
+    """The last 24 IST hours: arrivals per hour split by outcome, and the median turnaround of that hour."""
+    last = int((now + IST_OFFSET_S) // 3600)
+    buckets = {b: {"solved": 0, "breached": 0, "open": 0, "tat": []} for b in range(last - 23, last + 1)}
+    for c in cases:
+        b = int((c["received_at"] + IST_OFFSET_S) // 3600)
+        if b not in buckets:
+            continue
+        if c["decided_at"]:
+            info = sla_info(c, sla_m, now)
+            buckets[b]["breached" if info["breached"] else "solved"] += 1
+            buckets[b]["tat"].append(info["elapsed_s"] / 60)
+        else:
+            buckets[b]["open"] += 1
+    keys = sorted(buckets)
+    return {"labels": [f"{k % 24:02d}:00" for k in keys], "tz": "IST",
+            "solved": [buckets[k]["solved"] for k in keys], "breached": [buckets[k]["breached"] for k in keys],
+            "open": [buckets[k]["open"] for k in keys],
+            "median_tat": [round(median(buckets[k]["tat"]), 1) if buckets[k]["tat"] else None for k in keys],
+            "arrivals": sum(sum(buckets[k][f] for f in ("solved", "breached", "open")) for k in keys)}
+
+
 def dashboard(rt) -> dict:
-    cfg, roi, sla_m = rt.pack.config, rt.pack.config["roi"], rt.sla_minutes
-    cases = rt.cases.list()
-    processed = [c for c in cases if c["state"].get("decision")]
-    decided = sorted((c for c in cases if c.get("decided_at")), key=lambda c: c["received_at"])
+    roi, sla_m = rt.pack.config["roi"], rt.sla_minutes
+    now = clock.now()
+    cases = rt.cases.list_light()
+    processed = [c for c in cases if c["recommendation"]]
+    decided = sorted((c for c in cases if c.get("decided_at")), key=lambda c: c["decided_at"])
     tat = []
     for c in decided:
-        info = sla_info(c, sla_m)
+        info = sla_info(c, sla_m, now)
         tat.append({"case_id": c["case_id"], "title": c["title"], "minutes": round(info["elapsed_s"] / 60, 1),
                     "status": c["status"], "breached": info["breached"], "seeded": bool(c["seeded"]),
-                    "source": c["request"].get("source", "hero" if c["hero"] else "history"), "decided_at": c["decided_at"]})
+                    "source": c.get("source"), "decided_at": c["decided_at"]})
     minutes = [t["minutes"] for t in tat]
     statuses = [c["status"] for c in cases]
     reviewed = [c for c in cases if c.get("decided_at") or c["status"] == "ESCALATED"]
-    humans = [c for c in reviewed if not c["state"].get("human_decision", {}).get("auto")]
+    humans = [c for c in reviewed if not c.get("auto")]
     overrides = sum(1 for c in humans if c["override"])
-    outbox = rt.gateway.outbox()
     saved_per_case = roi["manual_minutes_per_case"] - roi["assisted_minutes_per_case"]
     annual_hours = roi["daily_volume"] * roi["working_days_per_year"] * saved_per_case / 60
-    blocked = rt.store.one("SELECT COUNT(*) AS n FROM audit_log WHERE action='action_blocked'")["n"]
+    count = lambda sql: rt.store.one(sql)["n"]  # noqa: E731
     return {
         "kpis": {
             "processed": len(processed), "decided": len(decided),
@@ -453,13 +485,14 @@ def dashboard(rt) -> dict:
             "within_sla_pct": round(100 * sum(1 for t in tat if not t["breached"]) / len(tat)) if tat else None,
             "override_rate_pct": round(100 * overrides / len(humans)) if humans else 0,
             "overrides": overrides, "human_reviews": len(humans),
-            "queries_sent": sum(1 for o in outbox if o["kind"] == "hospital_query"),
+            "queries_sent": count("SELECT COUNT(*) AS n FROM outbox WHERE kind='hospital_query'"),
             "hours_saved": round(len(processed) * saved_per_case / 60, 1),
-            "deductions_inr": sum(d["amount"] for c in processed for d in c["state"].get("policy", {}).get("evaluation", {}).get("deductions", [])),
-            "injections_blocked": sum(1 for c in processed if c["state"].get("intake", {}).get("guard", {}).get("detected")),
-            "unauthorized_blocked": blocked,
+            "deductions_inr": sum(c.get("deductions_inr") or 0 for c in processed),
+            "injections_blocked": sum(1 for c in processed if c.get("injection")),
+            "unauthorized_blocked": count("SELECT COUNT(*) AS n FROM audit_log WHERE action='action_blocked'"),
         },
-        "tat": sorted(tat, key=lambda t: t["decided_at"])[-30:],
+        "tat": tat[-30:],
+        "today": _hourly(cases, now, sla_m),
         "split": {
             "Approved": statuses.count("APPROVED"), "Partially approved": statuses.count("PARTIALLY_APPROVED"),
             "Denied by MO": statuses.count("DENIED"), "With Medical Officer": statuses.count("ESCALATED"),
@@ -470,6 +503,7 @@ def dashboard(rt) -> dict:
         "sla_minutes": sla_m,
         "baseline": {"label": "LocalCircles survey (Jan 2025): about 6 in 10 claimants waited 6-48 hours", "hours_low": 6, "hours_high": 48},
         "autonomy_level": rt.autonomy_level, "kill_switch": rt.kill_switch,
+        "feed": rt.feed.status(),
     }
 
 
@@ -523,22 +557,32 @@ def brief(case: dict | None) -> dict:
     return {"title": case["title"], "hospital": req["hospital"]["name"], "city": req["hospital"]["city"],
             "requested": sum(req["form"]["estimate"].values()), "status": case["status"],
             "recommendation": case.get("recommendation"), "recommended_amount": case.get("recommended_amount"),
-            "final_amount": case.get("final_amount"), "source": "hero" if case.get("hero") else req.get("source", "history"),
-            "injection": bool(case["state"].get("intake", {}).get("guard", {}).get("detected"))}
+            "final_amount": case.get("final_amount"), "source": case.get("source") or req.get("source", "history"),
+            "injection": bool(case.get("injection"))}
 
 
-def feed_arrival(rt, force_mock: bool = True) -> str:
-    """A new synthetic hospital request arrives and the agents process it immediately."""
-    seq = int(rt.store.kv_get("feed_seq", 2000)) + 1
-    rt.store.kv_set("feed_seq", seq)
-    req = generate_request(seq, admission=date.today(), source="feed")
+GENERATED = ("feed", "day")
+PENDING = ("AWAITING_APPROVAL", "ESCALATED", "QUERY_RAISED")
+
+
+def _arrive(rt, seq: int, source: str, force_mock: bool = True) -> str:
+    """A generated hospital request arrives (at the business clock's time) and the agents process it."""
+    now = clock.now()
+    req = generate_request(seq, admission=datetime.fromtimestamp(now, IST).date(), source=source)
     cid = req["case_id"]
-    rt.cases.create(cid, rt.pack.name, req, req["title"], None, time.time())
+    rt.cases.create(cid, rt.pack.name, req, req["title"], None, now, source=source)
     rt.audit.append(case_id=cid, actor=f"hospital:{req['hospital']['hospital_code']}", role="HOSPITAL", action="case_received",
-                    details={"title": req["title"], "hospital": req["hospital"]["name"], "source": "live feed"})
+                    details={"title": req["title"], "hospital": req["hospital"]["name"], "source": source})
     rt.events.notify(cid, "arrived", brief(rt.cases.get(cid)))
     rt.orchestrator.run(cid, force_mock=force_mock)
     return cid
+
+
+def feed_arrival(rt, force_mock: bool = True) -> str:
+    """Real-time feed: a new request arrives now."""
+    seq = int(rt.store.kv_get("feed_seq", 2000)) + 1
+    rt.store.kv_set("feed_seq", seq)
+    return _arrive(rt, seq, "feed", force_mock)
 
 
 def _desk_delay_s(case_id: str, status: str) -> int:
@@ -546,14 +590,17 @@ def _desk_delay_s(case_id: str, status: str) -> int:
 
 
 def feed_desk(rt, force_mock: bool = True, force: bool = False) -> list[tuple[str, str | None]]:
-    """Simulated desk staff (sim:processor, sim:medical_officer, sim:hospital) work the live-feed queue."""
-    now, acted = time.time(), []
-    pending = rt.store.query("SELECT case_id, status, updated_at FROM cases WHERE case_id LIKE 'PA-2%' "
+    """Simulated desk staff (sim:processor, sim:medical_officer, sim:hospital) work the generated queue in real time."""
+    now, acted = clock.now(), []
+    pending = rt.store.query("SELECT case_id, status, updated_at, source FROM cases WHERE source IN ('feed', 'day') "
                              "AND status IN ('AWAITING_APPROVAL', 'ESCALATED', 'QUERY_RAISED') ORDER BY updated_at")
     for row in pending:
         if rt.orchestrator.is_running(row["case_id"]):
             continue
-        if not force and now - (row["updated_at"] or now) < _desk_delay_s(row["case_id"], row["status"]):
+        # a case left open when a day replay ends keeps the timing that day planned for it
+        delay = (_day_desk_minutes(row["case_id"], row["status"]) * 60 if row["source"] == "day"
+                 else _desk_delay_s(row["case_id"], row["status"]))
+        if not force and now - (row["updated_at"] or now) < delay:
             continue
         try:
             acted.append((row["case_id"], desk_decision(rt, row["case_id"], "sim", force_mock)))
@@ -562,21 +609,81 @@ def feed_desk(rt, force_mock: bool = True, force: bool = False) -> list[tuple[st
     return acted
 
 
+def _drop_cases(rt, case_ids: list[str]) -> None:
+    for cid in case_ids:
+        for table in ("cases", "trace_events", "outbox"):
+            rt.store.execute(f"DELETE FROM {table} WHERE case_id=?", (cid,))
+
+
 def feed_prune(rt, keep: int) -> int:
     """Keep the newest `keep` live-feed cases; older decided ones leave the inbox (the audit chain keeps them)."""
-    feed = rt.store.query("SELECT case_id, decided_at FROM cases WHERE case_id LIKE 'PA-2%' ORDER BY received_at")
-    excess = len(feed) - keep
-    removed = 0
-    for row in feed:
-        if removed >= excess:
-            break
-        if row["decided_at"] is None:
-            continue
-        for table in ("cases", "trace_events", "outbox"):
-            rt.store.execute(f"DELETE FROM {table} WHERE case_id=?", (row["case_id"],))
-        removed += 1
-    rt.store.execute("DELETE FROM notifications WHERE id < (SELECT MAX(id) - 2000 FROM notifications)")
-    return removed
+    feed = rt.store.query("SELECT case_id, decided_at FROM cases WHERE source='feed' ORDER BY received_at")
+    drop = [r["case_id"] for r in feed if r["decided_at"] is not None][: max(0, len(feed) - keep)]
+    _drop_cases(rt, drop)
+    rt.store.execute("DELETE FROM notifications WHERE id < (SELECT MAX(id) - 3000 FROM notifications)")
+    return len(drop)
+
+
+# ---------------------------------------------------------------- day replay (24 hours on a simulated clock)
+
+# Relative arrival rate by IST hour: pre-authorizations peak late morning and mid-afternoon.
+DAY_PROFILE = [0.25, 0.2, 0.15, 0.15, 0.2, 0.3, 0.55, 0.9, 1.4, 1.85, 2.1, 2.05,
+               1.85, 1.7, 1.8, 1.9, 1.85, 1.65, 1.4, 1.15, 0.95, 0.75, 0.55, 0.4]
+
+
+def day_clear(rt) -> int:
+    """Remove generated cases (live feed and an earlier day replay) before a new replay."""
+    ids = [r["case_id"] for r in rt.store.query("SELECT case_id FROM cases WHERE source IN ('feed', 'day')")]
+    _drop_cases(rt, ids)
+    return len(ids)
+
+
+def day_plan(rt, start: float, end: float, volume: int) -> list[tuple[float, str, int]]:
+    """Random arrivals across the window, shaped by the IST intraday profile (deterministic per hour).
+
+    Arrivals start at the first full IST hour of the window, so every one lands in the dashboard's 24 hourly bars.
+    """
+    rng = random.Random(f"goldenhour-day-{int(end // 3600)}")
+    n = max(1, round(rng.gauss(volume, volume ** 0.5)))
+    first_hour = (int((end + IST_OFFSET_S) // 3600) - 23) * 3600 - IST_OFFSET_S
+    start = max(start, first_hour)
+    hours = [start + i * 3600 for i in range(int((end - start) // 3600) + 1) if start + i * 3600 < end]
+    span = {h: min(3600.0, end - h) for h in hours}  # the current hour is only partly over
+    weights = [DAY_PROFILE[int((h + IST_OFFSET_S) // 3600) % 24] * span[h] / 3600 for h in hours]
+    times = sorted(h + rng.random() * span[h] for h in rng.choices(hours, weights=weights, k=n))
+    first = int(rt.store.kv_get("day_seq", 3000))
+    rt.store.kv_set("day_seq", first + n)
+    return [(ts, "arrive", first + i + 1) for i, ts in enumerate(times)]
+
+
+def _day_desk_minutes(case_id: str, status: str) -> float:
+    """How long the simulated desk takes to act on a day-replay case in this status (deterministic per case)."""
+    rng = random.Random(f"{case_id}:{status}:desk")
+    if status == "AWAITING_APPROVAL":
+        return rng.uniform(3, 28)
+    if status == "ESCALATED":
+        return rng.uniform(62, 95) if rng.random() < 0.06 else rng.uniform(12, 52)
+    return rng.uniform(15, 110)  # QUERY_RAISED: the hospital takes a while to upload (the SLA clock is paused meanwhile)
+
+
+def _next_desk_event(rt, case_id: str) -> list[tuple[float, str, str]]:
+    """When the (simulated) desk next acts on a pending case, in simulated time."""
+    status = rt.cases.status(case_id)
+    if status not in PENDING:
+        return []
+    return [(clock.now() + _day_desk_minutes(case_id, status) * 60, "desk", case_id)]
+
+
+def day_event(rt, kind: str, ref) -> list[tuple[float, str, object]]:
+    """Handle one simulated event; returns follow-up events (all timestamps on the simulated clock)."""
+    if kind == "arrive":
+        return _next_desk_event(rt, _arrive(rt, int(ref), "day", force_mock=True))
+    if kind == "desk":
+        if rt.cases.status(ref) not in PENDING:
+            return []
+        if desk_decision(rt, ref, "sim", force_mock=True) == "upload":
+            return _next_desk_event(rt, ref)
+    return []
 
 
 # ---------------------------------------------------------------- demo seed

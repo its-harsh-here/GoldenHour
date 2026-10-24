@@ -8,7 +8,7 @@ Track: Healthcare (operational/administrative), with BFSI (insurance) crossover.
 ## Context (for README, landing page and pitch)
 - IRDAI Master Circular on health insurance (May 2024): insurers must decide cashless authorization within 1 hour of request and final discharge authorization within 3 hours.
 - LocalCircles survey (Jan 2025): about 6 in 10 claimants waited 6–48 hours for claim approval and discharge.
-- Hackathon: AgentOps'26 (CGI x MIT Bengaluru), 24 Oct 2026, freeze 6 PM IST. Judged on Reusability, Responsible AI & Governance, AI-to-ROI, MVP Readiness, Originality (10 pts each). Submission: public GitHub repo (no secrets), full commit SHA, PPT, MP4 demo video.
+- Evaluation lens for the pitch: Reusability, Responsible AI & Governance, AI-to-ROI, MVP Readiness, Originality. Deliverables: public GitHub repo (no secrets), full commit SHA, PPT, MP4 demo video.
 
 ## Explicit non-goal
 No clinical decisions (no diagnosis, no treatment or drug recommendation). The system checks coverage, documentation completeness, coding consistency and cost reasonableness, then routes to humans. Say this in the UI footer and README.
@@ -19,34 +19,35 @@ No clinical decisions (no diagnosis, no treatment or drug recommendation). The s
 This project is being built by Claude Code in an unattended cloud session while the owner is away. Follow these rules:
 1. **Never stop to ask questions.** When something is ambiguous, pick the sensible option, write one line about it in `DECISIONS.md`, and keep going.
 2. Work milestone by milestone (M0–M7 below). After each milestone: run the tests, commit with a clear message, **push**, and update `PROGRESS.md` (done / next / how to run / known issues).
-3. Never block on external services. If Groq is unreachable or rate-limited, continue in `mock` mode and note it in `PROGRESS.md`.
+3. Never block on external services. If the LLM provider is unreachable or rate-limited, continue in `mock` mode and note it in `PROGRESS.md`.
 4. Keep functions small and typed. Prefer boring, reliable code over clever code.
 5. **No secrets in the repo, ever.** Not in code, fixtures, replay cache, logs or commit messages.
 6. Verify your own work: tests for logic, HTTP checks for flows, and headless-browser screenshots for the UI (see M7).
 
 ### Cloud environment notes
-- Groq access in the cloud session: the environment may attach the Groq key to requests for `api.groq.com` as a network secret, so `GROQ_API_KEY` might not exist as a variable. First test connectivity with one `curl` to `https://api.groq.com/openai/v1/models`. If the secret is attached, use a placeholder key string in the SDK client and confirm a tiny chat completion works. If neither a secret nor a variable works, stay in mock mode.
-- **Groq budget during the build:** at most ~12 full case runs in `groq` mode in total (free tier is roughly 30 RPM / 8K TPM / 1K RPD / 200K TPD per model; verify at console.groq.com/settings/limits). Use `mock` for all development and tests.
-- **Vendor every frontend asset** (fonts as woff2, Chart.js, Alpine.js, icon SVGs) into `app/static/vendor/` and `app/static/fonts/`. The demo must not depend on CDNs: campus Wi-Fi is unreliable. Only Groq needs the network.
+- LLM access in the cloud session: the environment may attach the provider key to requests for the provider's host as a network secret, so `LLM_API_KEY` might not exist as a variable. First test connectivity with one `curl` to the endpoint's `/models`. If the secret is attached, use a placeholder key string in the SDK client and confirm a tiny chat completion works. If neither a secret nor a variable works, stay in mock mode.
+- **LLM budget during the build:** at most ~12 full case runs in `live` mode in total (free tiers are typically around 30 RPM / 8K TPM per model; check the provider's limits page). Use `mock` for all development and tests.
+- **Vendor every frontend asset** (fonts as woff2, Chart.js, Alpine.js, icon SVGs) into `app/static/vendor/` and `app/static/fonts/`. The demo must not depend on CDNs: venue Wi-Fi is unreliable. Only the LLM provider needs the network.
 
 ---
 
 ## Tech rules
-- Python 3.11+, FastAPI, uvicorn, SQLite (stdlib `sqlite3`), pydantic v2, `openai` SDK pointed at `https://api.groq.com/openai/v1`, `python-dotenv`, `pypdf` for PDF input, `pytest`.
+- Python 3.11+, FastAPI, uvicorn, SQLite (stdlib `sqlite3`), pydantic v2, `openai` SDK pointed at an OpenAI-compatible endpoint (`LLM_BASE_URL`), `python-dotenv`, `pypdf` for PDF input, `pytest`.
 - Config comes from `.env` (load with python-dotenv) so it works the same on Windows and Mac. Ship `.env.example`; `.env` is gitignored.
 - Entry point: `python run.py` (reads `LLM_MODE`, `PORT`, starts uvicorn). Also support `uvicorn app.main:app`.
 - Frontend: no build step and no Node at runtime. Plain HTML + hand-written CSS with design tokens + vanilla JS; Alpine.js and Chart.js are allowed, vendored locally.
-- `LLM_MODE` = `groq` | `mock` | `replay`. Default `mock`.
+- `LLM_MODE` = `live` | `mock` | `replay`. Default `mock`. `live` without `LLM_BASE_URL` and the three model ids falls back to `replay`.
   - `mock`: deterministic fixtures. The whole app and test suite run with no network.
-  - `replay`: serve responses recorded from earlier real `groq` runs (committed file `packs/health_preauth/data/replay_cache.json`, containing only redacted, synthetic content). Used for the demo video so rate limits cannot break it. On a cache miss, fall back to mock and show a small "replay miss" badge.
+  - `replay`: serve responses recorded from earlier real `live` runs (committed file `packs/health_preauth/data/replay_cache.json`, containing only redacted, synthetic content). Used for the demo video so rate limits cannot break it. On a cache miss, fall back to mock and show a small "replay miss" badge.
 - **The LLM never does money math or final eligibility.** The deterministic rule engine does. The LLM extracts, classifies, explains and drafts.
 - Every LLM call returns JSON validated by a pydantic model. On validation failure retry once, then route the case to a human with the reason.
 - Keep each prompt under ~1,500 tokens. Implement a per-model token-bucket throttle, honor `retry-after` on 429 with backoff, and a SQLite response cache keyed by sha256(model + messages).
 - Models via env (limits are per model, so splitting spreads load):
-  - `MODEL_FAST` default `openai/gpt-oss-20b` (extraction, drafting)
-  - `MODEL_REASON` default `openai/gpt-oss-120b` (decision explanation, risk rationale), `reasoning_effort` low
-  - `MODEL_GUARD` default `meta-llama/llama-prompt-guard-2-86m` (prompt-injection screening; inspect the real response format, parse the score, regex fallback)
-  - Check console.groq.com/docs for structured outputs and tool use if a call shape fails.
+  - Agents ask for a logical role; `MODEL_FAST`, `MODEL_REASON` and `MODEL_GUARD` map roles to the provider's model ids (no model id in code):
+  - `fast`: extraction, tool calling, drafting
+  - `reason`: decision explanation, risk rationale (`LLM_REASONING_EFFORT`, default low; empty for models without it)
+  - `guard`: prompt-injection classifier (inspect the real response format, parse the score, regex fallback)
+  - Check the provider's docs for structured outputs and tool use if a call shape fails.
 
 ## Architecture
 ```
@@ -119,7 +120,7 @@ Output: `eligible_amount`, `deductions[]`, `failed_rules[]`.
 
 ## Responsible AI and governance (each must be visible in the UI)
 1. **PHI redaction** before any LLM call: names, phone numbers, 12-digit Aadhaar-like numbers, emails and policy numbers become tokens like `[PATIENT_1]`. They are rehydrated locally only in final letters. UI toggle: "What the model saw".
-2. **Prompt-injection screening** on every ingested document (Prompt Guard + regex fallback). If detected: quarantine banner with the offending text highlighted, then escalate.
+2. **Prompt-injection screening** on every ingested document (guard model + regex fallback). If detected: quarantine banner with the offending text highlighted, then escalate.
 3. **Explainability:** the decision card lists each rule with pass/fail, rupee impact and clause reference. The LLM summary may only reference supplied rule results.
 4. **RBAC:** roles Processor, Medical Officer, Auditor, Admin, with a demo role switcher in the header. The Action Gateway rejects unauthorized actions with 403 and logs the attempt. Redacted fields stay masked for roles without PHI access.
 5. **Tamper-evident audit log:** every event is appended with `hash = sha256(prev_hash + payload)`. The Audit tab has "Verify chain", plus an Admin-only "Tamper test" that alters one stored row so verification visibly fails at that block (then "Restore").
@@ -166,7 +167,7 @@ Output: `eligible_amount`, `deductions[]`, `failed_rules[]`.
 
 **Console (`/console`)**
 - Tabs: Inbox · Case · Dashboard · Audit.
-- Header: product mark, role switcher, autonomy-level selector, LLM mode badge (mock / groq / replay), and a "Presentation mode" toggle.
+- Header: product mark, role switcher, autonomy-level selector, LLM mode badge (mock / live / replay), and a "Presentation mode" toggle.
 - **Presentation mode:** paper theme with larger type, for projectors.
 - **Guided demo:** a "Run guided demo" button plays hero cases A → B → C in sequence with short caption toasts ("Intake agent redacts patient data…"), auto-switching roles where needed. This is what gets screen-recorded.
 
@@ -188,13 +189,13 @@ Output: `eligible_amount`, `deductions[]`, `failed_rules[]`.
   - The audit chain verifies.
 
 ## Milestones (test, commit, push and update PROGRESS.md after each)
-- **M0** Scaffold, `run.py`, settings, `.env.example`, `.gitignore`, `core/llm.py` (groq/mock/replay, throttle, cache, retry), seed data.
+- **M0** Scaffold, `run.py`, settings, `.env.example`, `.gitignore`, `core/llm.py` (live/mock/replay, throttle, cache, retry), seed data.
 - **M1** Redaction, injection guard, Intake extraction; `rules.py` with tests.
 - **M2** Docs & Coding agent, Risk agent, orchestrator state machine, trace events + SSE.
 - **M3** REST API, Action Gateway, RBAC enforcement, hash-chained audit with verify and tamper test; backend e2e tests for A/B/C in mock mode.
 - **M4** Console UI: inbox, case view (trace, decision card, redaction view, approvals), outbox.
 - **M5** Dashboard, Audit tab, autonomy level + kill switch, guided demo, landing page.
-- **M6** Groq live verification: run each hero case once in `groq` mode, fix call-shape issues, and record `replay_cache.json`. If Groq can't be reached, document why and keep mock and replay working.
+- **M6** Live LLM verification: run each hero case once in `live` mode, fix call-shape issues, and record `replay_cache.json`. If the provider can't be reached, document why and keep mock and replay working.
 - **M7** Visual QA and docs:
   - Install a headless browser (`pip install playwright && playwright install --with-deps chromium`; if that fails, try another way to get headless Chromium).
   - Screenshot the landing page, inbox, case A, case C (quarantine), dashboard and audit at 1440×900 into `docs/screenshots/`. View them yourself and fix anything ugly, misaligned or unreadable, then re-shoot.
@@ -206,5 +207,5 @@ Stretch, only after M7: a tiny second pack (e.g. motor insurance claim) reusing 
 ## Definition of done
 - `LLM_MODE=mock pytest -q` passes with no network.
 - `python run.py` serves `/` and `/console`; hero cases A, B and C reach their expected end states (verified by HTTP checks and in the UI).
-- `LLM_MODE=replay` reproduces the recorded runs; `LLM_MODE=groq` works on a laptop with a real key in `.env`.
+- `LLM_MODE=replay` reproduces the recorded runs; `LLM_MODE=live` works on a laptop with a real endpoint, key and model ids in `.env`.
 - Screenshots in `docs/screenshots/`; README and DEMO_SCRIPT complete; `git status` clean and pushed.

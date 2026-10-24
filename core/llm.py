@@ -1,10 +1,13 @@
-"""LLM gateway used by every agent: `groq` | `mock` | `replay`.
+"""LLM gateway used by every agent: `live` | `mock` | `replay`.
+
+Agents ask for a logical model role (`fast`, `reason`, `guard`); the provider's model ids live only in
+configuration (MODEL_FAST, MODEL_REASON, MODEL_GUARD) and are used at the HTTP call.
 
 - mock:   deterministic fixtures supplied by the calling agent. No network.
-- replay: responses recorded from earlier real groq runs (packs/<pack>/data/replay_cache.json).
+- replay: responses recorded from earlier live runs (packs/<pack>/data/replay_cache.json).
           On a cache miss it falls back to the mock fixture and marks the result `replay_miss`.
-- groq:   OpenAI SDK pointed at Groq, with a per-model token bucket, a SQLite response cache
-          keyed by sha256(model + messages), and retry-after handling on 429.
+- live:   OpenAI SDK pointed at an OpenAI-compatible endpoint (LLM_BASE_URL), with a per-role token
+          bucket, a SQLite response cache keyed by sha256(role + messages), and retry-after on 429.
 
 Every agent answer is JSON validated by a pydantic model: one retry on failure, then LLMError,
 which the orchestrator turns into "route to a human with the reason".
@@ -56,7 +59,7 @@ class Completion:
     model: str
     tokens: int
     latency_ms: int
-    source: str  # groq | cache | mock | replay | replay_miss
+    source: str  # live | cache | mock | replay | replay_miss
 
 
 @dataclass
@@ -135,7 +138,7 @@ class TokenBucket:
 
 
 class ReplayCache:
-    """Committed file of redacted, synthetic responses recorded from real groq runs."""
+    """Committed file of redacted, synthetic responses recorded from earlier live runs."""
 
     def __init__(self, path: Path):
         self.path = Path(path)
@@ -171,21 +174,21 @@ class LLMClient:
         self._lock = threading.Lock()
 
     # ---------- low level ----------
-    def _bucket(self, model: str) -> TokenBucket:
+    def _bucket(self, role: str) -> TokenBucket:
         with self._lock:
-            if model not in self._buckets:
-                tpm = 15000 if "guard" in model else self.settings.groq_tpm
-                self._buckets[model] = TokenBucket(self.settings.groq_rpm, tpm)
-            return self._buckets[model]
+            if role not in self._buckets:
+                tpm = 15000 if role == "guard" else self.settings.llm_tpm
+                self._buckets[role] = TokenBucket(self.settings.llm_rpm, tpm)
+            return self._buckets[role]
 
     def _sdk(self):
         if self._sdk_client is None:
             from openai import OpenAI
 
-            # In the cloud build environment the proxy injects the real key; a placeholder is enough.
+            # Behind an authenticating proxy the real key is injected in transit; a placeholder is enough.
             self._sdk_client = OpenAI(
-                base_url=self.settings.groq_base_url,
-                api_key=self.settings.groq_api_key or "proxy-injected-key",
+                base_url=self.settings.llm_base_url,
+                api_key=self.settings.llm_api_key or "proxy-injected-key",
                 max_retries=0,
                 timeout=self.settings.llm_timeout_s,
             )
@@ -231,7 +234,7 @@ class LLMClient:
             comp = Completion(cached.get("content"), cached.get("tool_calls", []), model, cached.get("tokens", 0), 0, "cache")
         else:
             try:
-                comp = self._call_groq(model, messages, tools, max_tokens, json_mode, reasoning_effort)
+                comp = self._call_live(model, messages, tools, max_tokens, json_mode, reasoning_effort)
             except LLMError as err:
                 if self.settings.replay_record and "rejected the call (400)" in str(err):
                     self.replay.put(key, {"model": model, "error": str(err)})  # so replay takes the same degrade path
@@ -241,17 +244,17 @@ class LLMClient:
             self.replay.put(key, {"model": model, "content": comp.content, "tool_calls": comp.tool_calls, "tokens": comp.tokens})
         return comp
 
-    def _call_groq(self, model, messages, tools, max_tokens, json_mode, reasoning_effort) -> Completion:
+    def _call_live(self, role, messages, tools, max_tokens, json_mode, reasoning_effort) -> Completion:
         from openai import APIConnectionError, APIStatusError, InternalServerError, RateLimitError
 
-        kwargs: dict[str, Any] = {"model": model, "messages": messages, "max_tokens": max_tokens}
+        kwargs: dict[str, Any] = {"model": self.settings.model_id(role), "messages": messages, "max_tokens": max_tokens}
         if tools:
             kwargs["tools"] = tools
         elif json_mode:
             kwargs["response_format"] = {"type": "json_object"}
-        if reasoning_effort:
-            kwargs["reasoning_effort"] = reasoning_effort
-        self._bucket(model).acquire(estimate_tokens(messages) + 300)
+        if reasoning_effort and self.settings.reasoning_effort:  # LLM_REASONING_EFFORT= (empty) for models without it
+            kwargs["reasoning_effort"] = self.settings.reasoning_effort
+        self._bucket(role).acquire(estimate_tokens(messages) + 300)
         attempt = 0
         while True:
             attempt += 1
@@ -260,19 +263,19 @@ class LLMClient:
                 resp = self._sdk().chat.completions.create(**kwargs)
             except RateLimitError as err:
                 if attempt > 3:
-                    raise LLMError(f"Groq rate limit (429) persisted after {attempt} attempts") from err
+                    raise LLMError(f"LLM provider rate limit (429) persisted after {attempt} attempts") from err
                 time.sleep(_retry_after(err, attempt))
                 continue
             except (APIConnectionError, InternalServerError) as err:
                 if attempt > 2:
-                    raise LLMError(f"Groq unavailable: {type(err).__name__}") from err
+                    raise LLMError(f"LLM provider unavailable: {type(err).__name__}") from err
                 time.sleep(1.5 * attempt)
                 continue
             except APIStatusError as err:
-                # gpt-oss occasionally emits a malformed tool call (Groq answers 400 "tool call validation
-                # failed"); the same request usually succeeds on a fresh sample, so allow two retries.
+                # Models occasionally emit a malformed tool call (the provider answers 400 "tool call
+                # validation failed"); the same request usually succeeds on a fresh sample, so allow two retries.
                 if attempt > (3 if err.status_code == 400 else 1):
-                    raise LLMError(f"Groq rejected the call ({err.status_code}): {_short(err)}") from err
+                    raise LLMError(f"LLM provider rejected the call ({err.status_code}): {_short(err)}") from err
                 time.sleep(0.5 * attempt)
                 continue
             msg = resp.choices[0].message
@@ -281,11 +284,11 @@ class LLMClient:
                 for tc in (msg.tool_calls or [])
             ]
             tokens = resp.usage.total_tokens if resp.usage else 0
-            return Completion(msg.content, calls, model, tokens or 0, int((time.perf_counter() - t0) * 1000), "groq")
+            return Completion(msg.content, calls, role, tokens or 0, int((time.perf_counter() - t0) * 1000), "live")
 
     # ---------- agent loop ----------
     def run_agent(self, *, fallback_calls: list[tuple[str, dict]] | None = None, **kwargs) -> AgentResult:
-        """Run one agent turn. If Groq rejects the model's tool call (HTTP 400), run `fallback_calls`
+        """Run one agent turn. If the provider rejects the model's tool call (HTTP 400), run `fallback_calls`
         locally with the same allow-listed tools and ask once more without tools."""
         try:
             return self._run_agent(**kwargs)
@@ -301,7 +304,7 @@ class LLMClient:
             retry = dict(kwargs, tools=None, user=kwargs["user"] + "\n\nTOOL RESULTS (the tools were run for you; do not call tools):\n"
                          + json.dumps(outputs, ensure_ascii=False, sort_keys=True))
             result = self._run_agent(**retry)
-            result.degraded = f"tool call rejected by Groq; {len(fallback_calls)} allow-listed tool(s) run locally"
+            result.degraded = f"tool call rejected by the provider; {len(fallback_calls)} allow-listed tool(s) run locally"
             return result
 
     def _run_agent(

@@ -6,9 +6,9 @@ to the audit chain. Allowed actions run the pack's handler and are audited with 
 from __future__ import annotations
 
 import json
-import time
 from typing import Any, Callable
 
+from core import clock
 from core.audit import AuditLog
 from core.events import EventLog
 from core.rbac import RBAC, Forbidden
@@ -50,7 +50,7 @@ class ActionGateway:
     def outbox_add(self, case_id: str, kind: str, channel: str, recipient: str, subject: str, body: dict, actor: str) -> int:
         return self.store.execute(
             "INSERT INTO outbox(case_id, kind, channel, recipient, subject, body_json, created_at, actor) VALUES(?,?,?,?,?,?,?,?)",
-            (case_id, kind, channel, recipient, subject, json.dumps(body, ensure_ascii=False), time.time(), actor),
+            (case_id, kind, channel, recipient, subject, json.dumps(body, ensure_ascii=False), clock.now(), actor),
         )
 
     def outbox(self, case_id: str | None = None) -> list[dict[str, Any]]:

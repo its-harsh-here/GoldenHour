@@ -3,12 +3,15 @@
 One line per judgement call made during the unattended build.
 
 - Python 3.13 is what the build container has; code targets 3.11+ and uses nothing newer.
-- Groq is reachable from the cloud session through a proxy-injected key, so the SDK gets a placeholder key when `GROQ_API_KEY` is empty.
-- Prompt Guard 2 on Groq returns the malicious-probability as a bare string (e.g. `"0.9986"`); we parse it as a float and treat ≥ 0.5 as an injection, with a regex fallback that also supplies highlight spans.
+- The LLM provider is reachable from the cloud session through a proxy-injected key, so the SDK gets a placeholder key when `LLM_API_KEY` is empty.
+- The guard model returns the malicious probability as a bare string (e.g. `"0.9986"`); we parse it as a float and treat ≥ 0.5 as an injection, with a regex fallback that also supplies highlight spans.
 - Added `core/store.py` (one SQLite connection behind a lock) even though the layout in CLAUDE.md does not list it; every core module needs persistence and this keeps it in one place.
-- The replay key and the SQLite response cache key are both `sha256(model + json(messages))`; prompts contain no timestamps so recorded runs replay byte-for-byte.
-- Replay recording only happens when `REPLAY_RECORD=true`, so a laptop run in groq mode never rewrites the committed `replay_cache.json` by accident.
-- Mock fixtures live next to each agent (a function of the agent's own inputs), so mock, replay-miss fallback and tests all go through the same `run_agent` code path as groq.
+- The replay key and the SQLite response cache key are both `sha256(role + json(messages))`; prompts contain no timestamps so recorded runs replay byte-for-byte.
+- Agents name a logical model role (`fast`, `reason`, `guard`), never a provider model id; `MODEL_FAST`, `MODEL_REASON` and `MODEL_GUARD` map roles to ids. The code, replay file and UI stay provider-neutral, and swapping providers needs no code change.
+- `LLM_MODE` is `live | mock | replay`. `live` without `LLM_BASE_URL` and all three model ids, or an unknown mode, falls back to `replay` with a note in the header badge, so a misconfigured deployment still serves the recorded demo.
+- `reasoning_effort` is sent only when `LLM_REASONING_EFFORT` is non-empty (default `low`), because models without reasoning reject the parameter.
+- Replay recording only happens when `REPLAY_RECORD=true`, so a laptop run in live mode never rewrites the committed `replay_cache.json` by accident.
+- Mock fixtures live next to each agent (a function of the agent's own inputs), so mock, replay-miss fallback and tests all go through the same `run_agent` code path as live calls.
 - Hero cases are PA-1001 (A), PA-1002 (B), PA-1003 (C); case IDs are short and readable for the demo.
 - Case C's admission note is a generated PDF with the injection printed in white 1pt text: invisible on paper, present in the extracted text (the realistic attack).
 - Estimates use six heads (room, OT, surgeon, consumables, medicines, investigations); the structured form is the money source of truth and the LLM's note extraction is only a cross-check that can lower confidence.
@@ -18,18 +21,27 @@ One line per judgement call made during the unattended build.
 - Escalation wins over a missing-documents query when both apply; the Medical Officer can still query the hospital.
 - Policy deductions (room rent, sub-limit, co-pay, balance) are not "partial denials": a Processor may sign the computed eligible amount. Any amount different from it needs a Medical Officer and a written reason.
 - Added `packs/health_preauth/actions.py` for the Action Agent handlers, Reporter (dashboard), case views and demo seeding, to keep `agents.py` readable.
-- Non-hero cases are pre-processed at startup with the deterministic mock LLM (labelled "seeded") and backdated human sign-offs, so the dashboard shows a realistic recent history without spending Groq quota.
+- Non-hero cases are pre-processed at startup with the deterministic mock LLM (labelled "seeded") and backdated human sign-offs, so the dashboard shows a realistic recent history without spending LLM quota.
 - The synthetic insurer is "Kestrel Mutual Health"; letters are clearly marked as synthetic.
 - The audit chain records case receipt, each agent step (digest + key fields), every gateway action (allowed or blocked), human decisions and admin changes; individual tool calls stay in the trace log.
-- Groq call budget used during the build: hero cases A, B, C ran live (plus one partial C run that exposed the tool-call 400); everything else used mock or the SQLite response cache.
-- Groq 400 "tool call validation failed" (malformed gpt-oss tool name) is retried twice, then the agent's allow-listed tools run locally and the model gets their results in a plain JSON call. This keeps tool use governed by the same allow-list and records the degradation in the trace.
-- Screenshots in docs/screenshots are taken from `LLM_MODE=replay`, so explanations and drafts are the recorded Groq outputs, not mock templates.
+- LLM call budget used during the build: hero cases A, B, C ran live a handful of times (recording passes, one of which hit a 429 on case C and was re-run); everything else used mock or the SQLite response cache.
+- A provider 400 on a malformed tool call is retried twice, then the agent's allow-listed tools run locally and the model gets their results in a plain JSON call. This keeps tool use governed by the same allow-list and records the degradation in the trace.
+- Screenshots in docs/screenshots are taken from `LLM_MODE=replay`, so explanations and drafts are the recorded live outputs, not mock templates.
 - Screenshots use the preinstalled Node Playwright + Chromium (`scripts/screenshots.mjs`) instead of `pip install playwright`, as the build environment instructs not to install a second browser.
 - Alpine.js was not needed; the console is vanilla JS, so it is not vendored.
-- Deployment target chosen by the owner: Render (Docker, free plan) via `render.yaml`, running `LLM_MODE=groq` with `GROQ_API_KEY` entered in Render's dashboard (`sync: false`), never committed. The Dockerfile default stays `replay` so other hosts are safe by default.
+- Deployment target chosen by the owner: Render (Docker, free plan) via `render.yaml`, running `LLM_MODE=live` with the endpoint, key and model ids entered in Render's dashboard (`sync: false`), never committed. The Dockerfile default stays `replay` so other hosts are safe by default.
 - Dataset growth uses a seeded generator (`packs/health_preauth/generator.py`) rather than hand-written cases, so the same sequence number always yields the same request and the committed history can be regenerated and checked by a test.
-- The live feed runs feed cases on the mock pipeline by default (`FEED_LLM=mock`): with groq mode on a public URL, a request every 40 s would exhaust the free tier within hours.
-- Live-feed cases are decided by a simulated desk whose actors are labelled `sim:*` (like the `seed:*` history); hero cases and hand-written cases are never touched, so every real demo decision stays with a person.
-- Feed cases are numbered from PA-2001 and pruned beyond the newest 40 once decided; their audit blocks are kept, because the chain is append-only.
+- Generated cases (live feed and day replay) run on the mock pipeline by default (`FEED_LLM=mock`): a public URL with a request every 40 s plus a 200-case day would exhaust a free tier within hours.
+- Generated cases are decided by a simulated desk whose actors are labelled `sim:*` (like the `seed:*` history); hero cases and hand-written cases are never touched, so every real demo decision stays with a person.
+- Live arrivals are a Poisson process (exponential gaps around `FEED_INTERVAL_S`, clamped to 5 s – 4× the mean) rather than a fixed timer, so traffic looks like a real desk.
+- "A day worth of case solving" is a replay of the last 24 hours on a simulated business clock (`core/clock.py`, a per-thread context variable), not a 24-hour wait. Every stored timestamp reads `clock.now()`, so the day's cases, traces, audit blocks and notifications land on their own timeline while API requests keep real time.
+- The server backfills that day at startup (as fast as the machine allows, about 5 s) so the dashboard never opens empty; "Replay the day" replays it paced over a few minutes for the demo. Live arrivals pause while a replay runs, and a new replay replaces the previous day's cases (the audit chain keeps everything).
+- The day's arrival volume and shape are seeded per hour (`DAY_VOLUME` ≈ 200, IST intraday profile peaking late morning), and arrivals start at the first full IST hour so every one lands in the dashboard's 24 hourly bars.
+- Simulated desk timing: Processor sign-off 3–28 min, Medical Officer 12–52 min (6% take 62–95 min, so the day shows a few honest SLA breaches), hospital uploads 15–110 min with the SLA clock paused.
+- While a replay runs, its open cases show SLA and "received" times on the replay's clock, so a case received at simulated 18:24 is not shown as 12 hours overdue.
+- Smoothness: user-initiated view changes use `document.startViewTransition` (cross-fade, 200 ms, off under reduced motion); live data never rebuilds a view. Rows are keyed and patched by a signature, trace lines are appended, charts update in place, and entrance animations run only on first paint or when a case's status actually moves.
+- Feed cases are numbered from PA-2001 and day-replay cases from PA-3001; feed cases are pruned beyond the newest 40 once decided. Their audit blocks are kept, because the chain is append-only.
 - L1/L2/L3 and the kill switch stay Admin permissions on the server. In the demo console, clicking them as another role switches the role to Admin (with a toast), which is the same as using the role switcher. Earlier they were disabled and looked broken.
-- The Admin tamper test now edits the most recent approval, so the broken block is visible in the latest-blocks audit view as the chain grows.
+- The Admin tamper test edits the most recent approval, so the broken block is visible in the latest-blocks audit view as the chain grows.
+- The smoke script, screenshot script and guided demo use the same Medical Officer reason for case C, because the denial drafts include it; with one recording, replay serves all three.
+- The builder credit links to https://github.com/its-harsh-here on the landing page, the console footer and the README.

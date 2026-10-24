@@ -6,6 +6,7 @@ import json
 import time
 from typing import Any, AsyncIterator, Callable
 
+from core import clock
 from core.store import Store
 
 
@@ -23,7 +24,7 @@ class EventLog:
         return self.store.execute(
             "INSERT INTO trace_events(case_id, ts, agent, step, tool, input_summary, output_json, latency_ms, tokens, model, status)"
             " VALUES(?,?,?,?,?,?,?,?,?,?,?)",
-            (case_id, time.time(), agent, step, tool, input_summary[:300], _summary(output), latency_ms, tokens, model, status),
+            (case_id, clock.now(), agent, step, tool, input_summary[:300], _summary(output), latency_ms, tokens, model, status),
         )
 
     def list(self, case_id: str, after_id: int = 0) -> list[dict]:
@@ -38,7 +39,7 @@ class EventLog:
     # ---- desk-wide notifications (arrivals, settled cases, decisions, admin changes) ----
     def notify(self, case_id: str | None, kind: str, summary: dict | None = None) -> int:
         return self.store.execute("INSERT INTO notifications(ts, case_id, kind, summary_json) VALUES(?,?,?,?)",
-                                  (time.time(), case_id, kind, json.dumps(summary or {}, ensure_ascii=False, default=str)))
+                                  (clock.now(), case_id, kind, json.dumps(summary or {}, ensure_ascii=False, default=str)))
 
     def last_notification_id(self) -> int:
         row = self.store.one("SELECT MAX(id) AS n FROM notifications")

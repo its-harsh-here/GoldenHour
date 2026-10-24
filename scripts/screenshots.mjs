@@ -38,6 +38,7 @@ async function wait(id, statuses) {
   const shot = async (name, opts = {}) => { if (!want(name)) return; await sleep(1300); await page.screenshot({ path: OUT + name, ...opts }); console.log('saved', name); };
   const asRole = async (role) => { await page.goto(BASE + '/console#/inbox'); await page.evaluate((r) => { localStorage.setItem('gh.role', r); localStorage.setItem('gh.present', '0'); }, role); };
 
+  for (let i = 0; i < 120; i++) { const d = await api('GET', '/api/day'); if (!d.active) break; await sleep(500); }  // the reset's 24-hour backfill is done
   await asRole('PROCESSOR');
   if (want('landing')) { await page.goto(BASE + '/'); await shot('landing.png'); await shot('landing-full.png', { fullPage: true }); }
   await page.goto(BASE + '/console#/inbox'); await page.reload(); await page.waitForSelector('.case-row'); await shot('inbox.png');
@@ -56,9 +57,10 @@ async function wait(id, statuses) {
   await api('POST', '/api/cases/PA-1002/simulate-upload', 'PROCESSOR');
   await wait('PA-1002', ['AWAITING_APPROVAL']);
   await api('POST', '/api/cases/PA-1002/decision', 'PROCESSOR', { action: 'approve' });
-  await api('POST', '/api/cases/PA-1003/decision', 'MEDICAL_OFFICER', { action: 'deny', reason: 'Joint replacement has a 24-month waiting period (Sec 3.3); the policy is 8 months old.' });
+  await api('POST', '/api/cases/PA-1003/decision', 'MEDICAL_OFFICER', { action: 'deny', reason: 'Joint replacement has a 24-month waiting period (Sec 3.3) and the policy is 8 months old. Hidden instruction text in the note was disregarded.' });
 
-  await page.goto(BASE + '/console#/dashboard'); await page.waitForSelector('#tat-chart'); await shot('dashboard.png');
+  await page.goto(BASE + '/console#/dashboard'); await page.waitForSelector('#day-chart'); await shot('dashboard.png');
+  if (want('day-replay')) { await page.click('#dash-replay'); await sleep(9000); await shot('day-replay.png'); }
 
   await asRole('AUDITOR');
   await page.goto(BASE + '/console#/audit'); await page.reload(); await page.waitForSelector('#verify');

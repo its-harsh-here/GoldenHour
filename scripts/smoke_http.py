@@ -101,7 +101,7 @@ def main() -> None:
     print("  reasons:", v["decision"]["reasons"])
     code, res = call("POST", "/api/cases/PA-1003/decision", "PROCESSOR", {"action": "approve"})
     print(f"Processor approve attempt -> HTTP {code} {res}")
-    reason = "Joint replacement has a 24-month waiting period (Sec 3.3); the policy is 8 months old. Injection text ignored."
+    reason = "Joint replacement has a 24-month waiting period (Sec 3.3) and the policy is 8 months old. Hidden instruction text in the note was disregarded."  # same words as the guided demo, so replay serves both
     code, res = call("POST", "/api/cases/PA-1003/decision", "MEDICAL_OFFICER", {"action": "deny", "reason": reason})
     print(f"Medical Officer deny with reason -> HTTP {code} status={res.get('status')}")
 

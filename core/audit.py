@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-import time
 
+from core import clock
 from core.store import Store
 
 GENESIS = "0" * 64
@@ -26,7 +26,7 @@ class AuditLog:
         with self.store.lock:
             last = self.store.one("SELECT hash FROM audit_log ORDER BY id DESC LIMIT 1")
             prev = last["hash"] if last else GENESIS
-            ts = round(time.time(), 3)
+            ts = round(clock.now(), 3)
             payload = json.dumps({"ts": ts, "case_id": case_id, "actor": actor, "role": role, "action": action,
                                   "details": details or {}}, sort_keys=True, ensure_ascii=False, default=str)
             digest = _hash(prev, payload)

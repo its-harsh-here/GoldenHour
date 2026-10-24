@@ -48,6 +48,10 @@ class FeedBody(BaseModel):
     enabled: bool = True
 
 
+class DayBody(BaseModel):
+    minutes: float | None = None
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -60,6 +64,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.rt = rt
         if s.live_feed:
             rt.feed.start()
+            if s.day_backfill:
+                rt.feed.start_day()  # the last 24 hours, processed as fast as the machine allows
         yield
         rt.feed.stop()
 
@@ -117,23 +123,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         rt = rt_of(request)
         cfg = rt.pack.config
         return {
-            "llm_mode": rt.llm.mode,
-            "models": {"fast": rt.settings.model_fast, "reason": rt.settings.model_reason, "guard": rt.settings.model_guard},
+            "llm_mode": rt.llm.mode, "llm_mode_note": rt.settings.llm_mode_note,
+            "model_roles": ["fast", "reason", "guard"],
             "replay_entries": len(rt.llm.replay),
             "autonomy_level": rt.autonomy_level, "kill_switch": rt.kill_switch,
             "roles": rt.rbac.public_roles(),
             "permissions": {action: sorted(roles) for action, roles in rt.rbac.permissions.items()},
             "pack": {"name": rt.pack.name, "title": cfg["title"], "domain": cfg["domain"], "version": cfg["version"]},
             "sla_minutes": rt.sla_minutes, "threshold_inr": cfg["decision_policy"]["auto_threshold_inr"],
-            "hero_cases": [c["case_id"] for c in sorted(rt.cases.list(), key=lambda c: c["hero"] or "Z") if c["hero"]],
-            "feed": rt.feed.status(),
+            "hero_cases": [r["case_id"] for r in rt.store.query("SELECT case_id FROM cases WHERE hero IS NOT NULL ORDER BY hero")],
+            "feed": rt.feed.status(), "day_minutes": rt.settings.day_replay_minutes,
         }
 
     # ---------------- cases ----------------
     @app.get("/api/cases")
     def list_cases(request: Request, x_role: str | None = Header(None)) -> list[dict]:
         rt, role = rt_of(request), role_of(x_role)
-        return [rt.pack.case_summary(rt, c, role) for c in rt.cases.list()]
+        return [rt.pack.case_summary(rt, c, role) for c in rt.cases.list_light()]
 
     @app.get("/api/cases/{case_id}")
     def get_case(case_id: str, request: Request, x_role: str | None = Header(None)) -> dict:
@@ -239,12 +245,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def reset(request: Request, body: ResetBody | None = None, x_role: str | None = Header(None)) -> dict:
         rt = rt_of(request)
         rt.rbac.require(role_of(x_role), "reset_demo")
-        with rt.feed.busy:  # no live-feed tick runs while the desk is wiped
+        with rt.feed.busy:  # no live-feed tick or replay step runs while the desk is wiped
             for _ in range(50):  # let any in-flight case finish before wiping state
-                if not any(rt.orchestrator.is_running(c["case_id"]) for c in rt.cases.list()):
+                if not any(rt.orchestrator.is_running(c["case_id"]) for c in rt.cases.list_light()):
                     break
                 time.sleep(0.2)
-            return rt.pack.seed(rt, history=body.history if body else True)
+            out = rt.pack.seed(rt, history=body.history if body else True)
+            if rt.feed.running and rt.settings.day_backfill:
+                rt.feed.start_day()
+            return out
 
     # ---------------- live feed ----------------
     @app.get("/api/feed")
@@ -255,6 +264,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def feed_toggle(body: FeedBody, request: Request, x_role: str | None = Header(None), x_actor: str | None = Header(None)) -> dict:
         rt, role = rt_of(request), role_of(x_role)
         return rt.gateway.execute("set_feed", case_id=None, role=role, actor=actor_of(role, x_actor), params={"enabled": body.enabled})
+
+    @app.get("/api/day")
+    def day_status(request: Request) -> dict:
+        return rt_of(request).feed.status()["day"] or {"active": False}
+
+    @app.post("/api/day/replay")
+    def day_replay(request: Request, body: DayBody | None = None, x_role: str | None = Header(None), x_actor: str | None = Header(None)) -> dict:
+        rt, role = rt_of(request), role_of(x_role)
+        if body and body.minutes is not None and not 0.5 <= body.minutes <= 60:
+            raise HTTPException(400, "replay length must be between 0.5 and 60 minutes")
+        return rt.gateway.execute("replay_day", case_id=None, role=role, actor=actor_of(role, x_actor),
+                                  params={"minutes": body.minutes if body else None})
 
     @app.get("/api/notifications")
     def notifications(request: Request, after: int = 0, limit: int = 50) -> list[dict]:

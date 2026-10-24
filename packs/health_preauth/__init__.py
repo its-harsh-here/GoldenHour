@@ -90,6 +90,21 @@ class HealthPreauthPack:
 
         return actions.feed_prune(rt, keep)
 
+    def day_plan(self, rt, start: float, end: float, volume: int) -> list:
+        from packs.health_preauth import actions
+
+        return actions.day_plan(rt, start, end, volume)
+
+    def day_event(self, rt, kind: str, ref) -> list:
+        from packs.health_preauth import actions
+
+        return actions.day_event(rt, kind, ref)
+
+    def day_clear(self, rt) -> int:
+        from packs.health_preauth import actions
+
+        return actions.day_clear(rt)
+
     def brief(self, case: dict | None) -> dict:
         from packs.health_preauth import actions
 

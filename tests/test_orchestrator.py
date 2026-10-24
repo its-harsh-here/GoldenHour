@@ -54,7 +54,7 @@ def test_llm_failure_routes_to_a_human(rt, monkeypatch):
 
     def flaky(**kwargs):
         if kwargs["agent"] == "policy":
-            raise LLMError("Groq rate limit (429) persisted after 4 attempts")
+            raise LLMError("LLM provider rate limit (429) persisted after 4 attempts")
         return original(**kwargs)
 
     monkeypatch.setattr(rt.llm, "run_agent", flaky)

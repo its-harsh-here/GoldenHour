@@ -88,6 +88,20 @@ window.GH = (() => {
     });
   }
 
+  // Point an existing dial at fresh server numbers without rebuilding the row it sits in.
+  function syncDial(el, sla) {
+    if (!el || !sla) return;
+    const d = el.dataset;
+    d.elapsed = sla.elapsed_s; d.budget = sla.budget_s; d.paused = sla.paused ? 1 : 0; d.done = sla.done ? 1 : 0; d.t = Date.now();
+  }
+  const agoHtml = (ts) => `<span class="ago" data-ts="${ts}">${ago(ts)}</span>`;
+  function tickAgo() {
+    document.querySelectorAll('.ago[data-ts]').forEach((el) => {
+      const text = ago(Number(el.dataset.ts));
+      if (el.textContent !== text) el.textContent = text;
+    });
+  }
+
   function toast(msg, kind = 'ok', ms = 4500) {
     const box = document.getElementById('toasts');
     if (!box) return;
@@ -118,5 +132,5 @@ window.GH = (() => {
   }
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  return { state, store, api, inr, esc, icon, ago, clock, dial, tickDials, toast, caption, countUp, sleep, reduced };
+  return { state, store, api, inr, esc, icon, ago, agoHtml, tickAgo, clock, dial, syncDial, tickDials, toast, caption, countUp, sleep, reduced };
 })();
