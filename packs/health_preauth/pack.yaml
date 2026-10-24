@@ -1,0 +1,76 @@
+# GoldenHour pack: cashless pre-authorization for health insurance (synthetic, illustrative values).
+# core/ reads only generic keys (sla, decision_policy, roles, permissions, roi); the rest is pack-specific.
+pack: health_preauth
+title: Cashless pre-authorization
+domain: Health insurance / TPA
+version: 0.1.0
+
+sla:
+  decision_minutes: 60      # IRDAI Master Circular (May 2024): cashless authorization within 1 hour
+  discharge_minutes: 180    # final discharge authorization within 3 hours
+
+decision_policy:
+  autonomy_level: 2         # 1 = human decides everything; 2 = one-click sign-off; 3 = auto-execute clean cases
+  auto_threshold_inr: 150000
+  risk_escalate_at: 60
+  min_extraction_confidence: 0.8
+  post_audit_sample_pct: 10
+  outcomes: [RECOMMEND_APPROVE, QUERY_HOSPITAL, ESCALATE_MEDICAL_OFFICER]
+  # The AI may never deny. Denial or partial denial needs a Medical Officer and a written reason.
+
+risk:
+  cost_deviation_flag_pct: 25
+  weights:
+    injection_detected: 40
+    eligibility_rule_failed: 25
+    cost_deviation_high: 20
+    cost_deviation_moderate: 8
+    low_confidence: 15
+    llm_failure: 30
+    new_policy: 10
+    symptoms_predate_policy: 15
+    claim_frequency: 12
+    los_above_typical: 8
+    amount_over_threshold: 10
+    room_rent_over_cap: 5
+    coding_inconsistent: 15
+    missing_documents: 6
+    ped_link_flagged: 8
+
+roles:
+  PROCESSOR: {label: Processor, phi_access: true}
+  MEDICAL_OFFICER: {label: Medical Officer, phi_access: true}
+  AUDITOR: {label: Auditor, phi_access: false}
+  ADMIN: {label: Admin, phi_access: false}
+  SYSTEM: {label: GoldenHour agent, phi_access: false, internal: true}
+
+# Action -> roles allowed. The Action Gateway enforces this and logs every rejected attempt.
+permissions:
+  process_case: [PROCESSOR, MEDICAL_OFFICER, ADMIN, SYSTEM]
+  approve: [PROCESSOR, MEDICAL_OFFICER]
+  approve_escalated: [MEDICAL_OFFICER]
+  auto_approve: [SYSTEM]
+  partial_approve: [MEDICAL_OFFICER]
+  deny: [MEDICAL_OFFICER]
+  escalate: [PROCESSOR, SYSTEM]
+  query_hospital: [PROCESSOR, MEDICAL_OFFICER, SYSTEM]
+  notify: [PROCESSOR, MEDICAL_OFFICER, SYSTEM]
+  simulate_upload: [PROCESSOR, MEDICAL_OFFICER, ADMIN]
+  set_autonomy: [ADMIN]
+  kill_switch: [ADMIN]
+  tamper_test: [ADMIN]
+  verify_audit: [PROCESSOR, MEDICAL_OFFICER, AUDITOR, ADMIN]
+  view_phi: [PROCESSOR, MEDICAL_OFFICER]
+  reset_demo: [PROCESSOR, MEDICAL_OFFICER, AUDITOR, ADMIN]
+
+# Assumptions behind the ROI tile (shown on the dashboard next to the number).
+roi:
+  manual_minutes_per_case: 38       # read note, look up policy, compute deductions, draft letter
+  assisted_minutes_per_case: 6      # review the decision card and sign
+  processor_cost_per_hour_inr: 420
+  daily_volume: 400
+  working_days_per_year: 300
+
+redaction:
+  person_fields: [patient_name, treating_doctor]
+  id_fields: [policy_number]

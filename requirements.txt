@@ -1,0 +1,10 @@
+fastapi>=0.110
+uvicorn>=0.29
+pydantic>=2.6
+openai>=1.40
+python-dotenv>=1.0
+pypdf>=4.0
+PyYAML>=6.0
+pytest>=8.0
+httpx>=0.27
+reportlab>=4.0  # only for scripts/make_pdfs.py (regenerating sample PDFs)
