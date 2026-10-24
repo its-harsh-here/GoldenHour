@@ -184,7 +184,10 @@ class Orchestrator:
                 continue
             pause = out.pop("_pause", None) or pause
             resume_at = out.pop("_resume_at", None)
-            for key, value in rt.cases.get(case_id)["state"].items():  # keep what gateway handlers saved meanwhile
+            current = rt.cases.get(case_id)
+            if current is None:  # removed mid-run (a demo reset or a new day replay): nothing left to update
+                return {"status": "removed", "paused": False}
+            for key, value in current["state"].items():  # keep what gateway handlers saved meanwhile
                 state.setdefault(key, value)
             state.update(out)
             if resume_at:

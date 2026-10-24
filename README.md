@@ -307,7 +307,7 @@ switcher; presentation mode; the guided-demo button.
 
 The hero ("Discharge in minutes, not hours."), the problem strip with sourced statistics, an animated pipeline of the
 agents with gold dots flowing along the connectors, a grid of the eight guardrails, a `core/` + `packs/` diagram showing
-how a second domain plugs in, and calls to action for the console and the three-case demo. The footer states "Synthetic
+how a second domain plugs in, and calls to action that open the console. The footer states "Synthetic
 data only. Not a clinical decision tool." and the builder credit.
 
 ## 5. Governance and responsibility
@@ -424,7 +424,7 @@ The figures are planning assumptions for a synthetic desk, not measurements from
   cases and the guided demo replay with zero misses); `live` runs on any OpenAI-compatible endpoint.
 * **Resilient by design:** per-role token buckets, `retry-after` backoff, a SQLite response cache, schema validation
   with one retry, a local tool fallback for malformed tool calls, and graceful degradation to the human queue.
-* **Tested:** 86 automated tests run offline (`LLM_MODE=mock pytest -q`), from pure rules to HTTP end-to-end flows
+* **Tested:** 87 automated tests run offline (`LLM_MODE=mock pytest -q`), from pure rules to HTTP end-to-end flows
   for A, B and C, plus `scripts/smoke_http.py` against a running server and headless-browser screenshots.
 * **Operable:** `/api/health` (case count, mode, feed state), `/api/meta` (mode, which live settings are missing,
   whether a key is set, never the key), a live desk event stream, and a demo reset.
@@ -525,7 +525,7 @@ flowchart LR
 ```bash
 pip install -r requirements.txt
 cp .env.example .env            # LLM_MODE=mock by default: no network needed
-LLM_MODE=mock pytest -q         # 86 tests, offline
+LLM_MODE=mock pytest -q         # 87 tests, offline
 python run.py                   # http://127.0.0.1:8000  (or: uvicorn app.main:app)
 ```
 
@@ -626,7 +626,7 @@ All requests carry the demo role in the `X-Role` header; responses are masked fo
 
 ## 13. Testing and verification
 
-`LLM_MODE=mock pytest -q` runs 86 tests with no network:
+`LLM_MODE=mock pytest -q` runs 87 tests with no network:
 
 | File | Covers |
 |---|---|
@@ -634,7 +634,7 @@ All requests carry the demo role in the `X-Role` header; responses are masked fo
 | `test_redaction.py` | tokenising names, phones, Aadhaar-like numbers, emails and policy numbers; rehydration |
 | `test_guard.py` | the hidden text in case C, clean notes passing, guard-score parsing, model-only detection, fallback to regex when the guard model fails, quarantine, intake redaction |
 | `test_llm.py` | mock / replay / cache paths, schema retry, tool allow-list, token bucket, the tool-call fallback, reasoning-effort setting |
-| `test_orchestrator.py` | the three hero flows through the state machine, pause and resume, model failure routed to a human, level-3 auto-execution, kill switch, seeded history |
+| `test_orchestrator.py` | the three hero flows through the state machine, pause and resume, model failure routed to a human, level-3 auto-execution, kill switch, seeded history, a case removed mid-run |
 | `test_audit.py` | hash chain links, tamper detection at the edited block and restore, a deleted block, the empty chain |
 | `test_e2e_mock.py` | hero cases A, B and C over HTTP, RBAC 403s, PHI masking, autonomy levels 1–3 and the kill switch |
 | `test_feed.py` | generator, arrive-as-New and pickup, live-model share and hourly cap, simulated timing, simulated desk, retention, desk stream, feed RBAC |

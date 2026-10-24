@@ -69,7 +69,7 @@ five judging criteria (Reusability, Responsible AI & Governance, AI-to-ROI, MVP 
 
 ### 4. MVP readiness (1:00)
 * Runs with one command (`python run.py`), no Node, no CDN; fonts and charts vendored for offline demos.
-* 86 automated tests run offline (`LLM_MODE=mock pytest -q`), including HTTP end-to-end tests for all three hero
+* 87 automated tests run offline (`LLM_MODE=mock pytest -q`), including HTTP end-to-end tests for all three hero
   cases and the day replay, plus `scripts/smoke_http.py` against a running server.
 * Verified on real hosted models; live testing surfaced a malformed tool-call quirk that is now handled. A recorded
   replay makes the demo deterministic.

@@ -3,7 +3,7 @@ from dataclasses import replace
 import pytest
 
 from core.llm import LLMError
-from core.orchestrator import Runtime, sla_info
+from core.orchestrator import Runtime, Step, sla_info
 from core.settings import get_settings
 from packs.health_preauth import actions
 
@@ -100,3 +100,15 @@ def test_seeded_history_gives_dashboard_data(tmp_path):
             if c["status"] == "DENIED":
                 assert c["state"]["human_decision"]["reason"]
     assert runtime.audit.verify()["valid"]
+
+
+def test_a_case_removed_mid_run_stops_quietly(rt, monkeypatch):
+    # a demo reset or a new day replay can clear a case while its agents are still working on it
+    def removed_by_reset(ctx):
+        rt.store.execute("DELETE FROM cases WHERE case_id=?", (ctx.case_id,))
+        return {}
+    pipeline = list(rt.pack.pipeline)
+    pipeline.insert(1, Step("reset_meanwhile", removed_by_reset, "orchestrator"))
+    monkeypatch.setattr(rt.pack, "pipeline", pipeline)
+    assert rt.orchestrator.run("PA-1001") == {"status": "removed", "paused": False}
+    assert rt.cases.get("PA-1001") is None and not rt.orchestrator.is_running("PA-1001")

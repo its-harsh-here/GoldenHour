@@ -389,7 +389,7 @@ def _token_spans(text: str) -> list[dict]:
 
 
 def case_summary(rt, c: dict, role: str) -> dict:
-    form, st = c["request"]["form"], c["state"]
+    form = c["request"]["form"]
     phi = rt.rbac.has_phi_access(role)
     source = c.get("source") or ("hero" if c["hero"] else c["request"].get("source", "history"))
     sim_now = rt.feed.case_clock(source)

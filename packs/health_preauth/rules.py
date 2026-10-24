@@ -182,7 +182,7 @@ def rule_sub_limit(policy: dict, procedure: dict, amount: int, clauses: dict) ->
 def rule_copay(policy: dict, amount: int, clauses: dict) -> RuleResult:
     pct = policy.get("copay_pct", 0)
     impact = -int(round(amount * pct / 100))
-    why = f"No co-payment on this policy." if pct == 0 else f"{pct}% co-payment on {inr(amount)} = {inr(-impact)} borne by the insured."
+    why = "No co-payment on this policy." if pct == 0 else f"{pct}% co-payment on {inr(amount)} = {inr(-impact)} borne by the insured."
     return RuleResult(rule_id="copay", label="Co-payment", clause_ref=_clause(policy, "copay", clauses),
                       passed=True, blocking=False, impact_inr=impact, explanation=why)
 

@@ -84,6 +84,7 @@ class Feed:
         self._last_desk = 0.0
         self._last_progress = 0.0
         self._pending: list[tuple[float, str, bool]] = []  # (pick up at, case id, run on the live model)
+        self._inflight: set[str] = set()  # arrivals the agents are working on right now
         self._live_times: list[float] = []
 
     # ---------------- live feed ----------------
@@ -178,8 +179,10 @@ class Feed:
     def start_due(self, force: bool = False, wait: bool = False) -> list[str]:
         """Hand the arrivals whose wait is over to the agents (in the background unless `wait`)."""
         now = time.time()
-        due = [p for p in self._pending if force or p[0] <= now]
-        self._pending = [p for p in self._pending if p not in due]
+        with self.busy:  # never hand a case to the agents while a reset or a new replay is clearing the desk
+            due = [p for p in self._pending if force or p[0] <= now]
+            self._pending = [p for p in self._pending if p not in due]
+            self._inflight.update(cid for _, cid, _ in due)
         for _, cid, live in due:
             if wait:
                 self._process(cid, live)
@@ -189,16 +192,26 @@ class Feed:
 
     def _process(self, case_id: str, live: bool) -> None:
         rt = self.rt
-        if rt.cases.status(case_id) != "NEW" or rt.orchestrator.is_running(case_id):
-            return  # reset, replaced by a replay, or someone pressed Process first
-        rt.events.notify(case_id, "picked_up", {"model": "live" if live else "simulated"})
-        with nullcontext() if live else rt.llm.paced():
-            rt.orchestrator.run(case_id, force_mock=not live)
+        try:
+            if rt.cases.status(case_id) != "NEW" or rt.orchestrator.is_running(case_id):
+                return  # reset, replaced by a replay, or someone pressed Process first
+            rt.events.notify(case_id, "picked_up", {"model": "live" if live else "simulated"})
+            with nullcontext() if live else rt.llm.paced():
+                rt.orchestrator.run(case_id, force_mock=not live)
+        finally:
+            self._inflight.discard(case_id)
+
+    def _wait_inflight(self, timeout_s: float = 15.0) -> None:
+        stop_at = time.time() + timeout_s
+        while self._inflight and time.time() < stop_at:
+            time.sleep(0.1)
 
     # ---------------- day replay ----------------
     def start_day(self, minutes: float | None = None, end: float | None = None) -> dict:
         """Replay the 24 hours ending now: as fast as possible (minutes=None) or paced over `minutes`."""
         with self.busy:
+            self._wait_inflight()  # let the agents finish the arrivals they are on before the desk is cleared
+            self._pending.clear()
             end = end or time.time()
             start = end - DAY_S
             self.rt.pack.day_clear(self.rt)
