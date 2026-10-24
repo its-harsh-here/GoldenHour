@@ -124,7 +124,7 @@ Python 3.11+ (built and tested on 3.13). No Node at runtime; all fonts and scrip
 ```bash
 pip install -r requirements.txt
 cp .env.example .env            # LLM_MODE=mock by default: no network needed
-LLM_MODE=mock pytest -q         # 82 tests, offline
+LLM_MODE=mock pytest -q         # 84 tests, offline
 python run.py                   # http://127.0.0.1:8000  (or: uvicorn app.main:app)
 ```
 
@@ -230,7 +230,8 @@ so a public deployment never spends an LLM key, and it keeps `.env` out of the b
 * Otherwise `RECOMMEND_APPROVE`, handled by autonomy level:
   * **level 1**: the processor types the amount
   * **level 2** (default): one-click pre-filled sign-off
-  * **level 3**: clean cases at or below the threshold auto-execute, 10% sampled for post-audit
+  * **level 3**: clean cases at or below the threshold auto-execute, 10% sampled for post-audit. Switching to level 3
+    (or releasing the kill switch at level 3) also auto-executes the clean cases already waiting for a Processor
 
 ## Built to reuse
 

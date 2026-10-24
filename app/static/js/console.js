@@ -27,9 +27,19 @@
     rule_signals: 'Risk signals', rationale: 'Risk rationale', decision_policy: 'Decision policy', explain_decision: 'Explain decision',
     route_to_processor: 'Route to Processor', send_hospital_query: 'Query hospital', escalate_to_medical_officer: 'Escalate to MO',
     send_authorization_letter: 'Authorization letter', send_denial_letter: 'Decision letter', notify_hospital: 'Notify hospital',
-    notify_patient: 'SMS patient', status_update: 'Status update', blocked: 'Blocked by gateway', start: 'Pipeline start', resume: 'Resume from saved state',
+    notify_patient: 'SMS patient', status_update: 'Status update', auto_execute: 'Auto-execute (level 3)', blocked: 'Blocked by gateway', start: 'Pipeline start', resume: 'Resume from saved state',
     settled: 'Settled', paused: 'Paused (waiting on hospital)', hospital_upload: 'Hospital upload', step_failed: 'Step failed', tool_call: 'Tool call',
   };
+  const LEVEL = {
+    1: 'every decision needs a human; nothing is pre-filled',
+    2: 'clean cases up to the desk threshold get a pre-filled, one-click sign-off',
+    3: 'clean cases up to the desk threshold auto-execute, 10% sampled for post-audit',
+  };
+  const levelLine = (level) => `Autonomy level ${level}: ${LEVEL[level]}`;
+  function autoExecuted(r) {
+    const n = (r && r.auto_executed || []).length;
+    return n ? ` ${n} waiting clean case${n > 1 ? 's were' : ' was'} auto-executed now${r.post_audit_sampled ? ` (${r.post_audit_sampled} sampled for post-audit)` : ''}.` : '';
+  }
   const chip = (status) => { const [c, l] = STATUS[status] || ['plain', status]; return `<span class="chip ${c}"><span class="dot"></span>${l}</span>`; };
   const riskClass = (s) => (s == null ? '' : s >= 60 ? 'high' : s >= 30 ? 'medium' : 'low');
   const roleLabel = (r) => ({ PROCESSOR: 'Processor', MEDICAL_OFFICER: 'Medical Officer', AUDITOR: 'Auditor', ADMIN: 'Admin', SYSTEM: 'GoldenHour agent' }[r] || r);
@@ -102,18 +112,19 @@
     document.querySelectorAll('#autonomy button').forEach((b) => b.addEventListener('click', async () => {
       ensureAdmin();
       try {
-        await api('POST', '/api/admin/autonomy', { level: Number(b.dataset.level) });
+        const r = await api('POST', '/api/admin/autonomy', { level: Number(b.dataset.level) });
         await loadMeta();
-        toast(`Autonomy level set to ${b.dataset.level}${S.meta.kill_switch ? ' (kill switch still forces level 1)' : ''}.`);
+        toast(S.meta.kill_switch ? `Autonomy level ${b.dataset.level} saved; the kill switch still forces level 1.`
+          : `${levelLine(S.meta.autonomy_level)}.${autoExecuted(r)}`);
         refreshSoon();
       } catch (e) { toast(esc(e.message), 'err'); }
     }));
     const kill = async (engaged) => {
       ensureAdmin();
       try {
-        await api('POST', '/api/admin/kill-switch', { engaged });
+        const r = await api('POST', '/api/admin/kill-switch', { engaged });
         await loadMeta();
-        toast(engaged ? 'Kill switch engaged: autonomy forced to level 1.' : 'Kill switch released.', engaged ? 'err' : 'ok');
+        toast(engaged ? 'Kill switch engaged: autonomy forced to level 1.' : `Kill switch released. ${levelLine(S.meta.autonomy_level)}.${autoExecuted(r)}`, engaged ? 'err' : 'ok');
         refreshSoon();
       } catch (e) { toast(`${e.status || ''} ${esc(e.message)}`, 'err'); }
     };
@@ -558,6 +569,7 @@
       case 'hospital_upload': return `received ${(o.received || []).join(', ')} · SLA resumed`;
       case 'step_failed': return o.reason || '';
       case 'status_update': return `${o.status} · ${o.amount} · by ${o.by}`;
+      case 'auto_execute': return `autonomy level 3 applied to a case ${o.queue} · ${o.amount}`;
       case 'route_to_processor': return o.one_click ? `one-click sign-off, pre-filled ${o.prefilled_amount}` : 'manual review (level 1)';
       default: return typeof o === 'object' && o ? Object.entries(o).slice(0, 2).map(([k, x]) => `${k}: ${typeof x === 'object' ? JSON.stringify(x) : x}`).join(' · ') : '';
     }
@@ -704,17 +716,24 @@
         ${v.can.simulate_upload ? '' : `<span class="muted" style="font-size:.84rem">Not available to ${roleLabel(role)}.</span>`}</div></div>`;
     }
     if (v.status === 'AWAITING_APPROVAL') {
-      if (!v.can.approve) return `${head('Sign-off')}<div class="approval"><div class="hint">${icon('i-lock')}<span>${roleLabel(role)} has read-only access. A Processor or Medical Officer signs this case.</span></div></div>`;
-      const oneClick = level === 2 && d.one_click;
+      if (!v.can.approve) {
+        const how = level === 1 ? 'types the amount and confirms the review (no pre-filled decision)'
+          : `signs the pre-filled ${inr(d.recommended_amount)} with one click`;
+        return `${head('Sign-off', `<span class="chip plain">Autonomy level ${level}</span>`)}<div class="approval">
+          <div class="hint">${icon('i-lock')}<span>${roleLabel(role)} has read-only access. At level ${level}, a Processor ${how}.</span></div></div>`;
+      }
+      const oneClick = level >= 2 && d.outcome === 'RECOMMEND_APPROVE';
       const mo = v.can.change_amount;
       return `${head('Sign-off', `<span class="chip plain">Autonomy level ${level}</span>`)}<div class="approval">
         ${oneClick ? `<div class="row"><button class="btn primary lg" id="approve" data-amount="${d.recommended_amount}">${icon('i-check')}Approve ${inr(d.recommended_amount)}</button>
             ${v.can.escalate ? `<button class="btn" id="escalate">${icon('i-human', 'sm')}Escalate to Medical Officer</button>` : ''}</div>
-            <div class="hint">${icon('i-human')}<span>Pre-filled by GoldenHour at autonomy level 2. Your one-click sign-off is written to the audit chain.</span></div>`
-          : `<div class="field"><label for="amt">Amount to authorize</label><input class="input amount" id="amt" inputmode="numeric" placeholder="Type the amount, e.g. ${d.recommended_amount}" value="${S.draft.amount ?? ''}"></div>
+            <div class="hint">${icon('i-human')}<span>${level === 3
+              ? `Autonomy level 3 auto-executes clean cases up to ${inr(S.meta.threshold_inr)} as they are processed; this one is still waiting, so it gets a pre-filled one-click sign-off.`
+              : 'Pre-filled by GoldenHour at autonomy level 2. Your one-click sign-off is written to the audit chain.'}</span></div>`
+          : `<div class="field"><label for="amt">Amount to authorize</label><input class="input amount" id="amt" inputmode="numeric" placeholder="e.g. ${d.recommended_amount}" value="${S.draft.amount ?? ''}"></div>
             <label class="hint"><input type="checkbox" id="reviewed"> I reviewed the rule ledger and documents.</label>
             <div class="row"><button class="btn primary" id="approve-manual">${icon('i-check', 'sm')}Approve</button>${v.can.escalate ? `<button class="btn" id="escalate">Escalate to Medical Officer</button>` : ''}</div>
-            <div class="hint">${icon('i-lock')}<span>Autonomy level 1${S.meta.kill_switch ? ' (kill switch)' : ''}: no pre-filled decision. Eligible amount under the rules is ${inr(d.recommended_amount)}.</span></div>`}
+            <div class="hint">${icon('i-lock')}<span>Autonomy level 1${S.meta.kill_switch ? ' (kill switch)' : ''}: no pre-filled decision; type the amount and confirm your review. Eligible amount under the rules is ${inr(d.recommended_amount)}.</span></div>`}
         ${mo ? moControls(v, d.recommended_amount) : ''}</div>`;
     }
     if (v.status === 'ESCALATED') {

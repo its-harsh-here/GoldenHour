@@ -203,6 +203,31 @@ def _finalize(rt, case_id: str, params: dict, role: str, actor: str, kind: str, 
             "audit": {"status": kind, "amount": amount, "override": override, "reason": reason[:200], "auto": auto}}
 
 
+def apply_autonomy(rt, level: int) -> dict:
+    """Level 3 covers the waiting queue too: clean cases at or below the threshold that wait for a Processor
+    auto-execute now, exactly as they would have on arrival (10% sampled for post-audit). Levels 1 and 2 change
+    only how the sign-off is offered, so they leave the queue alone."""
+    if level < 3:
+        return {"auto_executed": [], "post_audit_sampled": 0}
+    threshold = rt.pack.config["decision_policy"]["auto_threshold_inr"]
+    done, sampled = [], 0
+    with rt.feed.busy:  # the simulated desk must not sign the same case at the same moment
+        rows = rt.store.query("SELECT case_id, recommended_amount, hero FROM cases WHERE status='AWAITING_APPROVAL' "
+                              "AND recommendation='RECOMMEND_APPROVE' AND recommended_amount <= ? ORDER BY received_at", (threshold,))
+        for row in rows:
+            cid = row["case_id"]
+            if rt.orchestrator.is_running(cid) or rt.cases.status(cid) != "AWAITING_APPROVAL":
+                continue
+            rt.events.emit(cid, "action", "auto_execute", tool="action_gateway",
+                           output={"level": 3, "amount": inr(row["recommended_amount"]), "queue": "waiting for a Processor"})
+            # hero cases keep the server's LLM mode (recorded drafts in replay); the rest stay on mock, like the feed
+            rt.gateway.execute("auto_approve", case_id=cid, role="SYSTEM", actor="agent:action",
+                               params={"amount": row["recommended_amount"], "force_mock": not row["hero"]})
+            done.append(cid)
+            sampled += bool(rt.cases.get(cid)["state"].get("post_audit_sampled"))
+    return {"auto_executed": done, "post_audit_sampled": sampled}
+
+
 def handle_query(rt, case_id: str, params: dict, role: str, actor: str) -> dict:
     case = rt.cases.get(case_id)
     form, hosp, mapping = case["request"]["form"], case["request"]["hospital"], _phi(case)

@@ -74,6 +74,11 @@ class HealthPreauthPack:
             out.append(actions._mask(row, case["state"].get("intake", {}).get("phi_map", {})) if case else row)
         return out
 
+    def apply_autonomy(self, rt, level: int) -> dict:
+        from packs.health_preauth import actions
+
+        return actions.apply_autonomy(rt, level)
+
     # ---- live feed hooks used by core/feed.py ----
     def feed_arrival(self, rt, force_mock: bool = True) -> str:
         from packs.health_preauth import actions

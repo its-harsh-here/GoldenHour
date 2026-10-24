@@ -119,3 +119,42 @@ def test_trace_stream_and_pages(client):
     assert "event: trace" in body and "event: done" in body and "get_policy" in body
     assert client.get("/").status_code == 200 and client.get("/console").status_code == 200
     assert client.post("/api/cases/PA-1001/process?sync=true").status_code == 409
+
+
+def test_autonomy_levels_behave_differently(client):
+    admin = H("ADMIN")
+    # Level 1: routed for a fully manual sign-off
+    assert client.post("/api/admin/autonomy", json={"level": 1}, headers=admin).json()["auto_executed"] == []
+    client.post("/api/cases/PA-1001/process?sync=true", headers=H("PROCESSOR"))
+    v = view(client, "PA-1001")
+    assert v["status"] == "AWAITING_APPROVAL" and not v["decision"]["one_click"]
+    # Level 2 leaves the waiting queue alone
+    assert client.post("/api/admin/autonomy", json={"level": 2}, headers=admin).json()["auto_executed"] == []
+    assert view(client, "PA-1001")["status"] == "AWAITING_APPROVAL"
+    # Level 3 auto-executes the clean case that was waiting for a Processor
+    r = client.post("/api/admin/autonomy", json={"level": 3}, headers=admin).json()
+    assert r["autonomy_level"] == 3 and r["auto_executed"] == ["PA-1001"]
+    v = view(client, "PA-1001")
+    assert v["status"] == "APPROVED" and v["final_amount"] == 101000
+    assert v["human_decision"]["auto"] and v["human_decision"]["actor"] == "agent:action"
+    assert {o["kind"] for o in v["outbox"]} == {"authorization_letter", "hospital_notice", "patient_sms"}
+    assert "auto_execute" in [e["step"] for e in client.get("/api/cases/PA-1001/events").json()]
+    # ... and new clean cases at level 3 never wait: PA-1010 auto-executes on arrival
+    client.post("/api/cases/PA-1010/process?sync=true", headers=H("PROCESSOR"))
+    assert view(client, "PA-1010")["status"] == "APPROVED" and view(client, "PA-1010")["human_decision"]["auto"]
+    # escalations still go to the Medical Officer at level 3
+    client.post("/api/cases/PA-1003/process?sync=true", headers=H("PROCESSOR"))
+    assert view(client, "PA-1003")["status"] == "ESCALATED"
+    assert client.post("/api/audit/verify", headers=H("AUDITOR")).json()["valid"]
+
+
+def test_kill_switch_holds_level_three_back_until_released(client):
+    admin = H("ADMIN")
+    client.post("/api/admin/kill-switch", json={"engaged": True}, headers=admin)
+    client.post("/api/cases/PA-1001/process?sync=true", headers=H("PROCESSOR"))
+    r = client.post("/api/admin/autonomy", json={"level": 3}, headers=admin).json()
+    assert r["autonomy_level"] == 1 and r["auto_executed"] == []
+    assert view(client, "PA-1001")["status"] == "AWAITING_APPROVAL"
+    r = client.post("/api/admin/kill-switch", json={"engaged": False}, headers=admin).json()
+    assert r["autonomy_level"] == 3 and r["auto_executed"] == ["PA-1001"]
+    assert view(client, "PA-1001")["status"] == "APPROVED"

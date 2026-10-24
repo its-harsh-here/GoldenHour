@@ -44,4 +44,6 @@ One line per judgement call made during the unattended build.
 - L1/L2/L3 and the kill switch stay Admin permissions on the server. In the demo console, clicking them as another role switches the role to Admin (with a toast), which is the same as using the role switcher. Earlier they were disabled and looked broken.
 - The Admin tamper test edits the most recent approval, so the broken block is visible in the latest-blocks audit view as the chain grows.
 - The smoke script, screenshot script and guided demo use the same Medical Officer reason for case C, because the denial drafts include it; with one recording, replay serves all three.
+- Level 3 applies to the waiting queue, not just to new arrivals: when it becomes the effective level (set, or the kill switch released), clean cases at or below the threshold that are waiting for a Processor auto-execute through the gateway as `agent:action`. Levels 1 and 2 only change how the sign-off is offered, so they never act on the queue. The panel follows the current level, not the level the case was routed at.
+- Time-dependent tests pin their clock (`clock.at`) or a fixed day end; one leftover-timing test failed only when the real hour had just begun.
 - The builder credit links to https://github.com/its-harsh-here on the landing page, the console footer and the README.

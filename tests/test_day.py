@@ -12,6 +12,7 @@ from core.feed import DAY_S, DayReplay
 from core.orchestrator import Runtime
 from core.settings import get_settings
 from packs.health_preauth import actions
+from packs.health_preauth.actions import IST_OFFSET_S
 
 END = 1_792_800_000.0  # a fixed "now" so the plan is deterministic
 
@@ -146,9 +147,17 @@ def test_live_mode_needs_an_endpoint_and_models(monkeypatch):
     assert get_settings().llm_mode == "replay"
 
 
-def test_cases_left_open_by_a_replay_keep_their_planned_timing(rt):
-    rt.feed.run_day(end=time.time() + 120)  # nothing the day planned can fall due before the first desk look
+def test_cases_left_open_by_a_replay_keep_their_planned_timing(tmp_path):
+    rt = Runtime(replace(get_settings(), llm_mode="mock", db_path=tmp_path / "late.db", live_feed=False, day_volume=200))
+    actions.seed_demo(rt, history=False)
+    # a full-size day ending at 11:59 IST, near the daily peak, so its last hour is still being worked
+    end = (END + IST_OFFSET_S) // DAY_S * DAY_S - IST_OFFSET_S + 12 * 3600 - 60
+    rt.feed.run_day(end=end)
     open_before = {c["case_id"] for c in rt.cases.list_light() if c["source"] == "day" and not c["decided_at"]}
-    assert open_before  # the last hour of the day is still being worked
-    out = rt.feed.tick(arrive=False)  # the live desk's first look, right after the replay
-    assert not [cid for cid, _ in out["desk"] if cid in open_before]  # nothing decided early, all at once
+    assert open_before
+    with clock.at(end + 1):  # the live desk's first look, right after the replay
+        first = rt.pack.feed_desk(rt, True)
+    assert not [cid for cid, _ in first if cid in open_before]  # nothing decided early, all at once
+    with clock.at(end + 3 * 3600):  # by then every planned sign-off has fallen due
+        later = rt.pack.feed_desk(rt, True)
+    assert {cid for cid, _ in later} & open_before

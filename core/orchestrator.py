@@ -251,11 +251,16 @@ class Runtime:
         if level not in (1, 2, 3):
             raise ValueError("autonomy level must be 1, 2 or 3")
         self.store.kv_set("autonomy_level", level)
-        return {"autonomy_level": self.autonomy_level, "requested": level, "kill_switch": self.kill_switch}
+        return {"autonomy_level": self.autonomy_level, "requested": level, "kill_switch": self.kill_switch, **self._apply_autonomy()}
 
     def _kill_switch(self, _cid: str, params: dict, _role: str, _actor: str) -> dict:
         self.store.kv_set("kill_switch", bool(params.get("engaged", True)))
-        return {"kill_switch": self.kill_switch, "autonomy_level": self.autonomy_level}
+        return {"kill_switch": self.kill_switch, "autonomy_level": self.autonomy_level, **self._apply_autonomy()}
+
+    def _apply_autonomy(self) -> dict:
+        """Let the pack apply a new effective autonomy level to work already waiting (e.g. level 3 auto-executes)."""
+        apply = getattr(self.pack, "apply_autonomy", None)
+        return (apply(self, self.autonomy_level) or {}) if apply else {}
 
     @property
     def sla_minutes(self) -> int:

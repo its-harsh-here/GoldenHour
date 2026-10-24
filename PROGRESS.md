@@ -36,13 +36,14 @@ Stretch: a `Dockerfile` (replay mode by default, `$PORT`, non-root) and a Render
 - A day of case solving: at startup (and after a demo reset) the server plays the last 24 hours on a simulated business clock (`core/clock.py`): about 200 requests shaped by an IST intraday profile (`DAY_VOLUME`), each processed by the agent pipeline and worked by the simulated desk, so the dashboard opens on a full day. It takes about 5 s. "Replay the day" (inbox live panel or dashboard) plays the same day paced over `DAY_REPLAY_MINUTES` (default 3), with a moving clock, progress bar, ticker and an hour-by-hour chart that fills in. Every timestamp (case, trace, audit, notification) is on the simulated timeline; open replay cases show SLA on the replay's clock.
 - Smooth UI: tab, role, filter, document-view and theme changes cross-fade with the View Transitions API (skipped under reduced motion). Live updates patch the DOM in place (keyed rows, appended trace lines, in-place chart updates), so nothing re-renders or replays its entrance animation. Refreshes during a replay are throttled rather than debounced, so screens keep moving while events stream.
 - De-branding: the provider and model names are gone from code, config and docs. Agents ask for a role (`fast`, `reason`, `guard`) and env maps roles to model ids. the provider-named mode became `live`, and `LLM_REASONING_EFFORT` makes the reasoning hint optional. The landing page and console footer credit the builder (github.com/its-harsh-here).
-- Tests: 82 (adds the business clock, day replay, replay-clock SLA, light case list, hour-by-hour dashboard, day API, live-mode settings, the reasoning-effort switch, and leftover replay cases keeping their planned timing).
+- Autonomy L3 fix: L3 used to look like L1, for three reasons. The sign-off panel offered the pre-filled one-click approval only at exactly level 2, so L3 fell through to L1's manual form and its "Autonomy level 1" text. Switching levels changed nothing already in the queue. And the Admin view (clicking a level switches to Admin) said "read-only" at every level. Now L2 and L3 both offer one-click sign-off and only L1 is manual. Switching to L3 auto-executes the clean cases waiting for a Processor (trace step `auto_execute`, 10% post-audit sample). Toasts and the read-only panel spell out what each level does. Verified in the browser in replay mode: case A and four waiting day cases auto-executed with zero replay misses.
+- Tests: 84 (autonomy levels L1/L2/L3 and the kill switch over HTTP; adds the business clock, day replay, replay-clock SLA, light case list, hour-by-hour dashboard, day API, live-mode settings, the reasoning-effort switch, and leftover replay cases keeping their planned timing).
 
 ## How to run
 ```
 pip install -r requirements.txt
 cp .env.example .env              # LLM_MODE=mock by default
-LLM_MODE=mock pytest -q           # 82 tests, no network
+LLM_MODE=mock pytest -q           # 84 tests, no network
 python run.py                     # http://127.0.0.1:8000  -> / and /console
 python scripts/smoke_http.py      # HTTP checks for hero cases A/B/C + audit (server must be running)
 LLM_MODE=replay python run.py     # recorded live runs, for the demo video
@@ -51,7 +52,7 @@ node scripts/screenshots.mjs      # regenerate docs/screenshots (needs Playwrigh
 ```
 
 ## Verified in the build session
-- `LLM_MODE=mock pytest -q`: 82 passed.
+- `LLM_MODE=mock pytest -q`: 84 passed.
 - Replay mode with the feed and the day backfill running: hero cases A, B, C reached their end states over HTTP (`scripts/smoke_http.py`) with zero replay misses. The guided demo ran headless in 69 s, also with zero misses; the only console error is case C's intended 403.
 - Day replay in the browser: backfill of 192 requests (398 simulated events) in about 5 s; a paced replay filled the hour-by-hour chart in place (bar totals 56 -> 163 over 24 s) without rebuilding the inbox or the dashboard; the audit chain verifies afterwards.
 - Audit verify returned valid; the Admin tamper test was detected at the edited block; restore made the chain valid again.
